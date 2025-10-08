@@ -1,0 +1,10 @@
+/*
+ * Custom CSS for the Concession Stand application.
+ */
+
+/* Style for the logo image in the header. */
+#menu-logo {
+    width: 50px; /* Adjust the width of the logo */
+    height: 50px; /* Adjust the height of the logo to maintain aspect ratio */
+    margin-right: 15px; /* Add some space between the logo and the brand name */
+}

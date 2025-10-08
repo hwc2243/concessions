@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Welcome to the Concession Stand</title>
+
+    <link href="../../../resources/css/bootstrap.min.css" rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+	<link href="../../../resources/css/concession.css" rel="stylesheet" media="screen" th:href="@{/css/concession.css}" />
+    
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+</head>
+
+<body>
+
+<div th:insert="~{fragments/header :: header}"></div>
+
+Welcome to the Concession Management System
+
+<div th:insert="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

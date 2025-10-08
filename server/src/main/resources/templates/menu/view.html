@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>View Menu</title>
+    
+    <th:block th:replace="fragments/css :: css"></th:block>
+    <th:block th:replace="fragments/javascript :: javascript"></th:block>
+</head>
+<body class="bg-light">
+    <!-- Insert the header fragment from the header.html file -->
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white text-center">
+                <h2 class="h5 mb-0">View Menu</h2>
+            </div>
+            <div class="card-body">
+                
+                <div class="mb-3">
+                    <label for="name" class="form-label">Menu Name</label>
+                    <!-- Display the name as read-only text -->
+                    <p class="form-control-plaintext" id="name" th:text="${menu.name}"></p>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white text-center">
+                        <h3 class="h5 mb-0">Menu Items</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Removed the "Add Items" button -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-bordered mb-0" id="menuItemsTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Description</th>
+                                        <th scope="col">Category</th>
+                                        <th scope="col">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="menuItem : ${menu.menuItems}">
+                                        <td th:text="${menuItem.name}"></td>
+                                        <td th:text="${menuItem.description}"></td>
+                                        <td th:text="${menuItem.category}"></td>
+                                        <td th:text="${menuItem.price}"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div th:if="${#lists.isEmpty(menu.menuItems)}" class="alert alert-info text-center mt-3" role="alert">
+                            This menu has no items.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/menu/{id}/edit(id=${menu.id})}" class="btn btn-warning btn-lg">Edit Menu</a>
+                    <a th:href="@{/menu}" class="btn btn-secondary btn-lg">Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        $(document).ready(function() {
+			new DataTable('#menuItemsTable');
+        });
+    </script>
+</body>
+</html>

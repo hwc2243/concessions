@@ -1,0 +1,15 @@
+# H2 Database configuration for testing
+spring:
+  datasource:
+    url: jdbc:h2:mem:concessions;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+# JPA/Hibernate settings for H2
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+# This will create schema on startup and drop on shutdown
+    hibernate.ddl-auto: create-drop
+ # Optional: to see SQL queries in logs
+    show-sql: true

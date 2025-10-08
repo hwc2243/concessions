@@ -1,0 +1,31 @@
+application:
+  version: @project.version@
+  name: @project.name@
+  
+spring:
+  application:
+    name: Concession Server
+  datasource:
+    url: jdbc:postgresql://localhost:5432/concession
+    username: concession
+    password: w31c0m3
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: app 
+            authorization-grant-type: authorization_code
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: https://login.connors.ddns.net/realms/concession
+            user-name-attribute: preferred_username
+            
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.connors.ddns.net/realms/concession

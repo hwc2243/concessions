@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+    <div th:fragment="footer" class="container-fluid mt-5 py-3">
+        <footer class="footer fixed-bottom">
+            <div class="row mx-2">
+            <p class="text-sm">
+            	<span th:text="${appName}">Application Name</span> - Version <span th:text="${appVersion}">Version</span> &copy; 2025 Bill Connors. All rights reserved.
+            </p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

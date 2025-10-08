@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <!-- Parent POMs MUST have the packaging type set to 'pom' -->
+    <modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.5.3</version>
+		<relativePath /> 
+	</parent>
+    <groupId>com.concessions.system</groupId>
+    <artifactId>concessions-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <!-- 
+        The 'modules' section lists all sub-directories (modules) 
+        that belong to this parent project.
+    -->
+    <modules>
+        <module>model</module>
+        <module>server</module>
+        <module>local</module>
+    </modules>
+
+    <!-- 
+        The 'properties' section is useful for centralizing common versions, 
+        making maintenance easier across all modules.
+    -->
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- Example: Centralize Spring Boot version -->
+        <spring-boot.version>3.5.3</spring-boot.version>
+        
+        <service.xml>${project.basedir}/service.xml</service.xml>
+    </properties>
+
+    <!-- 
+        The 'dependencyManagement' section centralizes dependency versions. 
+        Child modules inherit these versions but must explicitly declare the dependency 
+        (without the version tag).
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Example: Spring Boot BOM for consistent dependency versions -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            
+            <!-- Add all common dependencies here -->
+        </dependencies>
+    </dependencyManagement>
+
+    <!--
+        The 'build' section can enforce common plugins and configurations 
+        (like Java compiler settings) across all modules.
+    -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
+

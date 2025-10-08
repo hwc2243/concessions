@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Menu Items</title>
+    
+    <th:block th:replace="fragments/css :: css"></th:block>
+    <th:block th:replace="fragments/javascript :: javascript"></th:block>
+
+</head>
+<body class="bg-light">
+    <!-- Insert the header fragment from the header.html file -->
+	<div th:insert="~{fragments/header :: header}"></div>
+
+    <div class="container mt-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white text-center">
+                <h1 class="h4 mb-0">Menu Items</h1>
+            </div>
+            <div class="d-flex justify-content-end p-3">
+                <a th:href="@{/menuitem/create?redirect=menuitem}" class="btn btn-primary">Add Item</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-bordered mb-0" id="menuItemsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        	<tr th:each="menuitem : ${menuItems}">
+                                <td>
+                                	<a th:href="@{/menuitem/{id}/view(id=${menuitem.id})}" th:text="${menuitem.name}">Menu Item Name</a>
+                                </td>
+                                <td>
+									<div class="dropdown col-md-12">
+                        				<button class="btn btn-secondary dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Action</button>
+                            			<ul class="dropdown-menu">
+                            				<li><a class="dropdown-item" href="#" onclick="javascript:confirmDelete(this)" th:attr="data-name=${menuitem.name},data-href=@{/menuitem/{id}/delete(id=${menuitem.id})}">Delete</a></li>
+                                			<li><a class="dropdown-item" th:href="@{/menuitem/{id}/edit(id=${menuitem.id})}">Edit</a></li>
+                            			</ul>
+                        			</div>                	
+                				</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- A message to display if the list is empty -->
+                <div th:if="${#lists.isEmpty(menuItems)}" class="alert alert-info text-center mt-3" role="alert">
+                    No menu items found.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/delete :: delete-modal}">Delete</div>
+    
+    <script type="text/javascript">
+        $(document).ready(function() {
+			new DataTable('#menuItemsTable');
+        });
+    </script>
+</body>
+</html>

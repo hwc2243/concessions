@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+	<link href="../../../resources/css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/resources/css/bootstrap.min.css}" />
+	<link href="../../../resources/css/concession.css" rel="stylesheet" media="screen" th:href="@{/resources/css/concession.css}" />
+</head>
+<body>
+	<div th:fragment="header" class="bg-light">
+	<nav class="navbar navbar-expand-lg  navbar-fixed-top">
+		<div class="container-fluid">
+			<img id="menu-logo" src="/images/logo.png" th:src="@{/images/logo.png}"/>
+			<a class="navbar-brand" href="/#">Concession Stand</a>
+			<button class="navbar-toggler" type="button"
+				    data-bs-toggle="collapse" data-bs-target="#navbarNav"
+				    aria-controls="navbarNav" aria-expanded="false"
+				    aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div sec:authorize="isAuthenticated()" class="navbar-collapse collapse" id="navbarNav">
+				<ul class="nav navbar-nav">
+					<li class="nav-item">
+						<a class="nav-link" th:classappend="${module == 'location' ? 'active' : ''}" href="#" th:href="@{/location/}">Locations</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:classappend="${module == 'menu' ? 'active' : ''}" href="#" th:href="@{/menu/}">Menus</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:classappend="${module == 'menuitem' ? 'active' : ''}" href="#" th:href="@{/menuitem/}">Menu Items</a>
+					</li>
+
+				</ul>
+				<ul class="navbar-nav ms-auto">
+					<!-- Replaced the simple Logout link with a dropdown -->
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							<span th:text="${currentUser.firstName + ' ' + currentUser.lastName}">User</span>
+						</a>
+						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+							<li th:each="organization : ${userOrganizations}">
+								<a class="dropdown-item" href="#" th:href="@{/organization/{id}/select(id=${organization.id}, redirect=${requestURI})}" th:text="${organization.name}">Organization Name</a>
+							</li>
+							<li><hr class="dropdown-divider" th:if="${not #lists.isEmpty(userOrganizations)}"></li>
+							<li><a class="dropdown-item" href="#" th:href="@{/logout}">Logout</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			<div sec:authorize="isAnonymous()" class="navbar-collapse collpase" id="navbarNav">
+                <ul class="nav navbar-nav ms-auto">
+					<li class="nav-item"><a class="nav-link" href="#" th:href="@{/oauth2/authorization/keycloak}">Login / SignUp</a></li>
+                </ul>
+            </div>
+				
+		</div>
+	</nav>
+   	
+	<div th:if="${SUCCESS_MESSAGE}">
+		<div id="success-message" class="row m-3 success-message">
+			<div class="alert alert-success confirmation" role="alert">
+	  			<span id="confirmation" th:text="${SUCCESS_MESSAGE}"></span>
+			</div>
+		</div>
+	</div>
+	
+	</div>
+
+</body>
+</html>

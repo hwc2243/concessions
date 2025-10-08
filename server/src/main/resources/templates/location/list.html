@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Locations</title>
+    
+    <!-- CSS -->
+    <link href="../../../resources/css/bootstrap.min.css" rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <link href="../../../resources/css/concession.css" rel="stylesheet" media="screen" th:href="@{/css/concession.css}" />
+    
+    <!-- JS -->
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/concessions.js}"></script>
+</head>
+<body class="bg-light">
+    <!-- Insert the header fragment from the header.html file -->
+	<div th:insert="~{fragments/header :: header}"></div>
+
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white text-center">
+                <h1 class="h4 mb-0">Locations</h1>
+            </div>
+            <div class="d-flex justify-content-end p-3">
+                <a th:href="@{/location/create}" class="btn btn-primary">Add Location</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-bordered mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Street</th>
+                                <th scope="col">City</th>
+                                <th scope="col">State</th>
+                                <th scope="col">Zip Code</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="location : ${locations}">
+                                <td>
+                                	<a th:href="@{/location/{id}/view(id=${location.id})}" th:text="${location.name}">Location Name</a>
+                                </td>
+                                <td th:text="${location.address.street1}"></td>
+                                <td th:text="${location.address.city}"></td>
+                                <td th:text="${location.address.state}"></td>
+                                <td th:text="${location.address.zipCode}"></td>
+                                <td>
+									<div class="dropdown col-md-12">
+                        				<button class="btn btn-secondary dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Action</button>
+                            			<ul class="dropdown-menu">
+                            				<li><a class="dropdown-item" href="#" onclick="javascript:confirmDelete(this)" th:attr="data-name=${location.name},data-href=@{/location/{id}/delete(id=${location.id})}">Delete</a></li>
+                                			<li><a class="dropdown-item" th:href="@{/location/{id}/edit(id=${location.id})}">Edit</a></li>
+                            			</ul>
+                        			</div>                	
+                				</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- A message to display if the list is empty -->
+                <div th:if="${#lists.isEmpty(locations)}" class="alert alert-info text-center mt-3" role="alert">
+                    No locations found.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/delete :: delete-modal}">Delete</div>
+    
+</body>
+</html>

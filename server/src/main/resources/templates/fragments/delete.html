@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+	<link href="../../../resources/css/bootstrap.min.css" rel="stylesheet"
+          media="screen" th:href="@{/resources/css/bootstrap.min.css}" />
+</head>
+
+<body>
+
+    <div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" th:fragment="delete-modal">
+        <div class="modal-dialog">
+    	    <div class="modal-content">
+        	    <div class="modal-header">
+            	    <h5 class="modal-title" id="staticBackdropLabel">Confirm delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+	                <p>Do you really want to delete <span id="deleteItem"></span> ?</p>
+                </div>
+                <div class="modal-footer">
+                	<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="#" class="btn btn-primary" id="deleteButton">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>
