@@ -2,6 +2,9 @@ package com.concessions.local.service;
 
 import javax.swing.ImageIcon;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class QRGeneratorService {
 
 	public QRGeneratorService() {

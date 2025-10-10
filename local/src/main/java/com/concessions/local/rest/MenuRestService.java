@@ -3,13 +3,16 @@ package com.concessions.local.rest;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.concessions.model.Menu;
 import com.google.gson.reflect.TypeToken;
 
-public class MenuService extends AbstractRestService {
+@Service
+public class MenuRestService extends AbstractRestService {
 	
 
-	public MenuService() {
+	public MenuRestService() {
 		// TODO Auto-generated constructor stub
 	}
 

@@ -1,7 +1,9 @@
-package com.concessions.local.ui;
+package com.concessions.local.ui.view;
+
+import static com.concessions.local.ui.action.AbstractAction.CANCEL_COMMAND;
+import static com.concessions.local.ui.action.AbstractAction.OK_COMMAND;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -19,22 +21,32 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import org.springframework.stereotype.Component;
+
 import com.concessions.local.Application;
+import com.concessions.local.ui.model.SetupModel;
 import com.concessions.model.Location;
 import com.concessions.model.Menu;
 import com.concessions.model.Organization;
 
+@Component
 public class SetupDialog extends JDialog {
 
-	private final Application application;
+	//private final Application application;
+	
+	private SetupModel model;
 	
 	private JComboBox<Organization> orgComboBox;
 	private JComboBox<Location> locationComboBox;
 	private JComboBox<Menu> menuComboBox;
+	private JButton setupButton;
+	private JButton cancelButton;
 	
-	public SetupDialog (Application application) {
-		super(application, "Setup", Dialog.ModalityType.APPLICATION_MODAL);
-		this.application = application;
+	public SetupDialog (SetupModel model) {
+		super(null, "Setup", Dialog.ModalityType.APPLICATION_MODAL);
+		//this.application = application;
+		this.model = model;
+		
 		initializeDialog();
 	}
 
@@ -45,10 +57,10 @@ public class SetupDialog extends JDialog {
         
         // Set up the label
         JLabel label = new JLabel(labelText, SwingConstants.CENTER);
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
         
         // Set up the combo box
-        comboBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+        comboBox.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
         // Ensure the combobox respects the maximum size for cleaner stacking
         comboBox.setMaximumSize(new Dimension(250, 30)); 
         
@@ -61,11 +73,11 @@ public class SetupDialog extends JDialog {
 	
 	private void initializeDialog() {
 		setLayout(new BorderLayout(10, 10));
-        setSize(400, 300); // Increased size slightly to accommodate vertical stacking
-        setLocationRelativeTo(application); // Corrected field name
+        setSize(400, 300);
+        //setLocationRelativeTo(application); // Corrected field name
         setResizable(false);
         
-        // 1. Panel to hold both Org selection and Location selection (stacked vertically)
+        // Panel to hold both Org selection and Location selection (stacked vertically)
         JPanel selectionContainer = new JPanel();
         selectionContainer.setLayout(new BoxLayout(selectionContainer, BoxLayout.Y_AXIS));
         selectionContainer.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
@@ -74,19 +86,6 @@ public class SetupDialog extends JDialog {
         orgComboBox = new JComboBox<>();
         orgComboBox.setPreferredSize(new Dimension(250, 30));
         orgComboBox.setEnabled(false);
-        // Add listener to enable location selection once organization is chosen
-        /*
-        orgComboBox.addActionListener(e -> {
-            Organization selectedOrg = (Organization) orgComboBox.getSelectedItem();
-            if (selectedOrg != null) {
-                // TODO: Replace with actual location fetching logic
-                locationComboBox.setEnabled(true);
-            } else {
-                locationComboBox.setEnabled(false);
-                locationComboBox.removeAllItems();
-            }
-        });
-        */
 
         JPanel orgPanel = createSelectionGroup("Choose Organization:", orgComboBox);
         selectionContainer.add(orgPanel);
@@ -110,30 +109,38 @@ public class SetupDialog extends JDialog {
         
         // Action Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton selectButton = new JButton("Select");
-        selectButton.addActionListener(e -> {
-            Organization selectedOrg = (Organization) orgComboBox.getSelectedItem();
-            if (selectedOrg != null) {
-				application.setSelectedOrganization(selectedOrg);
-			}
-            JOptionPane.showMessageDialog(this, 
-                "Selected Organization: " + selectedOrg.getName() + " (ID: " + selectedOrg.getId() + ") set successfully.", 
-                "Selection Result", JOptionPane.INFORMATION_MESSAGE);
-            dispose();
-        });
+        setupButton = new JButton("Setup");
+        setupButton.setActionCommand(OK_COMMAND);
+        cancelButton = new JButton("Cancel");
+        cancelButton.setActionCommand(CANCEL_COMMAND);
         
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(e -> dispose());
-        
-        buttonPanel.add(selectButton);
+        buttonPanel.add(setupButton);
         buttonPanel.add(cancelButton);
         
         add(selectionContainer, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+        
+        model.addPropertyChangeListener(evt -> {
+			switch (evt.getPropertyName()) {
+			case "organizations":
+				setOrganizations(model.getOrganizations());
+				break;
+			case "locations":
+				setLocations(model.getLocations());
+				break;
+			case "menus":
+				setMenus(model.getMenus());
+				break;
+			}
+		});
     }
 	
 	public void addOrganizationSelectionListener (ActionListener listener) {
 		orgComboBox.addActionListener(listener);
+	}
+	
+	public Organization getSelectedOrganization () {
+		return (Organization)orgComboBox.getSelectedItem();
 	}
 	
 	public void setOrganizations (List<Organization> organizations) {
@@ -151,6 +158,10 @@ public class SetupDialog extends JDialog {
 		locationComboBox.addActionListener(listener);
 	}
 	
+	public Location getSelectedLocation() {
+		return (Location) locationComboBox.getSelectedItem();
+	}
+	
 	public void setLocations (List<Location> locations) {
 		// Convert List to array for JComboBox model
 		Location[] locArray = locations.toArray(new Location[0]);
@@ -160,6 +171,14 @@ public class SetupDialog extends JDialog {
 		
 		revalidate();
 		repaint();
+	}
+	
+	public void addMenuSelectionListener (ActionListener listener) {
+		menuComboBox.addActionListener(listener);
+	}
+	
+	public Menu getSelectedMenu() {
+		return (Menu) menuComboBox.getSelectedItem();
 	}
 	
 	public void setMenus (List<Menu> menus) {
@@ -172,5 +191,13 @@ public class SetupDialog extends JDialog {
 		revalidate();
 		repaint();
 	}
-
+	
+	public void setSetupEnabled (boolean enabled) {
+		setupButton.setEnabled(enabled);
+	}
+	
+	public void addActionListener (ActionListener listener) {
+		setupButton.addActionListener(listener);
+		cancelButton.addActionListener(listener);
+	}
 }

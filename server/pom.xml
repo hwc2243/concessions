@@ -7,12 +7,6 @@
 		<groupId>com.concessions.system</groupId>
 		<artifactId>concessions-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
-		<!--
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.3</version>
-		<relativePath /> 
-		-->
 	</parent>
 
 	<artifactId>server</artifactId>

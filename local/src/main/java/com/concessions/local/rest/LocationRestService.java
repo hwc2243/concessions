@@ -3,12 +3,15 @@ package com.concessions.local.rest;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.concessions.model.Location;
 import com.google.gson.reflect.TypeToken;
 
-public class LocationService extends AbstractRestService {
+@Service
+public class LocationRestService extends AbstractRestService {
 
-	public LocationService() {
+	public LocationRestService() {
 	}
 
 	public List<Location> findAll()  throws IOException, InterruptedException {

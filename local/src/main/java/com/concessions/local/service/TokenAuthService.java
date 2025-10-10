@@ -13,6 +13,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
+
+import org.springframework.stereotype.Service;
+
 import java.util.Map;
 
 import com.concessions.local.service.TokenAuthService.TokenResponse;
@@ -23,6 +26,7 @@ import com.google.gson.reflect.TypeToken;
  * Token Authentication Service implementing the secure Device Authorization Grant (Device Code Flow)
  * and the Refresh Token Grant.
  */
+@Service
 public class TokenAuthService {
 
     // --- Configuration ---
@@ -175,7 +179,7 @@ public class TokenAuthService {
 	 * 
 	 * @return The TokenResponse object, or null if no tokens are found.
 	 */
-	public TokenResponse retrieveTokenResponse() {
+	public TokenResponse loadTokenResponse() {
 		String accessToken = PREFS.get(PREF_ACCESS_TOKEN, null);
 		String refreshToken = PREFS.get(PREF_REFRESH_TOKEN, null);
 		long expiryEpochSeconds = PREFS.getLong(PREF_EXPIRY_TIME, 0);
