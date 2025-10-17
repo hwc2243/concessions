@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.ui.action.ExitAction;
+import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
 
 import jakarta.annotation.PostConstruct;
@@ -26,6 +27,9 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 
+	@Autowired
+	protected LoginAction loginAction;
+	
 	@Autowired
 	protected LogoutAction logoutAction;
 	
@@ -41,10 +45,12 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 		JMenu fileMenu = new javax.swing.JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
 		menuBar.add(fileMenu);
-
+		
+		JMenuItem loginItem = new JMenuItem(loginAction);
 		JMenuItem logoutItem = new JMenuItem(logoutAction);
-				
+		fileMenu.add(loginItem);
 		fileMenu.add(logoutItem);
+		fileMenu.addSeparator();
 		
 		JMenuItem exitItem = new JMenuItem(new ExitAction());
 		fileMenu.add(exitItem);

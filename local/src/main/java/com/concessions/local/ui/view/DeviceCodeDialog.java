@@ -1,4 +1,4 @@
-package com.concessions.local.ui;
+package com.concessions.local.ui.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,9 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.service.QRGeneratorService;
+import com.concessions.local.ui.ApplicationFrame;
 
 @Component
-public class DeviceCodeModal extends JDialog {
+public class DeviceCodeDialog extends JDialog {
 
 	@Autowired
 	protected ApplicationFrame applicationFrame;
@@ -45,7 +46,7 @@ public class DeviceCodeModal extends JDialog {
 	private JTextPane codeText;
 	private JTextPane uriText;
 	
-	public DeviceCodeModal() {
+	public DeviceCodeDialog() {
 		initializeUI();
 	}
 
@@ -85,7 +86,7 @@ public class DeviceCodeModal extends JDialog {
 						Desktop.getDesktop().browse(new java.net.URI(verificationUri));
 					}
 				} catch (Exception ex) {
-					JOptionPane.showMessageDialog(DeviceCodeModal.this, "Could not open browser: " + ex.getMessage(), "Error",
+					JOptionPane.showMessageDialog(DeviceCodeDialog.this, "Could not open browser: " + ex.getMessage(), "Error",
 							JOptionPane.ERROR_MESSAGE);
 				}
 			}
@@ -115,7 +116,7 @@ public class DeviceCodeModal extends JDialog {
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(e -> {
-			DeviceCodeModal.this.dispose();
+			DeviceCodeDialog.this.dispose();
 			// statusLabel.setText("Login cancelled by user.");
 			// TODO: If necessary, stop the polling scheduler in TokenAuthService
 		});
@@ -144,6 +145,7 @@ public class DeviceCodeModal extends JDialog {
 
 		pack();
 		setLocationRelativeTo(applicationFrame);
+		toFront();
 		setVisible(true);
 	}
 	

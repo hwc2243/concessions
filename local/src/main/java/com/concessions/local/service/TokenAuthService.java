@@ -7,13 +7,18 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -45,8 +50,8 @@ public class TokenAuthService {
     private final HttpClient httpClient = HttpClient.newBuilder().build();
     private final Gson gson = new Gson();
 
-    // Executor service for handling the polling and refresh processes
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    @Autowired
+    private ThreadPoolTaskScheduler taskScheduler;
 
     // Record to hold the initial response data from the device authorization endpoint
     public record DeviceCodeResponse(
@@ -63,6 +68,10 @@ public class TokenAuthService {
         String refresh_token, 
         long expires_in
     ) {}
+    
+    public boolean isTokenValid (TokenResponse tokenResponse) {
+		return tokenResponse != null && tokenResponse.access_token() != null && tokenResponse.expires_in() > 60;
+	}
 
     // --- Request Device Code ---
     public CompletableFuture<DeviceCodeResponse> requestDeviceCode() {
@@ -89,34 +98,52 @@ public class TokenAuthService {
         CompletableFuture<TokenResponse> tokenFuture = new CompletableFuture<>();
         long interval = Math.max(deviceCodeResponse.interval(), 5);
 
-        scheduler.scheduleWithFixedDelay(() -> {
-            if (tokenFuture.isDone()) return;
-            try {
-                // Now expects the full token response
-                TokenResponse token = attemptTokenExchange(deviceCodeResponse.device_code()); 
-                
-                // If successful, complete the future and stop polling
-                tokenFuture.complete(token);
-                scheduler.shutdown();
-            } catch (TokenPendingException ignored) {
-                // Keycloak responded with "authorization_pending". Continue polling.
-            } catch (Exception e) {
-                // Handle token expired, slow down, or other fatal errors
-                if (!tokenFuture.isDone()) {
-                    tokenFuture.completeExceptionally(e);
+        // Schedule the fixed-delay task using the injected taskScheduler
+        final Runnable pollingTask = new Runnable() {
+            @Override
+            public void run() {
+                if (tokenFuture.isDone()) return;
+                try {
+                    // This is synchronous (blocking) but runs on a background thread managed by taskScheduler
+                    TokenResponse token = attemptTokenExchange(deviceCodeResponse.device_code()); 
+                    
+                    // If successful, complete the future. The scheduled tasks will naturally stop.
+                    tokenFuture.complete(token);
+                } catch (TokenPendingException ignored) {
+                    // authorization_pending or slow_down. Continue polling.
+                } catch (Exception e) {
+                    // Handle fatal errors (e.g., expired_token, access_denied)
+                    if (!tokenFuture.isDone()) {
+                        tokenFuture.completeExceptionally(e);
+                    }
+                    // No need to call taskScheduler.shutdown(); it is managed by Spring.
                 }
-                scheduler.shutdown();
             }
-        }, interval, interval, TimeUnit.SECONDS);
+        };
 
-        // Schedule a task to terminate polling if the code expires
-        scheduler.schedule(() -> {
+        // Schedule the polling task and store the handle to cancel it later
+        final ScheduledFuture<?> pollingHandle = taskScheduler.scheduleWithFixedDelay(
+            pollingTask, 
+            Duration.ofMillis(1000L)
+        );
+
+        // Schedule a termination task to kill the polling if the code expires
+        taskScheduler.schedule(() -> {
             if (!tokenFuture.isDone()) {
+                // Cancel the recurring polling task
+                pollingHandle.cancel(true);
                 tokenFuture.completeExceptionally(new RuntimeException("Device code expired. Please restart login."));
-                scheduler.shutdown();
             }
-        }, deviceCodeResponse.expires_in(), TimeUnit.SECONDS);
-        
+        }, Instant.now().plusSeconds(deviceCodeResponse.expires_in()));
+            
+        // Add a handler to cancel the polling task once the tokenFuture completes normally or exceptionally
+        tokenFuture.whenComplete((result, ex) -> {
+            if (!pollingHandle.isDone()) {
+                // If the polling task is still running, cancel it
+                pollingHandle.cancel(true);
+            }
+        });
+
         return tokenFuture;
     }
     

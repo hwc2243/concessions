@@ -6,22 +6,27 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.concessions.local.Application;
+import com.concessions.local.ui.model.ApplicationModel;
 import com.google.gson.Gson;
 
 public class AbstractRestService {
 
+	@Autowired
+	protected ApplicationModel applicationModel;
+	
 	protected Gson gson = new Gson();
 
 	public AbstractRestService() {
-		// TODO Auto-generated constructor stub
 	}
 
 	protected <T> T doGet (String apiPath, Class<T> targetClass) throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
 				.uri(java.net.URI.create("http://localhost:8080" + apiPath))
-				.header("Authorization", "Bearer " + Application.tokenResponse.access_token())
+				.header("Authorization", "Bearer " + applicationModel.getTokenResponse().access_token())
 				.GET();
 		
 		if (Application.selectedOrganization != null) {
@@ -47,7 +52,7 @@ public class AbstractRestService {
         
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
             .uri(java.net.URI.create("http://localhost:8080" + apiPath))
-            .header("Authorization", "Bearer " + Application.tokenResponse.access_token())
+            .header("Authorization", "Bearer " + applicationModel.getTokenResponse().access_token())
             .GET();
 
         if (Application.selectedOrganization != null) {

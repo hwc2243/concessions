@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.config.AppConfig;
 import com.concessions.local.config.JpaConfig;
 import com.concessions.local.persistence.MenuRepository;
 import com.concessions.local.rest.LocationRestService;
@@ -55,9 +56,12 @@ import com.concessions.local.service.QRGeneratorService;
 import com.concessions.local.service.TokenAuthService;
 import com.concessions.local.service.TokenAuthService.TokenResponse;
 import com.concessions.local.ui.ApplicationFrame;
-import com.concessions.local.ui.DeviceCodeModal;
+import com.concessions.local.ui.action.LoginAction;
+import com.concessions.local.ui.action.LogoutAction;
+import com.concessions.local.ui.controller.DeviceCodeController;
 import com.concessions.local.ui.controller.SetupController;
 import com.concessions.local.ui.model.ApplicationModel;
+import com.concessions.local.ui.view.DeviceCodeDialog;
 import com.concessions.local.ui.view.SetupDialog;
 import com.concessions.model.Location;
 import com.concessions.model.Menu;
@@ -70,7 +74,6 @@ public class Application {
 	private final LocationRestService locationService = new LocationRestService();
 	private final MenuRestService menuService = new MenuRestService();
 	private final OrganizationRestService orgService = new OrganizationRestService();
-	private final QRGeneratorService qrService = new QRGeneratorService();
 	private final TokenAuthService authService = new TokenAuthService();
 	private final UserRestService userService = new UserRestService();
 
@@ -81,16 +84,23 @@ public class Application {
 	protected ApplicationModel applicationModel;
 	
 	@Autowired
-	protected DeviceCodeModal deviceCodeModal;
+	protected DeviceCodeDialog deviceCodeModal;
 	
 	@Autowired
-	protected SetupController setupController;
+	protected DeviceCodeController deviceCodeController;
+	
+	@Autowired
+	protected LoginAction loginAction;
+	
+	@Autowired
+	protected LogoutAction logoutAction;
 	
 	@Autowired
 	protected MenuRepository menuRepository;
 
-	public static TokenResponse tokenResponse;
-	
+	@Autowired
+	protected SetupController setupController;
+
 	public static Organization selectedOrganization;
 
 	public Application() {
@@ -98,6 +108,15 @@ public class Application {
 
 	public void initialize () {
 		applicationModel.addPropertyChangeListener(applicationFrame);
+		applicationModel.setTokenResponse(authService.loadTokenResponse());
+		
+		deviceCodeController.addDeviceCodeListener(new DeviceCodeController.DeviceCodeListener() {
+			@Override
+			public void onDeviceCodeAuthenticated (TokenResponse token) {
+				applicationModel.setStatusMessage("Authenticated.");
+				initializeMainApplication();
+			}
+		});
 	}
 		
 	public void execute () {
@@ -105,99 +124,11 @@ public class Application {
 		SwingUtilities.invokeLater(() -> {
 			applicationFrame.setVisible(true);
 		});
-		
-		// Start authentication process
-		initializeAuthToken();
+
+		deviceCodeController.execute();
 	}
 	
-	protected void initializeAuthToken() {
-		tokenResponse = authService.loadTokenResponse();
-		if (tokenResponse == null) {
-			applicationModel.setStatusMessage("Starting authentication...");
-			initiateLoginFlow();
-		} else {
-			System.out.println("refresh token " + tokenResponse.refresh_token());
-			System.out.println("Using stored access token, expires in " + tokenResponse.expires_in() + " seconds.");
-			if (tokenResponse.expires_in() < 60) {
-				System.out.println("refreshing token...");
-				authService.refreshToken(tokenResponse.refresh_token()).thenAccept(newToken -> {
-					tokenResponse = newToken;
-					authService.storeTokenResponse(tokenResponse);
-					initializeMainApplication();
-				}).exceptionally(ex -> {
-					// Refresh failed (e.g., refresh token expired). Force new device login.
-					initiateLoginFlow();
-					return null;
-				});
-			} else {
-				initializeMainApplication();
-			}
-		}
-	}
 
-	private void initiateLoginFlow() {
-		// SwingWorker runs network/blocking code on a separate background thread
-		SwingWorker<Void, Void> worker = new SwingWorker<>() {
-			TokenResponse tokenResponse = null;
-
-			@Override
-			protected Void doInBackground() throws Exception {
-				// 1. Request Device Code (Blocking the worker thread, not the EDT)
-				TokenAuthService.DeviceCodeResponse response = authService.requestDeviceCode().join();
-
-				// 2. Display the modal with instructions (must run on the EDT)
-				SwingUtilities.invokeLater(() -> showDeviceCodeModal(response));
-
-				// 3. Poll for Token (Blocks the worker thread until authorization completes)
-				tokenResponse = authService.pollForToken(response).join();
-				return null;
-			}
-
-			@Override
-			protected void done() {
-				// This method runs on the EDT, safe for UI updates
-				try {
-					get(); // This retrieves the result or re-throws exceptions from doInBackground()
-					applicationModel.setStatusMessage("Authenticated! Token acquired.");
-					System.out.println("Access Token received: " + tokenResponse.access_token());
-					JOptionPane.showMessageDialog(Application.this.applicationFrame, "Login Successful!", "Success",
-							JOptionPane.INFORMATION_MESSAGE);
-
-					// Close the modal if it's still open
-					if (deviceCodeModal.isVisible()) {
-						deviceCodeModal.setVisible(false);
-					}
-
-					authService.storeTokenResponse(tokenResponse);
-					Application.this.tokenResponse = tokenResponse;
-
-					// TODO: Initialize main application logic here
-					initializeMainApplication();
-
-				} catch (Exception ex) {
-					// Handle join() exceptions and nested exceptions
-					Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-					applicationModel.setStatusMessage("Authentication Failed.");
-					JOptionPane.showMessageDialog(Application.this.applicationFrame, "Authentication Failed: " + cause.getMessage(),
-							"Error", JOptionPane.ERROR_MESSAGE);
-
-					// Close the modal if it's still open
-					if (deviceCodeModal.isVisible()) {
-						deviceCodeModal.setVisible(false);
-					}
-				}
-			}
-		};
-		worker.execute();
-	}
-
-	/**
-	 * Creates and displays a modal dialog with the Keycloak user code and
-	 * verification URI.
-	 */
-	private void showDeviceCodeModal (TokenAuthService.DeviceCodeResponse response) {
-		deviceCodeModal.showDialog(response.verification_uri(), response.user_code(), response.expires_in());
-	}
 
 	private void initializeMainApplication() {
 
@@ -228,11 +159,15 @@ public class Application {
 	}
 
 	public static void main(String[] args) {
-		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-
+		AnnotationConfigApplicationContext context = null;
+		try {
+			context = new AnnotationConfigApplicationContext();
+			
 			context.register(JpaConfig.class);
+			context.register(AppConfig.class);
             context.scan("com.concessions.local");
             context.refresh();
+            context.registerShutdownHook();
 
 			Application application = context.getBean(Application.class);	
 			application.initialize();
@@ -243,6 +178,10 @@ public class Application {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(null, "Failed to start application: " + e.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
+			if (context != null)
+			{
+				context.close();
+			}
 			System.exit(1);
 		}
 	}
