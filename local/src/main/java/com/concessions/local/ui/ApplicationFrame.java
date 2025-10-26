@@ -3,6 +3,7 @@ package com.concessions.local.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -14,13 +15,18 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.model.OrganizationConfiguration;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
+import com.concessions.local.ui.action.OrderAction;
+import com.concessions.local.ui.action.SetupAction;
+import com.concessions.local.ui.model.ApplicationModel;
 
 import jakarta.annotation.PostConstruct;
 
@@ -33,18 +39,68 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	@Autowired
 	protected LogoutAction logoutAction;
 	
+	@Autowired 
+	protected OrderAction orderAction;
+	
+	@Autowired
+	protected SetupAction setupAction;
+	
+	private JLabel orgDisplayLabel;
+	private JLabel locationDisplayLabel;
+	private JLabel menuDisplayLabel;
 	private JLabel statusLabel;
+	
+	private JPanel mainContentPanel;
 	
 	public ApplicationFrame() {
 		super("Concessions Management System");
 		//initializeUI();
 	}
 
+	private JPanel initializeCurrentSetupPanel() {
+		// Use GridLayout(1, 3) for one row and three equal columns with 10px horizontal gap
+	    JPanel currentSetupPanel = new JPanel(new GridLayout(1, 3, 10, 0));
+	    
+	    // Add some vertical padding and a background color
+	    currentSetupPanel.setBorder(
+	    		BorderFactory.createCompoundBorder(
+	    				BorderFactory.createEmptyBorder(10, 5, 10, 5), // Outer padding
+	    				BorderFactory.createLineBorder(new Color(220, 220, 220)) // Light border
+	    		));
+	    currentSetupPanel.setBackground(new Color(245, 245, 245)); // Very light gray background
+
+	    // Initialize display labels
+	    orgDisplayLabel = new JLabel("Organization: N/A", SwingConstants.CENTER);
+	    locationDisplayLabel = new JLabel("Location: N/A", SwingConstants.CENTER);
+	    menuDisplayLabel = new JLabel("Menu: N/A", SwingConstants.CENTER);
+	    
+	    // Styling (use a slightly smaller, distinct font for clarity)
+	    Font statusFont = new Font("Arial", Font.BOLD, 12);
+	    orgDisplayLabel.setFont(statusFont);
+	    locationDisplayLabel.setFont(statusFont);
+	    menuDisplayLabel.setFont(statusFont);
+	    
+	    orgDisplayLabel.setForeground(new Color(50, 50, 150)); // Distinct color for Organization
+	    locationDisplayLabel.setForeground(new Color(50, 150, 50)); // Distinct color for Location
+	    menuDisplayLabel.setForeground(new Color(150, 50, 50)); // Distinct color for Menu
+
+	    // Add labels to the panel
+	    currentSetupPanel.add(orgDisplayLabel);
+	    currentSetupPanel.add(locationDisplayLabel);
+	    currentSetupPanel.add(menuDisplayLabel);
+
+	    return currentSetupPanel;
+	}
+	
 	private JMenuBar initializeMenuBar() {
-		JMenuBar menuBar = new javax.swing.JMenuBar();
-		JMenu fileMenu = new javax.swing.JMenu("File");
+		JMenuBar menuBar = new JMenuBar();
+		JMenu fileMenu = new JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
 		menuBar.add(fileMenu);
+		
+		JMenuItem setupItem = new JMenuItem(setupAction);
+		fileMenu.add(setupItem);
+		fileMenu.addSeparator();
 		
 		JMenuItem loginItem = new JMenuItem(loginAction);
 		JMenuItem logoutItem = new JMenuItem(logoutAction);
@@ -55,6 +111,12 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 		JMenuItem exitItem = new JMenuItem(new ExitAction());
 		fileMenu.add(exitItem);
 
+		JMenu orderMenu = new JMenu("Order");
+		menuBar.add(orderMenu);
+		
+		JMenuItem orderItem = new JMenuItem(orderAction);
+		orderMenu.add(orderItem);
+		
 		return menuBar;
 	}
 	
@@ -66,12 +128,22 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 		setLayout(new BorderLayout(5, 5));
 		setJMenuBar(initializeMenuBar());
 
-		// Initialize the Label (the content of the status bar)
+		JPanel currentSetupPanel = initializeCurrentSetupPanel();
+		mainContentPanel = new JPanel(new BorderLayout());
+		mainContentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		mainContentPanel.add(new JLabel("Welcome to the Concession Management System"));
+		
+		JPanel contentWrapperPanel = new JPanel(new BorderLayout(5, 5));
+		
+		contentWrapperPanel.add(currentSetupPanel, BorderLayout.SOUTH);
+		contentWrapperPanel.add(mainContentPanel, BorderLayout.CENTER);
+		
+		add(contentWrapperPanel, BorderLayout.CENTER);
+
 		statusLabel = new JLabel("Initializing...");
 		statusLabel.setFont(new Font("Arial", Font.BOLD, 14));
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8)); // Add padding
 
-		// 2. Create the Status Bar Panel (container for the label)
 		JPanel statusBar = new JPanel(new BorderLayout());
 		statusBar.setBorder(
 				BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY), // Top
@@ -80,30 +152,35 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 						BorderFactory.createEmptyBorder(0, 0, 0, 0)));
 		statusBar.setBackground(Color.WHITE);
 
-		// 3. Add the label to the status bar panel (aligned LEFT by default in
-		// BorderLayout)
 		statusBar.add(statusLabel, BorderLayout.WEST);
 
-		// 4. Add the status bar panel to the bottom of the JFrame
 		add(statusBar, BorderLayout.SOUTH);
 
-		// --- Main Content (Placeholder) ---
-		// Placing a placeholder panel in the CENTER region
-		// to show where your main working area or QR code display would go.
-		JPanel mainContentPanel = new JPanel();
-		mainContentPanel.add(new JLabel("Welcome to the Concession Management System"));
-		add(mainContentPanel, BorderLayout.CENTER);
-
-		// Center the frame on the screen
 		setLocationRelativeTo(null);
 		setVisible(true);
+	}
+	
+	/**
+	 * Clears the existing content in the main content area and displays the new panel.
+	 * * @param contentPanel The JPanel (e.g., ConcessionOrderPanel) to display.
+	 */
+	public void setMainContent(JPanel contentPanel) {
+		mainContentPanel.removeAll();
+		mainContentPanel.add(contentPanel, BorderLayout.CENTER);
+		mainContentPanel.revalidate();
+		mainContentPanel.repaint();
 	}
 
 	@Override
 	public void propertyChange (PropertyChangeEvent evt) {
-		if ("statusMessage".equals(evt.getPropertyName())) {
+		if (ApplicationModel.STATUS_MESSAGE.equals(evt.getPropertyName())) {
 			String newMessage = (String) evt.getNewValue();
 			statusLabel.setText(newMessage);
+		} else if (ApplicationModel.ORGANIZATION_CONFIGURATION.equals(evt.getPropertyName())) {
+			OrganizationConfiguration organizationConfiguration = (OrganizationConfiguration)evt.getNewValue();
+			orgDisplayLabel.setText("Organization: " + organizationConfiguration.getOrganizationName());
+			locationDisplayLabel.setText("Location: " + organizationConfiguration.getLocationName());
+			menuDisplayLabel.setText("Menu: " + organizationConfiguration.getMenuName());
 		}
 	}
 }

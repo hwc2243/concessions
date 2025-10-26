@@ -1,4 +1,4 @@
-package com.concessions.local.service;
+package com.concessions.local.security;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,7 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-import com.concessions.local.service.TokenAuthService.TokenResponse;
+import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.service.PreferenceService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -41,7 +42,6 @@ public class TokenAuthService {
     private static final String DEVICE_AUTH_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/auth/device";
     private static final String TOKEN_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/token";
 
-	private static final Preferences PREFS = Preferences.userNodeForPackage(TokenAuthService.class);
 	private static final String PREF_ACCESS_TOKEN = "accessToken";
 	private static final String PREF_REFRESH_TOKEN = "refreshToken";
 	private static final String PREF_EXPIRY_TIME = "tokenExpiryTime";
@@ -50,6 +50,9 @@ public class TokenAuthService {
     private final HttpClient httpClient = HttpClient.newBuilder().build();
     private final Gson gson = new Gson();
 
+    @Autowired
+    private PreferenceService preferenceService;
+    
     @Autowired
     private ThreadPoolTaskScheduler taskScheduler;
 
@@ -191,11 +194,10 @@ public class TokenAuthService {
 	 * Clears all stored token information from Java Preferences.
 	 */
 	public void clearTokenResponse() {
-		PREFS.remove(PREF_ACCESS_TOKEN);
-		PREFS.remove(PREF_REFRESH_TOKEN);
-		PREFS.remove(PREF_EXPIRY_TIME);
 		try {
-			PREFS.flush();
+			preferenceService.clear(TokenAuthService.class, PREF_ACCESS_TOKEN);
+			preferenceService.clear(TokenAuthService.class, PREF_REFRESH_TOKEN);
+			preferenceService.clear(TokenAuthService.class, PREF_EXPIRY_TIME);
 		} catch (java.util.prefs.BackingStoreException e) {
 			System.err.println("Failed to clear preferences: " + e.getMessage());
 		}
@@ -207,9 +209,15 @@ public class TokenAuthService {
 	 * @return The TokenResponse object, or null if no tokens are found.
 	 */
 	public TokenResponse loadTokenResponse() {
-		String accessToken = PREFS.get(PREF_ACCESS_TOKEN, null);
-		String refreshToken = PREFS.get(PREF_REFRESH_TOKEN, null);
-		long expiryEpochSeconds = PREFS.getLong(PREF_EXPIRY_TIME, 0);
+		System.out.println("preferenceService = " + preferenceService);
+		
+		String accessToken = preferenceService.get(TokenAuthService.class, PREF_ACCESS_TOKEN);
+		String refreshToken = preferenceService.get(TokenAuthService.class, PREF_REFRESH_TOKEN);
+		String expiryEpochSecondsText = preferenceService.get(TokenAuthService.class, PREF_EXPIRY_TIME);
+		long expiryEpochSeconds = 0;
+		if (expiryEpochSecondsText != null) {
+			expiryEpochSeconds = Long.parseLong(expiryEpochSecondsText);
+		}
 
 		if (accessToken != null && refreshToken != null) {
 			// Calculate remaining seconds for the TokenResponse constructor
@@ -236,12 +244,10 @@ public class TokenAuthService {
 		// Calculate the absolute expiry time (current time in seconds + token lifetime)
 		long expiryEpochSeconds = System.currentTimeMillis() / 1000 + tokenResponse.expires_in();
 
-		PREFS.put(PREF_ACCESS_TOKEN, tokenResponse.access_token());
-		PREFS.put(PREF_REFRESH_TOKEN, tokenResponse.refresh_token());
-		PREFS.putLong(PREF_EXPIRY_TIME, expiryEpochSeconds);
-		// Force the changes to be written to the underlying store
 		try {
-			PREFS.flush();
+			preferenceService.save(TokenAuthService.class, PREF_ACCESS_TOKEN, tokenResponse.access_token());
+			preferenceService.save(TokenAuthService.class, PREF_REFRESH_TOKEN, tokenResponse.refresh_token());
+			preferenceService.save(TokenAuthService.class, PREF_EXPIRY_TIME, String.valueOf(expiryEpochSeconds));
 		} catch (java.util.prefs.BackingStoreException e) {
 			System.err.println("Failed to save preferences: " + e.getMessage());
 		}

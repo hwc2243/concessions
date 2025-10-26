@@ -37,6 +37,7 @@
         <!-- Example: Centralize Spring Boot version -->
         <spring-boot.version>3.5.3</spring-boot.version>
         
+        <servicebuilder.version>0.4.0-SNAPSHOT</servicebuilder.version>
         <service.xml>${project.basedir}/service.xml</service.xml>
     </properties>
 
@@ -76,6 +77,7 @@
                         <target>${maven.compiler.target}</target>
                     </configuration>
                 </plugin>
+                
             </plugins>
         </pluginManagement>
     </build>

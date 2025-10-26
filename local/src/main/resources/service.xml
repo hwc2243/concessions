@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service name="concessions_local" package="com.concessions.local">
+	<entity name="organizationConfiguration" persistence="true">
+		<attribute name="organizationId" type="long"/>
+		<attribute name="organizationName" type="string"/>
+		<attribute name="locationId" type="long"/>
+		<attribute name="locationName" type="string"/>
+		<attribute name="menuId" type="long"/>
+		<attribute name="menuName" type="string"/>
+	</entity>
+</service>

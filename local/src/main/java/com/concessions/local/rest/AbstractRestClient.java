@@ -12,14 +12,14 @@ import com.concessions.local.Application;
 import com.concessions.local.ui.model.ApplicationModel;
 import com.google.gson.Gson;
 
-public class AbstractRestService {
+public class AbstractRestClient {
 
 	@Autowired
 	protected ApplicationModel applicationModel;
 	
 	protected Gson gson = new Gson();
 
-	public AbstractRestService() {
+	public AbstractRestClient() {
 	}
 
 	protected <T> T doGet (String apiPath, Class<T> targetClass) throws IOException, InterruptedException {
@@ -29,8 +29,8 @@ public class AbstractRestService {
 				.header("Authorization", "Bearer " + applicationModel.getTokenResponse().access_token())
 				.GET();
 		
-		if (Application.selectedOrganization != null) {
-            String orgId = String.valueOf(Application.selectedOrganization.getId());
+		if (applicationModel.getOrganizationId() > -1) {
+            String orgId = String.valueOf(applicationModel.getOrganizationId());
             requestBuilder.header("organization_id", orgId);
             System.out.println("API Call with organization-id: " + orgId);
         }
@@ -55,8 +55,8 @@ public class AbstractRestService {
             .header("Authorization", "Bearer " + applicationModel.getTokenResponse().access_token())
             .GET();
 
-        if (Application.selectedOrganization != null) {
-            String orgId = String.valueOf(Application.selectedOrganization.getId());
+        if (applicationModel.getOrganizationId() > -1) {
+            String orgId = String.valueOf(applicationModel.getOrganizationId());
             requestBuilder.header("organization_id", orgId);
             System.out.println("API Call with organization-id: " + orgId);
         }

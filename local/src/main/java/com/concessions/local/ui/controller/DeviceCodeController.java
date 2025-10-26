@@ -9,13 +9,14 @@ import javax.swing.SwingWorker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.service.TokenAuthService;
-import com.concessions.local.service.TokenAuthService.TokenResponse;
+import com.concessions.local.security.TokenAuthService;
+import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
 import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.view.DeviceCodeDialog;
+import com.concessions.local.util.NetworkUtil;
 
 import jakarta.annotation.PostConstruct;
 
@@ -24,56 +25,62 @@ public class DeviceCodeController {
 
 	@Autowired
 	protected LoginAction loginAction;
-	
+
 	@Autowired
 	protected LogoutAction logoutAction;
-	
+
 	@Autowired
 	protected ApplicationFrame applicationFrame;
-	
+
 	@Autowired
 	protected ApplicationModel applicationModel;
-	
+
 	@Autowired
 	protected DeviceCodeDialog deviceCodeModal;
-	
-	@Autowired 
+
+	@Autowired
 	protected TokenAuthService authService;
-	
+
 	private List<DeviceCodeListener> listeners = new java.util.ArrayList<>();
-	
+
 	public DeviceCodeController() {
 	}
 
-	public void execute () {
-		TokenResponse tokenResponse = applicationModel.getTokenResponse();
-		if (tokenResponse == null) {
-			applicationModel.setStatusMessage("Starting authentication...");
-			loginAction.setEnabled(true);
-			logoutAction.setEnabled(false);
-			initiateLoginFlow();
-		} else {
-			System.out.println("refresh token " + tokenResponse.refresh_token());
-			System.out.println("Using stored access token, expires in " + tokenResponse.expires_in() + " seconds.");
-			if (!authService.isTokenValid(tokenResponse)) {
-				System.out.println("refreshing token...");
-				authService.refreshToken(tokenResponse.refresh_token()).thenAccept(newToken -> {
-					applicationModel.setTokenResponse(newToken);
-					authService.storeTokenResponse(newToken);
-					loginAction.setEnabled(false);
-					logoutAction.setEnabled(true);
-					notifyListeners(newToken);
-				}).exceptionally(ex -> {
-					// Refresh failed (e.g., refresh token expired). Force new device login.
-					initiateLoginFlow();
-					return null;
-				});
+	public void execute() {
+		if (NetworkUtil.isConnected()) {
+			TokenResponse tokenResponse = applicationModel.getTokenResponse();
+			if (tokenResponse == null) {
+				applicationModel.setStatusMessage("Starting authentication...");
+				loginAction.setEnabled(true);
+				logoutAction.setEnabled(false);
+				initiateLoginFlow();
 			} else {
-				notifyListeners(tokenResponse);
+				System.out.println("refresh token " + tokenResponse.refresh_token());
+				System.out.println("Using stored access token, expires in " + tokenResponse.expires_in() + " seconds.");
+				if (!authService.isTokenValid(tokenResponse)) {
+					System.out.println("refreshing token...");
+					authService.refreshToken(tokenResponse.refresh_token()).thenAccept(newToken -> {
+						applicationModel.setTokenResponse(newToken);
+						authService.storeTokenResponse(newToken);
+						loginAction.setEnabled(false);
+						logoutAction.setEnabled(true);
+						notifyAuthenticated(newToken);
+					}).exceptionally(ex -> {
+						// Refresh failed (e.g., refresh token expired). Force new device login.
+						initiateLoginFlow();
+						return null;
+					});
+				} else {
+					notifyAuthenticated(tokenResponse);
+				}
 			}
+		} else {
+			JOptionPane.showMessageDialog(null, "Failed to start authentication: No network connection", "Fatal Error",
+					JOptionPane.ERROR_MESSAGE);
+			notifyFailed();
 		}
 	}
-	
+
 	@PostConstruct
 	protected void initialize() {
 		applicationModel.addPropertyChangeListener(evt -> {
@@ -85,18 +92,24 @@ public class DeviceCodeController {
 			}
 		});
 	}
-	
-	public void addDeviceCodeListener (DeviceCodeListener listener) {
+
+	public void addDeviceCodeListener(DeviceCodeListener listener) {
 		listeners.add(listener);
 	}
-	
-	public void removeDeviceCodeListener (DeviceCodeListener listener) {
+
+	public void removeDeviceCodeListener(DeviceCodeListener listener) {
 		listeners.remove(listener);
 	}
-	
-	protected void notifyListeners (TokenResponse tokenResponse) {
+
+	protected void notifyAuthenticated (TokenResponse tokenResponse) {
 		for (DeviceCodeListener listener : listeners) {
 			listener.onDeviceCodeAuthenticated(tokenResponse);
+		}
+	}
+
+	protected void notifyFailed () {
+		for (DeviceCodeListener listener : listeners) {
+			listener.onDeviceCodeFailed();
 		}
 	}
 	
@@ -113,7 +126,7 @@ public class DeviceCodeController {
 				// 2. Display the modal with instructions (must run on the EDT)
 				SwingUtilities.invokeLater(() -> {
 					showDeviceCodeModal(response);
-				});	
+				});
 
 				// 3. Poll for Token (Blocks the worker thread until authorization completes)
 				tokenResponse = authService.pollForToken(response).join();
@@ -134,11 +147,10 @@ public class DeviceCodeController {
 					JOptionPane.showMessageDialog(applicationFrame, "Login Successful!", "Success",
 							JOptionPane.INFORMATION_MESSAGE);
 
-
 					applicationModel.setTokenResponse(tokenResponse);
 					authService.storeTokenResponse(tokenResponse);
 
-					notifyListeners(tokenResponse);
+					notifyAuthenticated(tokenResponse);
 
 				} catch (Exception ex) {
 					// Handle join() exceptions and nested exceptions
@@ -152,6 +164,7 @@ public class DeviceCodeController {
 					if (deviceCodeModal.isVisible()) {
 						deviceCodeModal.setVisible(false);
 					}
+					notifyFailed();
 				}
 			}
 		};
@@ -162,11 +175,13 @@ public class DeviceCodeController {
 	 * Creates and displays a modal dialog with the Keycloak user code and
 	 * verification URI.
 	 */
-	private void showDeviceCodeModal (TokenAuthService.DeviceCodeResponse response) {
+	private void showDeviceCodeModal(TokenAuthService.DeviceCodeResponse response) {
 		deviceCodeModal.showDialog(response.verification_uri(), response.user_code(), response.expires_in());
 	}
-	
+
 	public interface DeviceCodeListener {
-		void onDeviceCodeAuthenticated (TokenResponse tokenResponse);
+		void onDeviceCodeAuthenticated(TokenResponse tokenResponse);
+		
+		void onDeviceCodeFailed ();
 	}
 }

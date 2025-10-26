@@ -1,45 +1,10 @@
 package com.concessions.local;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Desktop;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.prefs.Preferences;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextPane;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -47,35 +12,26 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.config.AppConfig;
 import com.concessions.local.config.JpaConfig;
-import com.concessions.local.persistence.MenuRepository;
-import com.concessions.local.rest.LocationRestService;
-import com.concessions.local.rest.MenuRestService;
-import com.concessions.local.rest.OrganizationRestService;
-import com.concessions.local.rest.UserRestService;
-import com.concessions.local.service.QRGeneratorService;
-import com.concessions.local.service.TokenAuthService;
-import com.concessions.local.service.TokenAuthService.TokenResponse;
+import com.concessions.local.model.OrganizationConfiguration;
+import com.concessions.local.rest.MenuRestClient;
+import com.concessions.local.security.TokenAuthService;
+import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.service.OrganizationConfigurationService;
+import com.concessions.local.service.PreferenceService;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
+import com.concessions.local.ui.action.OrderAction;
+import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.controller.DeviceCodeController;
 import com.concessions.local.ui.controller.SetupController;
 import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.view.DeviceCodeDialog;
-import com.concessions.local.ui.view.SetupDialog;
-import com.concessions.model.Location;
-import com.concessions.model.Menu;
-import com.concessions.model.Organization;
-import com.concessions.model.User;
+
+import jakarta.annotation.PostConstruct;
 
 @Component
-public class Application {
-
-	private final LocationRestService locationService = new LocationRestService();
-	private final MenuRestService menuService = new MenuRestService();
-	private final OrganizationRestService orgService = new OrganizationRestService();
-	private final TokenAuthService authService = new TokenAuthService();
-	private final UserRestService userService = new UserRestService();
+public class Application implements PropertyChangeListener {
 
 	@Autowired
 	protected ApplicationFrame applicationFrame;
@@ -96,25 +52,52 @@ public class Application {
 	protected LogoutAction logoutAction;
 	
 	@Autowired
-	protected MenuRepository menuRepository;
-
+	protected OrderAction orderAction;
+	
+	@Autowired
+	protected SetupAction setupAction;
+	
+	@Autowired
+	protected MenuRestClient menuRestClient;
+	
+	@Autowired
+	protected OrganizationConfigurationService organizationConfigurationService;
+	
+	@Autowired
+	protected PreferenceService preferenceService;
+	
 	@Autowired
 	protected SetupController setupController;
 
-	public static Organization selectedOrganization;
+	@Autowired
+	protected TokenAuthService authService;
 
 	public Application() {
 	}
 
-	public void initialize () {
-		applicationModel.addPropertyChangeListener(applicationFrame);
+	@PostConstruct
+	protected void initialize () {
 		applicationModel.setTokenResponse(authService.loadTokenResponse());
+		applicationModel.addPropertyChangeListener(applicationFrame);
+		applicationModel.addPropertyChangeListener(this);
 		
 		deviceCodeController.addDeviceCodeListener(new DeviceCodeController.DeviceCodeListener() {
 			@Override
 			public void onDeviceCodeAuthenticated (TokenResponse token) {
-				applicationModel.setStatusMessage("Authenticated.");
-				initializeMainApplication();
+				applicationModel.setStatusMessage("Authenticated");
+				executeSetup(null);
+			}
+			
+			public void onDeviceCodeFailed () {
+				applicationModel.setStatusMessage("Authentication failed.");
+			}
+		});
+		
+		setupController.addSetupListener(new SetupController.SetupListener() {
+			
+			@Override
+			public void setupCompleted(OrganizationConfiguration organizationConfiguration) {
+				executeSales(organizationConfiguration);
 			}
 		});
 	}
@@ -124,14 +107,43 @@ public class Application {
 		SwingUtilities.invokeLater(() -> {
 			applicationFrame.setVisible(true);
 		});
-
-		deviceCodeController.execute();
+		
+		// if we have an organizationConfiguration it doesn't matter if we are authenticated
+		String organizationConfigurationIdText = preferenceService.get(Application.class, "organizationConfigurationId");
+		if (organizationConfigurationIdText == null) {
+			if (applicationModel.getTokenResponse() == null || !authService.isTokenValid(applicationModel.getTokenResponse())) {
+				executeDeviceCode();
+			}
+		} else {
+			executeSetup(organizationConfigurationIdText);
+		}
 	}
 	
+	private void executeDeviceCode () {
+		deviceCodeController.execute();
+	}
 
+	private void executeSetup (String organizationConfigurationIdText) {
+		if (organizationConfigurationIdText == null) {
+			organizationConfigurationIdText = preferenceService.get(Application.class, "organizationConfigurationId");
+		}
+		if (organizationConfigurationIdText != null) {
+			long organizationConfigurationId = Long.parseLong(organizationConfigurationIdText);
+			try {
+				OrganizationConfiguration organizationConfiguration = organizationConfigurationService.get(organizationConfigurationId);
+				applicationModel.setOrganizationConfiguration(organizationConfiguration);
+				applicationModel.setOrganizationId(organizationConfiguration.getOrganizationId());
+				applicationModel.setStatusMessage("Ready");
+				executeSales(organizationConfiguration);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+		else {
+			setupController.execute();
+		}
 
-	private void initializeMainApplication() {
-
+		/*
 		// Use a background thread (CompletableFuture) for the network operation
 		CompletableFuture.supplyAsync(() -> {
 			try {
@@ -150,12 +162,32 @@ public class Application {
 				return "Error fetching data: " + e.getMessage();
 			}
 		}).thenAccept(result -> {
-			// Update UI (display modal) on the EDT
-			SwingUtilities.invokeLater(() -> {
-				applicationModel.setStatusMessage("Setup.");
-				});
 			setupController.execute();
 		});
+		*/
+	}
+	
+	private void executeSales (OrganizationConfiguration organizationConfiguration) {
+		try
+		{
+			applicationModel.setMenu(menuRestClient.get(organizationConfiguration.getMenuId()).get());
+			orderAction.setEnabled(true);
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+		if (ApplicationModel.CONNECTED.equals(evt.getPropertyName()) ||
+				ApplicationModel.TOKEN_RESPONSE.equals(evt.getPropertyName())) {
+			setupAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() != null);
+			loginAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() == null);
+			logoutAction.setEnabled(applicationModel.getTokenResponse() != null);
+		}
+		
 	}
 
 	public static void main(String[] args) {
@@ -170,7 +202,6 @@ public class Application {
             context.registerShutdownHook();
 
 			Application application = context.getBean(Application.class);	
-			application.initialize();
 			application.execute();
 
 

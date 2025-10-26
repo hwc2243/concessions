@@ -9,10 +9,10 @@ import com.concessions.local.Application;
 import com.concessions.model.User;
 import com.google.gson.Gson;
 
-public class UserRestService extends AbstractRestService {
+public class UserRestClient extends AbstractRestClient {
 	
 
-	public UserRestService() {
+	public UserRestClient() {
 		// TODO Auto-generated constructor stub
 	}
 

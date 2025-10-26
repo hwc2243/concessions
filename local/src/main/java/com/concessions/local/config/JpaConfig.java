@@ -3,6 +3,7 @@ package com.concessions.local.config;
 import javax.sql.DataSource;
 
 import org.hibernate.community.dialect.SQLiteDialect;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -24,8 +25,8 @@ import java.util.Properties;
  */
 @Configuration
 @EnableTransactionManagement
-// Configure where Spring Data JPA should look for your repository interfaces
-@EnableJpaRepositories(basePackages = "com.concessions.local.persistence") 
+@EnableJpaRepositories(basePackages = {"com.concessions.local.persistence"})
+//@EntityScan(basePackages = "com.concessions.local.entity")
 public class JpaConfig {
 
     /**
@@ -52,7 +53,7 @@ public class JpaConfig {
         emf.setDataSource(dataSource);
         
         // Define where Hibernate should scan for @Entity classes (like Menu and BaseMenu)
-        emf.setPackagesToScan("com.concessions.model"); 
+        emf.setPackagesToScan("com.concessions.model", "com.concessions.local.model"); 
         
         // Use Hibernate as the JPA vendor
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();

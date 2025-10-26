@@ -8,6 +8,7 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -32,7 +33,7 @@ import com.concessions.model.Organization;
 @Component
 public class SetupDialog extends JDialog {
 
-	//private final Application application;
+	public static final String PLEASE_SELECT = "Please select...";
 	
 	private SetupModel model;
 	
@@ -144,12 +145,19 @@ public class SetupDialog extends JDialog {
 	}
 	
 	public void setOrganizations (List<Organization> organizations) {
-        // Convert List to array for JComboBox model
-        Organization[] orgArray = organizations.toArray(new Organization[0]);
-        System.out.println("organizations: " + orgArray.length);
-        orgComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(orgArray));
-        orgComboBox.setEnabled(true);
-        
+		List<Organization> displayList = new ArrayList<>();
+		displayList.add(new OrganizationPlaceholder()); 
+		
+		if (organizations != null) {
+			displayList.addAll(organizations);
+		}
+		
+		Organization[] orgArray = displayList.toArray(new Organization[0]);
+		System.out.println("organizations: " + orgArray.length);
+		orgComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(orgArray));
+		orgComboBox.setEnabled(true);
+		orgComboBox.setSelectedIndex(0);
+
 		revalidate();
 		repaint();
 	}
@@ -163,8 +171,15 @@ public class SetupDialog extends JDialog {
 	}
 	
 	public void setLocations (List<Location> locations) {
+		List<Location> displayList = new ArrayList<>();
+		displayList.add(new LocationPlaceholder()); 
+		
+		if (locations != null) {
+			displayList.addAll(locations);
+		}
+		
 		// Convert List to array for JComboBox model
-		Location[] locArray = locations.toArray(new Location[0]);
+		Location[] locArray = displayList.toArray(new Location[0]);
 		System.out.println("locations: " + locArray.length);
 		locationComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(locArray));
 		locationComboBox.setEnabled(true);
@@ -182,8 +197,14 @@ public class SetupDialog extends JDialog {
 	}
 	
 	public void setMenus (List<Menu> menus) {
+		List<Menu> displayList = new ArrayList<>();
+		displayList.add(new MenuPlaceholder()); 
+		
+		if (menus != null) {
+			displayList.addAll(menus);
+		}
 		// Convert List to array for JComboBox model
-		Menu[] menuArray = menus.toArray(new Menu[0]);
+		Menu[] menuArray = displayList.toArray(new Menu[0]);
 		System.out.println("menus: " + menuArray.length);
 		menuComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(menuArray));
 		menuComboBox.setEnabled(true);
@@ -199,5 +220,32 @@ public class SetupDialog extends JDialog {
 	public void addActionListener (ActionListener listener) {
 		setupButton.addActionListener(listener);
 		cancelButton.addActionListener(listener);
+	}
+	
+	private static class OrganizationPlaceholder extends Organization {
+		@Override
+		public String toString() { return PLEASE_SELECT; }
+		
+		public OrganizationPlaceholder() {
+			super();
+		}
+	}
+	
+	private static class LocationPlaceholder extends Location {
+		@Override
+		public String toString() { return PLEASE_SELECT; }
+		
+		public LocationPlaceholder() {
+			super();
+		}
+	}
+	
+	private static class MenuPlaceholder extends Menu {
+		@Override
+		public String toString() { return PLEASE_SELECT; }
+		
+		public MenuPlaceholder() {
+			super();
+		}
 	}
 }

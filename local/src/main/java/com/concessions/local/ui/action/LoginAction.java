@@ -11,7 +11,7 @@ import javax.swing.KeyStroke;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.service.TokenAuthService;
+import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.ui.controller.DeviceCodeController;
 
 @Component

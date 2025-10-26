@@ -2,6 +2,7 @@ package com.concessions.local.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
@@ -11,6 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  * whose lifecycle is tied directly to the Spring context.
  */
 @Configuration
+@EnableAsync
 public class AppConfig {
 
     /**
@@ -22,7 +24,7 @@ public class AppConfig {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         // Set a reasonable pool size for background tasks like polling
         scheduler.setPoolSize(5); 
-        scheduler.setThreadNamePrefix("Token-Polling-");
+        scheduler.setThreadNamePrefix("Task-");
         scheduler.initialize();
         return scheduler;
     }
