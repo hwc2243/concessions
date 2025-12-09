@@ -8,10 +8,13 @@ import com.concessions.client.model.Location;
 
 import com.google.gson.reflect.TypeToken;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public abstract class BaseLocationRestClient<T extends Location>
   extends MultitenantRestClient  
 {
-	protected String hostPath = "http://localhost:8080";
+	@Value("${apiHostName:http://localhost:8080}")
+	protected String hostPath;
 	protected String apiPath = "/api/external/location";
 
 	public BaseLocationRestClient() {

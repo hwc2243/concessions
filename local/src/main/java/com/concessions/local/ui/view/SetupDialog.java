@@ -24,7 +24,7 @@ import javax.swing.SwingConstants;
 
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.server.Application;
+import com.concessions.local.server.ServerApplication;
 import com.concessions.local.ui.model.SetupModel;
 import com.concessions.client.model.Location;
 import com.concessions.client.model.Menu;

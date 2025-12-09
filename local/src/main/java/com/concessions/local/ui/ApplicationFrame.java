@@ -4,7 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -16,6 +19,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,6 +42,9 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 
+	@Autowired
+	protected ExitAction exitAction;
+	
 	@Autowired
 	protected LoginAction loginAction;
 	
@@ -75,7 +82,18 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	
 	public ApplicationFrame() {
 		super("Concessions Management System");
-		//initializeUI();
+
+		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                exitAction.actionPerformed(new ActionEvent(
+                    ApplicationFrame.this, 
+                    ActionEvent.ACTION_PERFORMED, 
+                    null
+                ));
+            }
+        });
 	}
 
 	private JPanel initializeCurrentSetupPanel() {
@@ -129,7 +147,7 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 		fileMenu.add(logoutItem);
 		fileMenu.addSeparator();
 		
-		JMenuItem exitItem = new JMenuItem(new ExitAction());
+		JMenuItem exitItem = new JMenuItem(exitAction);
 		fileMenu.add(exitItem);
 
 		JMenu journalMenu = new JMenu("Journal");

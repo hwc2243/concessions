@@ -8,10 +8,13 @@ import com.concessions.client.model.Order;
 
 import com.google.gson.reflect.TypeToken;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public abstract class BaseOrderRestClient<T extends Order>
   extends AbstractRestClient
 {
-	protected String hostPath = "http://localhost:8080";
+	@Value("${apiHostName:http://localhost:8080}")
+	protected String hostPath;
 	protected String apiPath = "/api/external/order";
 
 	public BaseOrderRestClient() {

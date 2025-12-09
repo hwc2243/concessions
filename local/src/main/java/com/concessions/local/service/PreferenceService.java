@@ -7,7 +7,7 @@ import java.util.prefs.Preferences;
 
 import org.springframework.stereotype.Service;
 
-import com.concessions.local.server.Application;
+import com.concessions.local.server.ServerApplication;
 
 
 @Service
@@ -21,7 +21,7 @@ public class PreferenceService {
 
 	public void clear (String name) throws BackingStoreException
 	{
-		clear(Application.class, name);
+		clear(ServerApplication.class, name);
 	}
 	
 	public void clear (Class<?> clazz, String name) throws BackingStoreException
@@ -33,7 +33,7 @@ public class PreferenceService {
 	
 	public String get (String name) 
 	{
-		return get(Application.class, name);
+		return get(ServerApplication.class, name);
 	}
 	
 	public String get (Class<?> clazz, String name)
@@ -43,7 +43,7 @@ public class PreferenceService {
 	
 	public void save (String name, String value) throws BackingStoreException
 	{
-		save(Application.class, name, value);
+		save(ServerApplication.class, name, value);
 	}
 	
 	public void save (Class<?> clazz, String name, String value) throws BackingStoreException

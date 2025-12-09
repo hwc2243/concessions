@@ -2,6 +2,9 @@ package com.concessions.local.server;
 
 import java.awt.BorderLayout;
 import java.awt.Desktop;
+import java.awt.desktop.QuitEvent;
+import java.awt.desktop.QuitHandler;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -16,6 +19,8 @@ import javax.swing.UIManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
@@ -31,6 +36,7 @@ import com.concessions.local.service.OrganizationConfigurationService;
 import com.concessions.local.service.PreferenceService;
 import com.concessions.local.ui.AboutDialog;
 import com.concessions.local.ui.ApplicationFrame;
+import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
 import com.concessions.local.ui.action.JournalStartAction;
 import com.concessions.local.ui.action.JournalSuspendAction;
@@ -48,7 +54,7 @@ import com.concessions.local.ui.view.DeviceCodeDialog;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class Application implements PropertyChangeListener {
+public class ServerApplication implements PropertyChangeListener {
 
 	@Value("${application.name:Concessions Management System}")
 	protected String applicationName;
@@ -81,6 +87,9 @@ public class Application implements PropertyChangeListener {
 	protected JournalController journalController;
 	
 	@Autowired
+	protected ExitAction exitAction;
+	
+	@Autowired
 	protected LoginAction loginAction;
 	
 	@Autowired
@@ -110,7 +119,7 @@ public class Application implements PropertyChangeListener {
 	@Autowired
 	protected TokenAuthService authService;
 
-	public Application() {
+	public ServerApplication() {
 	}
 
 	@PostConstruct
@@ -173,13 +182,13 @@ public class Application implements PropertyChangeListener {
 	public void execute () {
 		// Show the main application window
 		SwingUtilities.invokeLater(() -> {
-			setupAboutHandler(applicationFrame);
+			setupDesktopHandler(applicationFrame);
 
 			applicationFrame.setVisible(true);
 		});
 		
 		// if we have an organizationConfiguration it doesn't matter if we are authenticated
-		String organizationConfigurationIdText = preferenceService.get(Application.class, "organizationConfigurationId");
+		String organizationConfigurationIdText = preferenceService.get(ServerApplication.class, "organizationConfigurationId");
 		if (organizationConfigurationIdText == null) {
 			if (applicationModel.getTokenResponse() == null || !authService.isTokenValid(applicationModel.getTokenResponse())) {
 				executeDeviceCode();
@@ -198,7 +207,7 @@ public class Application implements PropertyChangeListener {
 
 	private void executeSetup (String organizationConfigurationIdText) {
 		if (organizationConfigurationIdText == null) {
-			organizationConfigurationIdText = preferenceService.get(Application.class, "organizationConfigurationId");
+			organizationConfigurationIdText = preferenceService.get(ServerApplication.class, "organizationConfigurationId");
 		}
 		if (organizationConfigurationIdText != null) {
 			long organizationConfigurationId = Long.parseLong(organizationConfigurationIdText);
@@ -234,12 +243,28 @@ public class Application implements PropertyChangeListener {
 		}
 	}
 	
-	private void setupAboutHandler (JFrame ownerFrame) {
+	private void setupDesktopHandler (JFrame ownerFrame) {
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
             if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
                 desktop.setAboutHandler(e -> {
                     showAboutDialog(ownerFrame);
+                });
+            }
+            if (desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
+                desktop.setQuitHandler(new QuitHandler() {
+                    @Override
+                    public void handleQuitRequestWith(QuitEvent e, java.awt.desktop.QuitResponse response) {
+                        // Trigger the ExitAction when the user selects "Quit" from the macOS menu.
+                        exitAction.actionPerformed(new ActionEvent(
+                            applicationFrame, 
+                            ActionEvent.ACTION_PERFORMED, 
+                            "macOS_Quit_Menu"
+                        ));
+                        
+                        // Since ExitAction calls System.exit(0), we instruct the OS to proceed.
+                        response.performQuit(); 
+                    }
                 });
             }
         }
@@ -273,6 +298,11 @@ public class Application implements PropertyChangeListener {
 		AnnotationConfigApplicationContext context = null;
 		try {
 			context = new AnnotationConfigApplicationContext();
+			ConfigurableEnvironment environment = context.getEnvironment();
+
+	        // Load application.yml from classpath
+	        environment.getPropertySources().addLast(
+	                new ResourcePropertySource("application.yml", "classpath:application.yml"));
 			
 			context.register(JpaConfig.class);
 			context.register(AppConfig.class);
@@ -280,7 +310,7 @@ public class Application implements PropertyChangeListener {
             context.refresh();
             context.registerShutdownHook();
 
-			Application application = context.getBean(Application.class);	
+			ServerApplication application = context.getBean(ServerApplication.class);	
 			application.execute();
 
 

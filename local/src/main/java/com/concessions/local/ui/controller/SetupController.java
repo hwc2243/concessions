@@ -25,7 +25,7 @@ import com.concessions.client.rest.OrganizationRestClient;
 import com.concessions.local.model.OrganizationConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
-import com.concessions.local.server.Application;
+import com.concessions.local.server.ServerApplication;
 import com.concessions.local.service.OrganizationConfigurationService;
 import com.concessions.local.service.PreferenceService;
 import com.concessions.local.service.ServiceException;
@@ -116,7 +116,7 @@ public class SetupController {
 				organizationConfiguration.setMenuName(menu.getName());
 				try {
 					organizationConfiguration = organizationConfigurationService.create(organizationConfiguration);
-					preferenceService.save(Application.class, "organizationConfigurationId", String.valueOf(organizationConfiguration.getId()));
+					preferenceService.save(ServerApplication.class, "organizationConfigurationId", String.valueOf(organizationConfiguration.getId()));
 					applicationModel.setOrganizationConfiguration(organizationConfiguration);
 					notifySetupCompleted(organizationConfiguration);
 				} catch (Exception ex) {

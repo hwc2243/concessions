@@ -4,9 +4,9 @@ import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatLightLaf;
 
-public class Application {
+public class POSApplication {
 
-	public Application() {
+	public POSApplication() {
 		// TODO Auto-generated constructor stub
 	}
 
@@ -25,7 +25,7 @@ public class Application {
 			}
 		}
 		
-		Application application = new Application();
+		POSApplication application = new POSApplication();
 		application.execute();
 	}
 }

@@ -8,6 +8,9 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ExitAction extends AbstractAction {
 
 	public ExitAction() {
@@ -20,5 +23,4 @@ public class ExitAction extends AbstractAction {
 	public void actionPerformed(ActionEvent e) {
 		System.exit(0);
 	}
-
 }

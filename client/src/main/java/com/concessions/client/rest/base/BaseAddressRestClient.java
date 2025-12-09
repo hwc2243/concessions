@@ -8,10 +8,13 @@ import com.concessions.client.model.Address;
 
 import com.google.gson.reflect.TypeToken;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public abstract class BaseAddressRestClient<T extends Address>
   extends AbstractRestClient
 {
-	protected String hostPath = "http://localhost:8080";
+	@Value("${apiHostName:http://localhost:8080}")
+	protected String hostPath;
 	protected String apiPath = "/api/external/address";
 
 	public BaseAddressRestClient() {
