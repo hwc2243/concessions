@@ -25,6 +25,7 @@ import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
 import com.concessions.local.ui.view.OrderPanel;
 import com.concessions.local.ui.view.OrderPanel.OrderActionListener;
+import com.concessions.client.model.CategoryType;
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Menu;
 import com.concessions.client.model.MenuItem;
@@ -33,7 +34,6 @@ import com.concessions.client.model.OrderItem;
 import com.concessions.client.service.OrderItemService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
-import com.concessions.model.CategoryType;
 
 import jakarta.annotation.PostConstruct;
 
