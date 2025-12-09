@@ -15,7 +15,7 @@ import com.concessions.model.base.BaseOrganization;
 @Entity
 @Table(name="organization")
 public class Organization extends BaseOrganization<Organization>
-    implements Serializable
+    implements Comparable, Serializable
 {
 	public Organization ()
 	{
@@ -28,6 +28,19 @@ public class Organization extends BaseOrganization<Organization>
         this.name = builder.name;
     }
 
+    @Override
+    public int compareTo(Object o) {
+            if (o instanceof Organization) {
+                    Organization org = (Organization)o;
+                    return this.getName().compareTo(org.getName());
+            }
+            return 0;
+    }
+    
+    public String toString () {
+        return this.getName();
+    }
+    
     public static class Builder {
 
         private String name = null;
