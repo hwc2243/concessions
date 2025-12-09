@@ -127,14 +127,14 @@ public abstract class BaseExternalUserRestImpl implements BaseExternalUserRest
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user)
     {
       User updatedUser = null;
-      
+
       if (user.getId() == 0) 
       {
       	user.setId(id);
       }
       else if (id != user.getId())
       {
-         return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().build();
       }
       try
       {

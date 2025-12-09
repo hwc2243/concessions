@@ -127,14 +127,14 @@ public abstract class BaseExternalMenuRestImpl implements BaseExternalMenuRest
     public ResponseEntity<Menu> updateMenu(@PathVariable Long id, @RequestBody Menu menu)
     {
       Menu updatedMenu = null;
-      
+
       if (menu.getId() == 0) 
       {
       	menu.setId(id);
       }
       else if (id != menu.getId())
       {
-         return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().build();
       }
       try
       {

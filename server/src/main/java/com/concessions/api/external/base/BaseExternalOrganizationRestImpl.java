@@ -127,14 +127,14 @@ public abstract class BaseExternalOrganizationRestImpl implements BaseExternalOr
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long id, @RequestBody Organization organization)
     {
       Organization updatedOrganization = null;
-      
+
       if (organization.getId() == 0) 
       {
       	organization.setId(id);
       }
       else if (id != organization.getId())
       {
-         return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().build();
       }
       try
       {

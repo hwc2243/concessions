@@ -25,7 +25,6 @@ public class LoginAction extends AbstractAction {
 
 	public LoginAction() {
 		super("Login");
-		System.out.println("LoginAction initialized");
 		putValue(Action.NAME, "Login");
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
 		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
@@ -34,7 +33,6 @@ public class LoginAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("Login action triggered");
 		deviceCodeController.execute();
 	}
 

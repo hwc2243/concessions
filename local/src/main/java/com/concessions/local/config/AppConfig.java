@@ -5,6 +5,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.concessions.client.rest.base.HeaderProvider;
+import com.concessions.local.bean.BearerTokenHeaderProvider;
+import com.concessions.local.bean.TenantDiscriminator;
+import com.concessions.local.ui.model.ApplicationModel;
+
 /**
  * Configuration class for application-wide background task management.
  * Defines a Spring-managed TaskScheduler to ensure long-running background 
@@ -27,5 +32,15 @@ public class AppConfig {
         scheduler.setThreadNamePrefix("Task-");
         scheduler.initialize();
         return scheduler;
+    }
+    
+    @Bean
+    public HeaderProvider headerProvider (ApplicationModel model) {
+    	return new BearerTokenHeaderProvider(model);
+    }
+    
+    @Bean
+    public TenantDiscriminator tenantDiscriminator (ApplicationModel model) {
+    	return new TenantDiscriminator(model);
     }
 }

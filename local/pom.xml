@@ -24,11 +24,20 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.concessions.system</groupId>
-			<artifactId>model</artifactId>
+			<artifactId>client</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-
-<!--
+		<dependency>
+			<groupId>com.concessions.system</groupId>
+			<artifactId>common</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.formdev</groupId>
+			<artifactId>flatlaf</artifactId>
+			<version>3.6.2</version>
+		</dependency>
+		<!--
 		<dependency>
 	        <groupId>com.github.gwenn</groupId>
         	<artifactId>sqlite-dialect</artifactId>
@@ -91,7 +100,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.11.0</version>
 				<configuration>
 					<source>${maven.compiler.source}</source>
 					<target>${maven.compiler.target}</target>
@@ -103,7 +111,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.6.0</version>
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
@@ -140,10 +147,16 @@
 					</execution>
 				</executions>
 				<configuration>
-					<buildType>all</buildType>
+					<buildType>service</buildType>
 				</configuration>
 			</plugin>
 		</plugins>
+		<resources>
+        <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+        </resource>
+    </resources>
 	</build>
 </project>
 

@@ -35,7 +35,7 @@ public class TokenRefreshManager {
     private TokenAuthService authService; 
 
     // Define the scheduling parameters
-    private static final long REFRESH_INTERVAL_MINUTES = 1; // The token refresh frequency
+    private static final long REFRESH_INTERVAL_MINUTES = 3; // The token refresh frequency
     private static final long INITIAL_DELAY_MINUTES = 0; // Delay before the first refresh run
 
     /**
@@ -67,7 +67,7 @@ public class TokenRefreshManager {
     						applicationModel.setTokenResponse(newToken);
     						authService.storeTokenResponse(newToken);
     					}).exceptionally(ex -> {
-            				logger.warn("Failed to refresh access token. Must handle re-login flow.");
+            				logger.warn("Failed to refresh access token. Must handle re-login flow.", ex);
             				applicationModel.setTokenResponse(null);
             				authService.clearTokenResponse();
     						return null;
@@ -76,8 +76,10 @@ public class TokenRefreshManager {
             		
             	} else {
             		applicationModel.setConnected(false);
+            		/* just because we lose network connectivity we don't need to clear the access token
     				applicationModel.setTokenResponse(null);
     				authService.clearTokenResponse();
+    				*/
             	}
             } catch (Exception e) {
                 logger.error("Unexpected error during token refresh execution:", e);

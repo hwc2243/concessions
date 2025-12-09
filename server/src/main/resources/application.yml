@@ -10,9 +10,9 @@ spring:
     username: concession
     password: w31c0m3
   jpa:
-    generate-ddl: true
     hibernate:
       ddl-auto: update
+    show-sql: true
   security:
     oauth2:
       client:

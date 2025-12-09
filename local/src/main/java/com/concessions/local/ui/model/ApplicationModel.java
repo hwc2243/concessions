@@ -4,11 +4,13 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.model.OrganizationConfiguration;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
-import com.concessions.model.Menu;
+import com.concessions.client.model.Journal;
+import com.concessions.client.model.Menu;
 
 @Component
 public class ApplicationModel extends AbstractModel {
 	public static final String CONNECTED = "connected";
+	public static final String JOURNAL = "journal";
 	public static final String MENU = "menu";
 	public static final String ORGANIZATION_CONFIGURATION = "organizationConfiguration";
 	public static final String STATUS_MESSAGE = "statusMessage";
@@ -17,6 +19,8 @@ public class ApplicationModel extends AbstractModel {
 	private String statusMessage;
 	
 	private boolean connected;
+	
+	private Journal journal;
 	
 	private Menu menu;
 	
@@ -39,6 +43,18 @@ public class ApplicationModel extends AbstractModel {
 		firePropertyChange(CONNECTED, oldConnected, connected);
 	}
 
+	public Journal getJournal ()
+	{
+		return this.journal;		
+	}
+	
+	public void setJournal (Journal journal)
+	{
+		Journal oldJournal = this.journal;
+		this.journal = journal;
+		firePropertyChange(JOURNAL, oldJournal, journal);
+	}
+	
 	public Menu getMenu() {
 		return menu;
 	}

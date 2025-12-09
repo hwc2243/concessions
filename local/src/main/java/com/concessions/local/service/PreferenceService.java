@@ -7,7 +7,7 @@ import java.util.prefs.Preferences;
 
 import org.springframework.stereotype.Service;
 
-import com.concessions.local.Application;
+import com.concessions.local.server.Application;
 
 
 @Service

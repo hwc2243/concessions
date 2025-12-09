@@ -33,7 +33,7 @@ public class RestContextFilter extends OncePerRequestFilter {
 
 	private final Logger logger = LoggerFactory.getLogger(RestContextFilter.class);
 
-	private static final String ORGANIZATION_HEADER = "organization_id";
+	private static final String ORGANIZATION_HEADER = "organizationId";
 
 	@Autowired
 	protected OrganizationService organizationService;

@@ -102,15 +102,11 @@ public class DeviceCodeController {
 	}
 
 	protected void notifyAuthenticated (TokenResponse tokenResponse) {
-		for (DeviceCodeListener listener : listeners) {
-			listener.onDeviceCodeAuthenticated(tokenResponse);
-		}
+		listeners.stream().forEach(listener -> listener.onDeviceCodeAuthenticated(tokenResponse));
 	}
 
 	protected void notifyFailed () {
-		for (DeviceCodeListener listener : listeners) {
-			listener.onDeviceCodeFailed();
-		}
+		listeners.stream().forEach(listener -> listener.onDeviceCodeFailed());
 	}
 	
 	private void initiateLoginFlow() {

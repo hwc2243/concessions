@@ -25,7 +25,7 @@ import java.util.Properties;
  */
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackages = {"com.concessions.local.persistence"})
+@EnableJpaRepositories(basePackages = {"com.concessions.local.persistence", "com.concessions.client.repository", "com.concessions.client.repository.base"})
 //@EntityScan(basePackages = "com.concessions.local.entity")
 public class JpaConfig {
 
@@ -53,7 +53,7 @@ public class JpaConfig {
         emf.setDataSource(dataSource);
         
         // Define where Hibernate should scan for @Entity classes (like Menu and BaseMenu)
-        emf.setPackagesToScan("com.concessions.model", "com.concessions.local.model"); 
+        emf.setPackagesToScan("com.concessions.local.model", "com.concessions.client.model", "com.concessions.client.model.base"); 
         
         // Use Hibernate as the JPA vendor
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();

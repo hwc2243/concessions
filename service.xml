@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service name="concessions" package="com.concessions" multitenant="true">
+
+	<tenant-discriminator name="organizationId" type="long" />
+	
+	<!--
+    This is the definition for the 'Address' entity.
+    It includes standard fields for a physical address.
+    -->
+    <entity name="address" db-name="address" persistence="true">
+        
+        <!-- Standard attributes for an address -->
+        <attribute name="street1" type="string" db-name="street1" />
+        <attribute name="street2" type="string" db-name="street2" />
+        <attribute name="city" type="string" db-name="city" />
+        <attribute name="state" type="string" db-name="state" />
+        <attribute name="zipCode" type="string" db-name="zip_code" />
+        <attribute name="country" type="string" db-name="country" />
+        
+        <!--
+        The API element defines the available operations for this entity.
+        'internal' operations are for internal system use (e.g., from other services),
+        while 'external' operations can be exposed to external clients via a public API.
+        -->
+        <api>
+            <internal operations="CREATE READ UPDATE DELETE" />
+        </api>
+        
+    </entity>
+
+	<!--
+    This is the definition for the 'Location' entity.
+    It has a name and is related to the Address entity.
+    The relationship is 'many_to_one' because multiple Location can share the same address.
+    -->
+    <entity name="location" db-name="location" persistence="true" multitenant="true">
+        
+        <!-- Standard attribute for the organization's name -->
+        <attribute name="name" type="string" />
+        
+        <!--
+        A 'related' element defines a relationship with another entity.
+        'name' is the name of the attribute in this entity.
+        'entity' is the name of the related entity.
+        'relationship' is set to 'one_to_one' as the address is unique 
+        to the organization.
+        -->
+        <related name="address" entity="address" relationship="one_to_one" />
+
+        <!-- API operations for the Organization entity -->
+        <api>
+            <external operations="CREATE READ UPDATE DELETE" />
+            <internal operations="CREATE READ UPDATE DELETE" />
+        </api>
+        
+    </entity>
+    
+	<!--
+    This is the definition for the 'Organization' entity.
+    It has a name and is related to the Address entity.
+    The relationship is 'one_to_one' because it represent the address of the primary account holder
+    -->
+    <entity name="organization" db-name="organization" persistence="true">
+        
+        <!-- Standard attribute for the organization's name -->
+        <attribute name="name" type="string" db-name="name" />
+        
+        <!--
+        A 'related' element defines a relationship with another entity.
+        'name' is the name of the attribute in this entity.
+        'entity' is the name of the related entity.
+        'relationship' is set to 'one_to_one' as the address is unique 
+        to the organization.
+        -->
+        <related name="address" entity="address" relationship="one_to_one" />
+
+        <!-- API operations for the Organization entity -->
+        
+        <api>
+            <external operations="CREATE READ UPDATE DELETE" />
+            <internal operations="CREATE READ UPDATE DELETE" />
+        </api>
+        
+    </entity>
+    
+    <!--
+    ====================================================================
+    Entity: User
+    Represents a specific user
+    ====================================================================
+    -->
+    <entity name="user" db-name="user_" persistence="true">
+        <key name="id" type="long" />
+        
+        <attribute name="username" type="string" />
+        <attribute name="firstName" type="string" />
+        <attribute name="lastName" type="string" />
+        <attribute name="authProvider" type="string" />
+        
+        <related name="organization" entity="organization" relationship="many_to_one" />
+        
+		<!--
+        A many-to-many relationship with the 'location' entity.
+        This entity is the owning side, indicated by owner="true".
+        -->
+        <related name="locations" entity="location" collection="list" relationship="many_to_many"/>
+
+		<!--
+        A many-to-many relationship with the 'organization' entity.
+        This entity is the owning side, indicated by owner="true".
+        -->
+        <related name="organizations" entity="organization" collection="list" relationship="many_to_many"/>
+
+        <finder unique="true">
+            <finder-attribute name="username"/>
+        </finder>
+        
+        <api>
+            <external operations="CREATE READ UPDATE DELETE"/>
+            <internal operations="CREATE READ UPDATE DELETE"/>
+        </api>
+    </entity>
+    
+    <!--
+    ====================================================================
+    Entity: Menu
+    Represents a specific menu (e.g., "Breakfast Menu", "Dinner Menu").
+    ====================================================================
+    -->
+    <entity name="menu" persistence="true" multitenant="true">
+        <key name="id" type="long"/>
+
+        <attribute name="name" type="string" />
+        <attribute name="description" type="string" />
+
+        <!-- A menu can have many MenuItems -->
+        <related name="menuItems" entity="menuItem" collection="list" relationship="many_to_many" />
+        
+        <finder>
+            <finder-attribute name="name"/>
+        </finder>
+        
+        <api>
+            <external operations="CREATE READ UPDATE DELETE"/>
+            <internal operations="CREATE READ UPDATE DELETE"/>
+        </api>
+    </entity>
+
+    <!--
+    ====================================================================
+    Entity: MenuItem
+    Represents an item on a menu. (i.e., "Pancakes", "Burger").
+    ====================================================================
+    -->
+    <entity name="menuItem" persistence="true" multitenant="true">
+        <key name="id" type="long" />
+        
+        <attribute name="name" type="string" />
+        <attribute name="description" type="string" />
+        <attribute name="category" type="enum" enum-values="Appetizer Entree Side Drink Dessert"/>
+        <attribute name="price" type="money" />
+
+        <!-- A MenuItem can have many Options -->
+        <related name="options" entity="menuItemOption" collection="list" relationship="many_to_many"/>
+    </entity>
+
+    <!--
+    ====================================================================
+    Entity: MenuItemOption
+    Represents an optional add-on for a MenuItem. (i.e., "Extra Cheese", "Bacon").
+    ====================================================================
+    -->
+    <entity name="menuItemOption" persistence="true" multitenant="true">
+        <key name="id" type="long" />
+        
+        <attribute name="name" type="string" />
+        <attribute name="description" type="string" />
+        <attribute name="price" type="money" />
+    </entity>
+
+    <!--
+    ====================================================================
+    Entity: Journal
+    Represents a sales journal to which orders during that period are
+    assigned.
+    ====================================================================
+    -->
+    <entity name="journal" persistence="true" multitenant="true">
+    	<key name="id" type="uuid" />
+    	
+    	<attribute name="status" type="enum" enum-values="New Open Suspend Close Sync"/>
+    	<attribute name="menuId" type="long" />
+    	<attribute name="orderCount" type="long" />
+    	<attribute name="salesTotal" type="money" />
+    	<attribute name="startTs" type="datetime" />
+    	<attribute name="endTs" type="datetime" />
+    	<attribute name="syncTs" type="datetime" />
+    	
+    	 <api>
+            <external operations="CREATE READ UPDATE DELETE"/>
+            <internal operations="CREATE READ UPDATE DELETE"/>
+        </api>
+    </entity>
+    
+    <entity name="order" persistence="true" db-name="order_">
+    	<key name="id" type="uuid" />
+    	
+    	<attribute name="journalId" type="string" />
+    	<attribute name="menuId" type="long" />
+    	<attribute name="orderTotal" type="money" />
+    	<attribute name="startTs" type="datetime" />
+    	<attribute name="endTs" type="datetime" />
+
+        <!-- An order can have many orderItems -->
+        <related name="orderItems" entity="orderItem" collection="list" relationship="one_to_many"/>
+        
+        <finder>
+        	<finder-attribute name="journalId"/>
+        </finder>
+        
+        <api>
+            <external operations="CREATE READ UPDATE DELETE"/>
+            <internal operations="CREATE READ UPDATE DELETE"/>
+        </api>
+    </entity>
+    
+    <entity name="orderItem" persistence="true" >
+    	<key name="id" type="uuid" />
+    	
+    	<attribute name="menuItemId" type="long" />
+    	<attribute name="name" type="string" />
+    	<attribute name="price" type="money" />
+    </entity>
+</service>

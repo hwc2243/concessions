@@ -22,6 +22,11 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.model.OrganizationConfiguration;
 import com.concessions.local.ui.action.ExitAction;
+import com.concessions.local.ui.action.JournalCloseAction;
+import com.concessions.local.ui.action.JournalOpenAction;
+import com.concessions.local.ui.action.JournalStartAction;
+import com.concessions.local.ui.action.JournalSuspendAction;
+import com.concessions.local.ui.action.JournalViewAction;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
 import com.concessions.local.ui.action.OrderAction;
@@ -38,6 +43,22 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	
 	@Autowired
 	protected LogoutAction logoutAction;
+	
+	@Autowired
+	protected JournalCloseAction journalCloseAction;
+	
+	@Autowired
+	protected JournalOpenAction journalOpenAction;
+	
+	@Autowired
+	protected JournalStartAction journalStartAction;
+
+	@Autowired
+	protected JournalSuspendAction journalSuspendAction;
+	
+	@Autowired
+	protected JournalViewAction journalViewAction;
+	
 	
 	@Autowired 
 	protected OrderAction orderAction;
@@ -111,6 +132,19 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 		JMenuItem exitItem = new JMenuItem(new ExitAction());
 		fileMenu.add(exitItem);
 
+		JMenu journalMenu = new JMenu("Journal");
+		menuBar.add(journalMenu);
+		JMenuItem journalViewItem = new JMenuItem(journalViewAction);
+		journalMenu.add(journalViewItem);
+		JMenuItem journalStartItem = new JMenuItem(journalStartAction);
+		journalMenu.add(journalStartItem);
+		JMenuItem journalOpenItem = new JMenuItem(journalOpenAction);
+		journalMenu.add(journalOpenItem);
+		JMenuItem journalSuspendItem = new JMenuItem(journalSuspendAction);
+		journalMenu.add(journalSuspendItem);
+		JMenuItem journalCloseItem = new JMenuItem(journalCloseAction);
+		journalMenu.add(journalCloseItem);
+		
 		JMenu orderMenu = new JMenu("Order");
 		menuBar.add(orderMenu);
 		

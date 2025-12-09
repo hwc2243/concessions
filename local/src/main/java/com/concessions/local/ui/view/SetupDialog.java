@@ -24,11 +24,11 @@ import javax.swing.SwingConstants;
 
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.Application;
+import com.concessions.local.server.Application;
 import com.concessions.local.ui.model.SetupModel;
-import com.concessions.model.Location;
-import com.concessions.model.Menu;
-import com.concessions.model.Organization;
+import com.concessions.client.model.Location;
+import com.concessions.client.model.Menu;
+import com.concessions.client.model.Organization;
 
 @Component
 public class SetupDialog extends JDialog {

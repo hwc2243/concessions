@@ -16,13 +16,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.Application;
+import com.concessions.client.model.Location;
+import com.concessions.client.model.Menu;
+import com.concessions.client.model.Organization;
+import com.concessions.client.rest.LocationRestClient;
+import com.concessions.client.rest.MenuRestClient;
+import com.concessions.client.rest.OrganizationRestClient;
 import com.concessions.local.model.OrganizationConfiguration;
-import com.concessions.local.rest.LocationRestClient;
-import com.concessions.local.rest.MenuRestClient;
-import com.concessions.local.rest.OrganizationRestClient;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.server.Application;
 import com.concessions.local.service.OrganizationConfigurationService;
 import com.concessions.local.service.PreferenceService;
 import com.concessions.local.service.ServiceException;
@@ -31,9 +34,6 @@ import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.model.SetupModel;
 import com.concessions.local.ui.view.SetupDialog;
-import com.concessions.model.Location;
-import com.concessions.model.Menu;
-import com.concessions.model.Organization;
 
 import jakarta.annotation.PostConstruct;
 

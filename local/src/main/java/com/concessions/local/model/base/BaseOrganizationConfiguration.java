@@ -56,7 +56,7 @@ public abstract class BaseOrganizationConfiguration<T extends BaseOrganizationCo
   protected String menuName = null;
   
 
-
+  
   public Long getId ()
   {
     return this.id;

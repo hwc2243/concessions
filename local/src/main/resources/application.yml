@@ -1,0 +1,5 @@
+application:
+  version: @project.version@
+  name: @project.name@
+  
+authHostName: login.connors.ddns.net

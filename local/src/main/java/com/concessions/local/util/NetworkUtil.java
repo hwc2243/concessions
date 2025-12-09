@@ -24,8 +24,20 @@ public class NetworkUtil {
     }
 
     /**
+     * Checks if a specific host and port are reachable within the default timeout period.
+     * @param host The hostname or IP address (e.g., "www.google.com").
+     * @param port The port number (e.g., 80 for HTTP, 443 for HTTPS).
+     * @return true if the socket connection is successful, false otherwise.
+     */
+
+    public static boolean isConnected(String host, int port)
+    {
+    	return isConnected(host, port, DEFAULT_TIMEOUT_MS);
+    }
+    
+    /**
      * Checks if a specific host and port are reachable within a timeout period.
-     * * @param host The hostname or IP address (e.g., "www.google.com").
+     * @param host The hostname or IP address (e.g., "www.google.com").
      * @param port The port number (e.g., 80 for HTTP, 443 for HTTPS).
      * @param timeoutMs The connection timeout in milliseconds.
      * @return true if the socket connection is successful, false otherwise.

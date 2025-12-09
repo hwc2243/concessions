@@ -1,8 +1,8 @@
 package com.concessions.local.ui.model;
 
-import com.concessions.model.Location;
-import com.concessions.model.Menu;
-import com.concessions.model.Organization;
+import com.concessions.client.model.Location;
+import com.concessions.client.model.Menu;
+import com.concessions.client.model.Organization;
 
 import java.util.List;
 

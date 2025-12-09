@@ -127,14 +127,14 @@ public abstract class BaseExternalLocationRestImpl implements BaseExternalLocati
     public ResponseEntity<Location> updateLocation(@PathVariable Long id, @RequestBody Location location)
     {
       Location updatedLocation = null;
-      
+
       if (location.getId() == 0) 
       {
       	location.setId(id);
       }
       else if (id != location.getId())
       {
-         return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().build();
       }
       try
       {

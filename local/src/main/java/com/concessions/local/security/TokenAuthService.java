@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -35,12 +36,15 @@ import com.google.gson.reflect.TypeToken;
 @Service
 public class TokenAuthService {
 
+	@Value("${authHostName:login.connors.ddns.net}")
+	protected String authHostName;
+	
     // --- Configuration ---
     // NOTE: In a real application, these should be loaded from configuration, not hardcoded.
-    private static final String KEYCLOAK_URL = "https://login.connors.ddns.net/realms/concession";
-    private static final String CLIENT_ID = "local"; // Must be a Public Client in Keycloak
-    private static final String DEVICE_AUTH_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/auth/device";
-    private static final String TOKEN_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/token";
+    private final String KEYCLOAK_URL;
+    private final String CLIENT_ID = "local"; // Must be a Public Client in Keycloak
+    private final String DEVICE_AUTH_ENDPOINT;
+    private final String TOKEN_ENDPOINT;
 
 	private static final String PREF_ACCESS_TOKEN = "accessToken";
 	private static final String PREF_REFRESH_TOKEN = "refreshToken";
@@ -71,6 +75,12 @@ public class TokenAuthService {
         String refresh_token, 
         long expires_in
     ) {}
+    
+    public TokenAuthService (@Value("${authHostName:login.connors.ddns.net}") String authHostName) {
+    	KEYCLOAK_URL = "https://" + authHostName + "/realms/concession";
+    	DEVICE_AUTH_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/auth/device";
+    	TOKEN_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/token";
+    }
     
     public boolean isTokenValid (TokenResponse tokenResponse) {
 		return tokenResponse != null && tokenResponse.access_token() != null && tokenResponse.expires_in() > 60;

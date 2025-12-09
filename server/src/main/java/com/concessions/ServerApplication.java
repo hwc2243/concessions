@@ -2,6 +2,7 @@ package com.concessions;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import jakarta.annotation.PostConstruct;
 
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 @SpringBootApplication
+@EntityScan("com.concessions.model")
 public class ServerApplication {
 	private final Logger logger = LoggerFactory.getLogger(ServerApplication.class);
 	
