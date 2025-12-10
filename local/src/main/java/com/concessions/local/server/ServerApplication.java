@@ -30,10 +30,10 @@ import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.service.MenuService;
 import com.concessions.local.config.AppConfig;
 import com.concessions.local.config.JpaConfig;
-import com.concessions.local.model.OrganizationConfiguration;
+import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
-import com.concessions.local.service.OrganizationConfigurationService;
+import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.PreferenceService;
 import com.concessions.local.ui.AboutDialog;
 import com.concessions.local.ui.ApplicationFrame;
@@ -109,7 +109,7 @@ public class ServerApplication implements PropertyChangeListener {
 	protected MenuService menuService;
 	
 	@Autowired
-	protected OrganizationConfigurationService organizationConfigurationService;
+	protected LocationConfigurationService locationConfigurationService;
 	
 	@Autowired
 	protected PreferenceService preferenceService;
@@ -174,7 +174,7 @@ public class ServerApplication implements PropertyChangeListener {
 		setupController.addSetupListener(new SetupController.SetupListener() {
 			
 			@Override
-			public void setupCompleted(OrganizationConfiguration organizationConfiguration) {
+			public void setupCompleted(LocationConfiguration organizationConfiguration) {
 				executeSales(organizationConfiguration);
 			}
 		});
@@ -210,24 +210,28 @@ public class ServerApplication implements PropertyChangeListener {
 		if (organizationConfigurationIdText == null) {
 			organizationConfigurationIdText = preferenceService.get(ServerApplication.class, "organizationConfigurationId");
 		}
+		
+		LocationConfiguration organizationConfiguration = null;
 		if (organizationConfigurationIdText != null) {
 			long organizationConfigurationId = Long.parseLong(organizationConfigurationIdText);
 			try {
-				OrganizationConfiguration organizationConfiguration = organizationConfigurationService.get(organizationConfigurationId);
-				applicationModel.setOrganizationConfiguration(organizationConfiguration);
-				applicationModel.setOrganizationId(organizationConfiguration.getOrganizationId());
-				applicationModel.setStatusMessage("Ready");
-				executeSales(organizationConfiguration);
+				organizationConfiguration = locationConfigurationService.get(organizationConfigurationId);
+				if (organizationConfiguration != null) {
+					applicationModel.setLocationConfiguration(organizationConfiguration);
+					applicationModel.setOrganizationId(organizationConfiguration.getOrganizationId());
+					applicationModel.setStatusMessage("Ready");
+					executeSales(organizationConfiguration);
+				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
 		}
-		else {
+		if (organizationConfiguration == null) {
 			setupController.execute();
 		}
 	}
 	
-	private void executeSales (OrganizationConfiguration organizationConfiguration) {
+	private void executeSales (LocationConfiguration organizationConfiguration) {
 		try
 		{
 			Menu menu = menuService.get(organizationConfiguration.getMenuId());

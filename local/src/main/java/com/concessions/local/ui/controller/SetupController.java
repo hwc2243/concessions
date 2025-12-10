@@ -22,11 +22,11 @@ import com.concessions.client.model.Organization;
 import com.concessions.client.rest.LocationRestClient;
 import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.rest.OrganizationRestClient;
-import com.concessions.local.model.OrganizationConfiguration;
+import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.ServerApplication;
-import com.concessions.local.service.OrganizationConfigurationService;
+import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.PreferenceService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
@@ -55,7 +55,7 @@ public class SetupController {
 	protected MenuRestClient menuClient;
 	
 	@Autowired
-	protected OrganizationConfigurationService organizationConfigurationService;
+	protected LocationConfigurationService locationConfigurationService;
 
 	@Autowired
 	protected PreferenceService preferenceService;
@@ -101,23 +101,43 @@ public class SetupController {
 		view.addActionListener(e -> {
 			switch (e.getActionCommand()) {
 			case OK_COMMAND:
+				
+				String pin = view.getPin();
+				String confirmPin = view.getConfirmPin();
+				
+				// 1. Validate PIN is purely numeric and not empty
+				if (!isValidPin(pin)) {
+					JOptionPane.showMessageDialog(view, "The Device PIN must be purely numeric and cannot be empty.", 
+							"Validation Error", JOptionPane.ERROR_MESSAGE);
+					return; // Stop processing and keep dialog open
+				}
+				
+				// 2. Validate PIN and Confirm PIN match
+				if (!pin.equals(confirmPin)) {
+					JOptionPane.showMessageDialog(view, "The Device PIN and Confirm PIN do not match.", 
+							"Validation Error", JOptionPane.ERROR_MESSAGE);
+					return; // Stop processing and keep dialog open
+				}
+				
 				Organization organization = view.getSelectedOrganization();
 				Location location = view.getSelectedLocation();
 				Menu menu = view.getSelectedMenu();
 				logger.debug("organization: " + organization);
 				logger.debug("location: " + location);
 				logger.debug("menu: " + menu);
-				OrganizationConfiguration organizationConfiguration = new OrganizationConfiguration();
+				LocationConfiguration organizationConfiguration = new LocationConfiguration();
 				organizationConfiguration.setOrganizationId(organization.getId());
 				organizationConfiguration.setOrganizationName(organization.getName());
 				organizationConfiguration.setLocationId(location.getId());
 				organizationConfiguration.setLocationName(location.getName());
 				organizationConfiguration.setMenuId(menu.getId());
 				organizationConfiguration.setMenuName(menu.getName());
+				organizationConfiguration.setPin(Integer.parseInt(pin));
+				
 				try {
-					organizationConfiguration = organizationConfigurationService.create(organizationConfiguration);
+					organizationConfiguration = locationConfigurationService.create(organizationConfiguration);
 					preferenceService.save(ServerApplication.class, "organizationConfigurationId", String.valueOf(organizationConfiguration.getId()));
-					applicationModel.setOrganizationConfiguration(organizationConfiguration);
+					applicationModel.setLocationConfiguration(organizationConfiguration);
 					notifySetupCompleted(organizationConfiguration);
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -132,6 +152,20 @@ public class SetupController {
 		view.setSetupEnabled(false);
 	}
 
+	private boolean isValidPin(String pin) {
+        if (pin == null || pin.isEmpty()) {
+            return false;
+        }
+        
+        // Check if the pin contains only digits
+        for (char c : pin.toCharArray()) {
+            if (!Character.isDigit(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+	
 	public void execute() {
 		applicationModel.setStatusMessage("Setup...");
 
@@ -197,7 +231,7 @@ public class SetupController {
 		listeners.remove(listener);
 	}
 
-	protected void notifySetupCompleted (OrganizationConfiguration organizationConfiguration) {
+	protected void notifySetupCompleted (LocationConfiguration organizationConfiguration) {
 		for (SetupListener listener : listeners) {
 			listener.setupCompleted(organizationConfiguration);
 		}
@@ -206,6 +240,6 @@ public class SetupController {
 
 	
 	public interface SetupListener {
-		void setupCompleted (OrganizationConfiguration organizationConfiguration);
+		void setupCompleted (LocationConfiguration organizationConfiguration);
 	}
 }

@@ -20,6 +20,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.SwingConstants;
 
 import org.springframework.stereotype.Component;
@@ -40,6 +41,8 @@ public class SetupDialog extends JDialog {
 	private JComboBox<Organization> orgComboBox;
 	private JComboBox<Location> locationComboBox;
 	private JComboBox<Menu> menuComboBox;
+	private JPasswordField pinField;
+	private JPasswordField confirmField;
 	private JButton setupButton;
 	private JButton cancelButton;
 	
@@ -68,6 +71,24 @@ public class SetupDialog extends JDialog {
         groupPanel.add(label);
         groupPanel.add(Box.createVerticalStrut(5)); // Small vertical space
         groupPanel.add(comboBox);
+        
+        return groupPanel;
+    }
+	
+	private JPanel createPinGroup(String labelText, JPasswordField passwordField) {
+        JPanel groupPanel = new JPanel();
+        groupPanel.setLayout(new BoxLayout(groupPanel, BoxLayout.Y_AXIS));
+        
+        JLabel label = new JLabel(labelText, SwingConstants.CENTER);
+        label.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
+        
+        passwordField.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
+        passwordField.setMaximumSize(new Dimension(250, 30));
+        passwordField.setPreferredSize(new Dimension(250, 30));
+        
+        groupPanel.add(label);
+        groupPanel.add(Box.createVerticalStrut(5));
+        groupPanel.add(passwordField);
         
         return groupPanel;
     }
@@ -101,12 +122,28 @@ public class SetupDialog extends JDialog {
         selectionContainer.add(locationPanel);
         selectionContainer.add(Box.createVerticalStrut(20)); // Larger spacer between groups
         
+        // --- Menu selection Group
         menuComboBox = new JComboBox<>();
         menuComboBox.setPreferredSize(new Dimension(250, 30));
         menuComboBox.setEnabled(false); // Disabled until location is chosen
         
         JPanel menuPanel = createSelectionGroup("Choose Menu:", menuComboBox);
         selectionContainer.add(menuPanel);
+        selectionContainer.add(Box.createVerticalStrut(20)); // Larger spacer between groups
+        
+        // --- PIN fields
+        pinField = new JPasswordField(10); // 10 columns wide, but max size controls width
+        pinField.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel pinPanel = createPinGroup("Enter Device PIN (4-6 digits):", pinField);
+        selectionContainer.add(pinPanel);
+        selectionContainer.add(Box.createVerticalStrut(15));
+        
+        // Confirm PIN Field
+        confirmField = new JPasswordField(10);
+        confirmField.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel confirmPinPanel = createPinGroup("Confirm Device PIN:", confirmField);
+        selectionContainer.add(confirmPinPanel);
+        selectionContainer.add(Box.createVerticalStrut(20));
         
         // Action Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -222,6 +259,21 @@ public class SetupDialog extends JDialog {
 		cancelButton.addActionListener(listener);
 	}
 	
+	/**
+     * Retrieves the text entered in the PIN field as a String.
+     * NOTE: char[] is preferred for security, but often String is used for simple retrieval.
+     */
+    public String getPin() {
+        return new String(pinField.getPassword());
+    }
+
+    /**
+     * Retrieves the text entered in the Confirm PIN field as a String.
+     */
+    public String getConfirmPin() {
+        return new String(confirmField.getPassword());
+    }
+    
 	private static class OrganizationPlaceholder extends Organization {
 		@Override
 		public String toString() { return PLEASE_SELECT; }

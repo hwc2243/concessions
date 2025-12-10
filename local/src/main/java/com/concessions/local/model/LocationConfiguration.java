@@ -10,20 +10,20 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 
-import com.concessions.local.model.base.BaseOrganizationConfiguration;
+import com.concessions.local.model.base.BaseLocationConfiguration;
 
 @Entity
-@Table(name="organizationConfiguration")
-public class OrganizationConfiguration extends BaseOrganizationConfiguration<OrganizationConfiguration>
+@Table(name="location_configuration")
+public class LocationConfiguration extends BaseLocationConfiguration<LocationConfiguration>
     implements Serializable
 {
-	public OrganizationConfiguration ()
+	public LocationConfiguration ()
 	{
 		super();
 	}
 	
     // Private constructor to force the use of the Builder
-    private OrganizationConfiguration(Builder builder)
+    private LocationConfiguration(Builder builder)
     {
         this.organizationId = builder.organizationId;
         this.organizationName = builder.organizationName;
@@ -31,6 +31,7 @@ public class OrganizationConfiguration extends BaseOrganizationConfiguration<Org
         this.locationName = builder.locationName;
         this.menuId = builder.menuId;
         this.menuName = builder.menuName;
+        this.pin = builder.pin;
     }
 
     public static class Builder {
@@ -41,6 +42,7 @@ public class OrganizationConfiguration extends BaseOrganizationConfiguration<Org
         private String locationName = null;
         private Long menuId = null;
         private String menuName = null;
+        private Integer pin = null;
 
         public Builder organizationId(Long organizationId) {
             this.organizationId = organizationId;
@@ -72,11 +74,16 @@ public class OrganizationConfiguration extends BaseOrganizationConfiguration<Org
             return this;
         }
 
+        public Builder pin(Integer pin) {
+            this.pin = pin;
+            return this;
+        }
+
         /**
          * The build method creates and returns the immutable Entity object.
          */
-        public OrganizationConfiguration build() {
-            return new OrganizationConfiguration(this);
+        public LocationConfiguration build() {
+            return new LocationConfiguration(this);
         }
     }
 }

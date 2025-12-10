@@ -2,7 +2,7 @@ package com.concessions.local.ui.model;
 
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.model.OrganizationConfiguration;
+import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Menu;
@@ -12,7 +12,7 @@ public class ApplicationModel extends AbstractModel {
 	public static final String CONNECTED = "connected";
 	public static final String JOURNAL = "journal";
 	public static final String MENU = "menu";
-	public static final String ORGANIZATION_CONFIGURATION = "organizationConfiguration";
+	public static final String LOCATION_CONFIGURATION = "locationConfiguration";
 	public static final String STATUS_MESSAGE = "statusMessage";
 	public static final String TOKEN_RESPONSE = "tokenResponse";
 
@@ -24,7 +24,7 @@ public class ApplicationModel extends AbstractModel {
 	
 	private Menu menu;
 	
-	private OrganizationConfiguration organizationConfiguration;
+	private LocationConfiguration locationConfiguration;
 	
 	private long organizationId = -1;
 	
@@ -65,14 +65,14 @@ public class ApplicationModel extends AbstractModel {
 		firePropertyChange(MENU, oldMenu, menu);
 	}
 
-	public OrganizationConfiguration getOrganizationConfiguration() {
-		return organizationConfiguration;
+	public LocationConfiguration getLocationConfiguration() {
+		return locationConfiguration;
 	}
 
-	public void setOrganizationConfiguration(OrganizationConfiguration organizationConfiguration) {
-		OrganizationConfiguration oldOrganizationConfiguration = this.organizationConfiguration;
-		this.organizationConfiguration = organizationConfiguration;
-		firePropertyChange(ORGANIZATION_CONFIGURATION, oldOrganizationConfiguration, organizationConfiguration);
+	public void setLocationConfiguration(LocationConfiguration locationConfiguration) {
+		LocationConfiguration oldLocationConfiguration = this.locationConfiguration;
+		this.locationConfiguration = locationConfiguration;
+		firePropertyChange(LOCATION_CONFIGURATION, oldLocationConfiguration, locationConfiguration);
 	}
 
 	

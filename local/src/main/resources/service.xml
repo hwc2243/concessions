@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <service name="concessions_local" package="com.concessions.local">
-	<entity name="organizationConfiguration" persistence="true">
+	<entity name="locationConfiguration" persistence="true" db-name="location_configuration">
 		<attribute name="organizationId" type="long"/>
 		<attribute name="organizationName" type="string"/>
 		<attribute name="locationId" type="long"/>
 		<attribute name="locationName" type="string"/>
 		<attribute name="menuId" type="long"/>
 		<attribute name="menuName" type="string"/>
+		<attribute name="pin" type="int" />
 	</entity>
 </service>

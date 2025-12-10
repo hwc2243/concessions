@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import com.concessions.local.model.OrganizationConfiguration;
+import com.concessions.local.model.LocationConfiguration;
 
 @MappedSuperclass
-public abstract class BaseOrganizationConfiguration<T extends BaseOrganizationConfiguration> extends AbstractBaseEntity
+public abstract class BaseLocationConfiguration<T extends BaseLocationConfiguration> extends AbstractBaseEntity
     implements Serializable
 {
   @Id
@@ -54,6 +54,9 @@ public abstract class BaseOrganizationConfiguration<T extends BaseOrganizationCo
   
   @Column
   protected String menuName = null;
+  
+  @Column
+  protected Integer pin = null;
   
 
   
@@ -132,6 +135,16 @@ public abstract class BaseOrganizationConfiguration<T extends BaseOrganizationCo
     this.menuName = menuName;
   }
 
+  public Integer getPin ()
+  {
+    return this.pin;
+  }
+  
+  public void setPin (Integer pin)
+  {
+    this.pin = pin;
+  }
+
 
     @Override
 	public int hashCode() {
@@ -147,7 +160,7 @@ public abstract class BaseOrganizationConfiguration<T extends BaseOrganizationCo
 		if (getClass() != obj.getClass())
 			return false;
 			
-		BaseOrganizationConfiguration other = (BaseOrganizationConfiguration) obj;
+		BaseLocationConfiguration other = (BaseLocationConfiguration) obj;
 		return id == other.id;
 	}
 

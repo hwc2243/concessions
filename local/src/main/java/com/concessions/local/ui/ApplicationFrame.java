@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.StatusType;
-import com.concessions.local.model.OrganizationConfiguration;
+import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
 import com.concessions.local.ui.action.JournalOpenAction;
@@ -237,11 +237,18 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 		if (ApplicationModel.STATUS_MESSAGE.equals(evt.getPropertyName())) {
 			String newMessage = (String) evt.getNewValue();
 			statusLabel.setText(newMessage);
-		} else if (ApplicationModel.ORGANIZATION_CONFIGURATION.equals(evt.getPropertyName())) {
-			OrganizationConfiguration organizationConfiguration = (OrganizationConfiguration)evt.getNewValue();
-			orgDisplayLabel.setText("Organization: " + organizationConfiguration.getOrganizationName());
-			locationDisplayLabel.setText("Location: " + organizationConfiguration.getLocationName());
-			menuDisplayLabel.setText("Menu: " + organizationConfiguration.getMenuName());
+		} else if (ApplicationModel.LOCATION_CONFIGURATION.equals(evt.getPropertyName())) {
+			LocationConfiguration organizationConfiguration = (LocationConfiguration)evt.getNewValue();
+			if (organizationConfiguration != null) {
+				orgDisplayLabel.setText("Organization: " + organizationConfiguration.getOrganizationName());
+				locationDisplayLabel.setText("Location: " + organizationConfiguration.getLocationName());
+				menuDisplayLabel.setText("Menu: " + organizationConfiguration.getMenuName());
+			} else {
+				orgDisplayLabel.setText("Organization: N/A");
+				locationDisplayLabel.setText("Location: N/A");
+				menuDisplayLabel.setText("Menu: N/A");
+				
+			}
 		}
 	}
 }
