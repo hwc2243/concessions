@@ -5,6 +5,7 @@ import com.concessions.client.model.Journal;
 import com.concessions.client.repository.base.BaseJournalPersistence;
 import com.concessions.client.model.StatusType;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface JournalPersistence extends BaseJournalPersistence<Journal,Long>
@@ -14,4 +15,6 @@ public interface JournalPersistence extends BaseJournalPersistence<Journal,Long>
     List<Journal> findByStatusAndOrganizationId(StatusType status, Long organizationId);
     
     List<Journal> findByStatusNotAndOrganizationId(StatusType status, Long organizationId);
+    
+    List<Journal> findByStatusNotInAndOrganizationId(Collection<StatusType> statuses, Long organizationId);
 } 

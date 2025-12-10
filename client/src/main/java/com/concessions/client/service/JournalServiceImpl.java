@@ -2,6 +2,7 @@ package com.concessions.client.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,12 +22,14 @@ public class JournalServiceImpl
   extends BaseJournalServiceImpl<Journal,Long>
   implements JournalService
 {
+	protected Collection<StatusType> notClosed = List.of(StatusType.CLOSE, StatusType.SYNC);
+	
 	@Autowired
 	protected OrderService orderService;
 	
 	@Override
 	public List<Journal> findNotClosedJournals() throws ServiceException {
-		return journalPersistence.findByStatusNotAndOrganizationId(StatusType.CLOSE, tenantDiscriminator.getOrganizationId());
+		return journalPersistence.findByStatusNotInAndOrganizationId(notClosed, tenantDiscriminator.getOrganizationId());
 	}
 
 	@Override

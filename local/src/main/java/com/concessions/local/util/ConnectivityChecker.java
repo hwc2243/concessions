@@ -53,7 +53,7 @@ public class ConnectivityChecker {
         connectivityTask = scheduler.scheduleAtFixedRate(() -> {
             try {
             	notifyInternet((NetworkUtil.isConnected() ? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED));
-            	notifyAuth((NetworkUtil.isConnected(authHostName, 443, 100)? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED));
+            	notifyAuth((NetworkUtil.isConnected(authHostName, 443, 1000)? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED));
             } catch (Exception ex) {
                 logger.error("Unexpected error during Connectivity execution:", ex);
             }

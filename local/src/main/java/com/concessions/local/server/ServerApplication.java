@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Menu;
+import com.concessions.client.model.StatusType;
 import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.service.MenuService;
 import com.concessions.local.config.AppConfig;
@@ -235,6 +236,7 @@ public class ServerApplication implements PropertyChangeListener {
 				menuService.create(menu);
 			}
 			applicationModel.setMenu(menu);
+			journalController.initialize();
 			journalStartAction.setEnabled(true);
 		}
 		catch (Exception ex)
@@ -242,7 +244,7 @@ public class ServerApplication implements PropertyChangeListener {
 			ex.printStackTrace();
 		}
 	}
-	
+
 	private void setupDesktopHandler (JFrame ownerFrame) {
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
@@ -262,8 +264,8 @@ public class ServerApplication implements PropertyChangeListener {
                             "macOS_Quit_Menu"
                         ));
                         
-                        // Since ExitAction calls System.exit(0), we instruct the OS to proceed.
-                        response.performQuit(); 
+                        // Since ExitAction calls System.exit(0), we instruct the OS to cancel if we get here.
+                        response.cancelQuit();
                     }
                 });
             }

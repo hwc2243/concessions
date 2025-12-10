@@ -17,6 +17,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
@@ -24,6 +25,8 @@ import javax.swing.WindowConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.client.model.Journal;
+import com.concessions.client.model.StatusType;
 import com.concessions.local.model.OrganizationConfiguration;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
@@ -35,6 +38,7 @@ import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
 import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.action.SetupAction;
+import com.concessions.local.ui.controller.JournalController;
 import com.concessions.local.ui.model.ApplicationModel;
 
 import jakarta.annotation.PostConstruct;
@@ -50,6 +54,9 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	
 	@Autowired
 	protected LogoutAction logoutAction;
+	
+	@Autowired
+	protected JournalController journalController;
 	
 	@Autowired
 	protected JournalCloseAction journalCloseAction;
@@ -83,19 +90,21 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	public ApplicationFrame() {
 		super("Concessions Management System");
 
-		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+            	// HWC for some reason if we do this outside of here it defaults to EXIT_ON_CLOSE
+        		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
                 exitAction.actionPerformed(new ActionEvent(
-                    ApplicationFrame.this, 
+                    this, 
                     ActionEvent.ACTION_PERFORMED, 
                     null
                 ));
             }
         });
 	}
-
+	
+	
 	private JPanel initializeCurrentSetupPanel() {
 		// Use GridLayout(1, 3) for one row and three equal columns with 10px horizontal gap
 	    JPanel currentSetupPanel = new JPanel(new GridLayout(1, 3, 10, 0));

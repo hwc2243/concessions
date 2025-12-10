@@ -71,11 +71,21 @@ public class JournalController implements OrderListener {
 	}
 
 	@PostConstruct
-	protected void initialize () {
+	protected void postConstruct () {
 		orderController.addOrderListener(this);
 		addJournalListener(orderController);
 	}
 	
+	public void initialize () {
+		try {
+			List<Journal> journals = journalService.findAllByStatus(StatusType.OPEN);
+			if (journals.size() == 1) {
+				open(journals.iterator().next());
+			}
+		} catch (ServiceException ex) {
+			ex.printStackTrace();
+		}
+	}
 	public void view() {
 		try {
 			List<Journal> journals = journalService.findAll();
@@ -211,6 +221,8 @@ public class JournalController implements OrderListener {
 
 	public void start() {
 		try {
+			// HWC TODO
+			// this should be find new, opened or suspended journals
 			List<Journal> incompleteJournals = journalService.findNotClosedJournals();
 			if (!incompleteJournals.isEmpty()) {
 				JOptionPane.showMessageDialog(null, "Can not start a new journal until existing journal is closed.",
