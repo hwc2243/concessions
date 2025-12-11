@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <service name="concessions_local" package="com.concessions.local">
+	<entity name="device" db-name="device">
+		<attribute name="deviceId" type="string" />
+		<attribute name="deviceType" type="enum" enum-values="SERVER KITCHEN POS" />
+	</entity>
+	
 	<entity name="locationConfiguration" persistence="true" db-name="location_configuration">
 		<attribute name="organizationId" type="long"/>
 		<attribute name="organizationName" type="string"/>

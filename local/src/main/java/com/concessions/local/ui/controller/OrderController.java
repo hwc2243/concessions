@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.DisabledLayerUI;
+import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
@@ -40,6 +41,9 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class OrderController 
 	implements OrderActionListener, JournalListener {
+	
+	@Autowired
+	protected OrderAction orderAction;
 	
 	@Autowired
 	protected ApplicationModel applicationModel;
@@ -195,18 +199,21 @@ public class OrderController
 			disableLayerUI.setMessage("Journal closed");
 			disableLayer.setEnabled(false);
 		}
+		orderAction.setEnabled(false);
 	}
 
 	@Override
 	public void journalOpened(Journal journal) {
-		// HWC this only get initialized the first time the view is activated
+		// HWC this should only get initialized the first time the view is activated
 		if (disableLayer != null) {
 			disableLayer.setEnabled(true);
 		}
+		orderAction.setEnabled(true);
 	}
 
 	@Override
 	public void journalStarted(Journal journal) {
+		orderAction.setEnabled(false);
 	}
 
 	@Override
@@ -216,6 +223,7 @@ public class OrderController
 			disableLayerUI.setMessage("Journal suspended");
 			disableLayer.setEnabled(false);
 		}
+		orderAction.setEnabled(false);
 	}
 
 	@Override

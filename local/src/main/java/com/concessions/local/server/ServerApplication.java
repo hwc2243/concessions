@@ -7,6 +7,8 @@ import java.awt.desktop.QuitHandler;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.UUID;
+import java.util.prefs.BackingStoreException;
 
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -16,6 +18,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -30,11 +35,15 @@ import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.service.MenuService;
 import com.concessions.local.config.AppConfig;
 import com.concessions.local.config.JpaConfig;
+import com.concessions.local.model.Device;
+import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.PreferenceService;
+import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.AboutDialog;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.ExitAction;
@@ -57,6 +66,8 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class ServerApplication implements PropertyChangeListener {
 
+	private static final Logger logger = LoggerFactory.getLogger(ServerApplication.class)
+			;
 	@Value("${application.name:Concessions Management System}")
 	protected String applicationName;
 	
@@ -74,6 +85,9 @@ public class ServerApplication implements PropertyChangeListener {
 	
 	@Autowired
 	protected DeviceCodeController deviceCodeController;
+	
+	@Autowired
+	protected DeviceService deviceService;
 	
 	@Autowired
 	protected JournalCloseAction journalCloseAction;
@@ -95,9 +109,6 @@ public class ServerApplication implements PropertyChangeListener {
 	
 	@Autowired
 	protected LogoutAction logoutAction;
-	
-	@Autowired
-	protected OrderAction orderAction;
 	
 	@Autowired
 	protected SetupAction setupAction;
@@ -125,6 +136,28 @@ public class ServerApplication implements PropertyChangeListener {
 
 	@PostConstruct
 	protected void initialize () {
+		
+		// register our deviceId
+		String deviceId = preferenceService.get(ServerApplication.class, "deviceId");
+		if (StringUtils.isBlank(deviceId)) {
+			deviceId = UUID.randomUUID().toString();
+			Device device = new Device();
+			device.setDeviceId(deviceId);
+			device.setDeviceType(DeviceTypeType.SERVER);
+			try {
+				deviceService.create(device);
+				logger.info("Registered device {} as server", deviceId);
+			} catch (ServiceException e) {
+				logger.error("Failed to register device {} as server", deviceId);
+				System.exit(1);
+			}
+			try {
+				preferenceService.save(ServerApplication.class, "deviceId", deviceId);
+			} catch (BackingStoreException ex) {
+				ex.printStackTrace();
+			}
+		}
+		
 		applicationModel.setTokenResponse(authService.loadTokenResponse());
 		applicationModel.addPropertyChangeListener(applicationFrame);
 		applicationModel.addPropertyChangeListener(this);
@@ -145,25 +178,20 @@ public class ServerApplication implements PropertyChangeListener {
 			
 			@Override
 			public void journalStarted(Journal journal) {
-				orderAction.setEnabled(false);
 			}
 
 			@Override
 			public void journalOpened(Journal journal) {
-				orderAction.setEnabled(true);
 				journalCloseAction.setEnabled(true);
 				journalSuspendAction.setEnabled(true);
 			}
 
 			@Override
 			public void journalClosed(Journal journal) {
-				orderAction.setEnabled(false);
 			}
 
 			@Override
 			public void journalSuspended(Journal journal) {
-				orderAction.setEnabled(false);
-				
 			}
 			
 			public void journalSynced (Journal journal) {

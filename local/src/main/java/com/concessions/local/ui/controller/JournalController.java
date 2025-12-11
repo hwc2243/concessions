@@ -185,12 +185,13 @@ public class JournalController implements OrderListener {
 				journal = journals.get(0);
 			}
 			if (journal.getStatus() == null) {
-				journal.setStatus(StatusType.NEW);
+				journal.setStatus(StatusType.OPEN);
 			}
 			switch (journal.getStatus()) {
 			case NEW:
 			case SUSPEND:
-				break;
+				journal.setStatus(StatusType.OPEN);
+				journalService.update(journal);
 			case OPEN:
 				notifyJournalOpened(journal);
 				break;
