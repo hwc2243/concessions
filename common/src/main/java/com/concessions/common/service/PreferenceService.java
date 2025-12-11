@@ -1,27 +1,22 @@
-package com.concessions.local.service;
+package com.concessions.common.service;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.springframework.stereotype.Service;
-
-import com.concessions.local.server.ServerApplication;
-
-
-@Service
 public class PreferenceService {
 
 	private Map<Class<?>, Preferences> prefMap = new HashMap<>();
-
-	public PreferenceService() {
-		System.out.println("PreferenceService created");
+	private Class<?> appClass;
+	
+	public PreferenceService(Class<?> appClass) {
+		this.appClass = appClass;
 	}
 
 	public void clear (String name) throws BackingStoreException
 	{
-		clear(ServerApplication.class, name);
+		clear(appClass, name);
 	}
 	
 	public void clear (Class<?> clazz, String name) throws BackingStoreException
@@ -33,7 +28,7 @@ public class PreferenceService {
 	
 	public String get (String name) 
 	{
-		return get(ServerApplication.class, name);
+		return get(appClass, name);
 	}
 	
 	public String get (Class<?> clazz, String name)
@@ -43,7 +38,7 @@ public class PreferenceService {
 	
 	public void save (String name, String value) throws BackingStoreException
 	{
-		save(ServerApplication.class, name, value);
+		save(appClass, name, value);
 	}
 	
 	public void save (Class<?> clazz, String name, String value) throws BackingStoreException

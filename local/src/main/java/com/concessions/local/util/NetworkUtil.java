@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Utility class for checking network connectivity using a simple socket.
  */
 public class NetworkUtil {
+	private static final Logger logger = LoggerFactory.getLogger(NetworkUtil.class);
 
     private static final String DEFAULT_HOST = "8.8.8.8"; // Google's public DNS server
     private static final int DEFAULT_PORT = 53;          // DNS port
@@ -47,11 +51,11 @@ public class NetworkUtil {
         try (Socket socket = new Socket()) {
             // Attempt to connect to the host:port within the timeout
             socket.connect(new InetSocketAddress(host, port), timeoutMs);
-            System.out.println("Connection successful to " + host + ":" + port);
+            logger.debug("Connection successful to " + host + ":" + port);
             return true;
         } catch (IOException e) {
             // This catches UnknownHostException, ConnectionException, and SocketTimeoutException
-            System.out.println("Connection failed. Host " + host + " is unreachable or connection timed out.");
+            logger.error("Connection failed. Host " + host + " is unreachable or connection timed out.");
             // Log the error detail for debugging, but return false for the connectivity check
             // e.printStackTrace(); 
             return false;

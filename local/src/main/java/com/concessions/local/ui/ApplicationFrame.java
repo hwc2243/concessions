@@ -90,18 +90,6 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	public ApplicationFrame() {
 		super("Concessions Management System");
 
-		addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-            	// HWC for some reason if we do this outside of here it defaults to EXIT_ON_CLOSE
-        		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                exitAction.actionPerformed(new ActionEvent(
-                    this, 
-                    ActionEvent.ACTION_PERFORMED, 
-                    null
-                ));
-            }
-        });
 	}
 	
 	
@@ -184,7 +172,18 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	@PostConstruct
 	private void initializeUI() {
 		// Set up the main frame
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                exitAction.actionPerformed(new ActionEvent(
+                    this, 
+                    ActionEvent.ACTION_PERFORMED, 
+                    null
+                ));
+            }
+        });
+
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setSize(800, 400);
 		setLayout(new BorderLayout(5, 5));
 		setJMenuBar(initializeMenuBar());

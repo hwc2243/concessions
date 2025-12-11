@@ -25,7 +25,6 @@ public class LogoutAction extends AbstractAction {
 	
 	public LogoutAction() {
 		super("Logout");
-		System.out.println("LogoutAction initialized");
 		putValue(Action.NAME, "Logout");
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_O);
 		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));

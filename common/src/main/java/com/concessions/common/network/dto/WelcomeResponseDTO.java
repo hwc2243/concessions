@@ -1,4 +1,4 @@
-package com.concessions.local.dto;
+package com.concessions.common.network.dto;
 
 public class WelcomeResponseDTO {
 

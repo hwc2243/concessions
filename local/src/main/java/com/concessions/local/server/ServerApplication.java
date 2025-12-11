@@ -1,22 +1,19 @@
 package com.concessions.local.server;
 
-import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.awt.desktop.QuitEvent;
-import java.awt.desktop.QuitHandler;
+import static com.concessions.local.base.Constants.DEVICE_ID_PREFERENCE;
+import static com.concessions.local.base.Constants.LOCATION_CONFIGURATION_PREFERENCE;
+import static com.concessions.local.base.Constants.PIN_PREFERENCE;
+
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
 import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 
-import com.formdev.flatlaf.FlatLightLaf;
-
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -30,9 +27,11 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Menu;
-import com.concessions.client.model.StatusType;
 import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.service.MenuService;
+import com.concessions.common.service.PreferenceService;
+import com.concessions.local.base.AbstractApplication;
+import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.config.AppConfig;
 import com.concessions.local.config.JpaConfig;
 import com.concessions.local.model.Device;
@@ -42,9 +41,7 @@ import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
-import com.concessions.local.service.PreferenceService;
 import com.concessions.local.service.ServiceException;
-import com.concessions.local.ui.AboutDialog;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
@@ -52,7 +49,6 @@ import com.concessions.local.ui.action.JournalStartAction;
 import com.concessions.local.ui.action.JournalSuspendAction;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
-import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.controller.DeviceCodeController;
 import com.concessions.local.ui.controller.JournalController;
@@ -64,10 +60,10 @@ import com.concessions.local.ui.view.DeviceCodeDialog;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class ServerApplication implements PropertyChangeListener {
+public class ServerApplication extends AbstractApplication implements PropertyChangeListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(ServerApplication.class)
-			;
+	private static final Logger logger = LoggerFactory.getLogger(ServerApplication.class);
+	
 	@Value("${application.name:Concessions Management System}")
 	protected String applicationName;
 	
@@ -138,7 +134,7 @@ public class ServerApplication implements PropertyChangeListener {
 	protected void initialize () {
 		
 		// register our deviceId
-		String deviceId = preferenceService.get(ServerApplication.class, "deviceId");
+		String deviceId = preferenceService.get(DEVICE_ID_PREFERENCE);
 		if (StringUtils.isBlank(deviceId)) {
 			deviceId = UUID.randomUUID().toString();
 			Device device = new Device();
@@ -152,12 +148,17 @@ public class ServerApplication implements PropertyChangeListener {
 				System.exit(1);
 			}
 			try {
-				preferenceService.save(ServerApplication.class, "deviceId", deviceId);
+				preferenceService.save(DEVICE_ID_PREFERENCE, deviceId);
 			} catch (BackingStoreException ex) {
 				ex.printStackTrace();
 			}
 		}
 		
+		String pin = preferenceService.get(PIN_PREFERENCE);
+		if (StringUtils.isNotBlank(pin)) {
+			applicationModel.setPIN(pin);
+		}
+
 		applicationModel.setTokenResponse(authService.loadTokenResponse());
 		applicationModel.addPropertyChangeListener(applicationFrame);
 		applicationModel.addPropertyChangeListener(this);
@@ -209,6 +210,7 @@ public class ServerApplication implements PropertyChangeListener {
 	}
 		
 	public void execute () {
+		logger.info("Starting Server application");
 		// Show the main application window
 		SwingUtilities.invokeLater(() -> {
 			setupDesktopHandler(applicationFrame);
@@ -217,7 +219,7 @@ public class ServerApplication implements PropertyChangeListener {
 		});
 		
 		// if we have an organizationConfiguration it doesn't matter if we are authenticated
-		String organizationConfigurationIdText = preferenceService.get(ServerApplication.class, "organizationConfigurationId");
+		String organizationConfigurationIdText = preferenceService.get(LOCATION_CONFIGURATION_PREFERENCE);
 		if (organizationConfigurationIdText == null) {
 			if (applicationModel.getTokenResponse() == null || !authService.isTokenValid(applicationModel.getTokenResponse())) {
 				executeDeviceCode();
@@ -236,7 +238,7 @@ public class ServerApplication implements PropertyChangeListener {
 
 	private void executeSetup (String organizationConfigurationIdText) {
 		if (organizationConfigurationIdText == null) {
-			organizationConfigurationIdText = preferenceService.get(ServerApplication.class, "organizationConfigurationId");
+			organizationConfigurationIdText = preferenceService.get(LOCATION_CONFIGURATION_PREFERENCE);
 		}
 		
 		LocationConfiguration organizationConfiguration = null;
@@ -277,34 +279,19 @@ public class ServerApplication implements PropertyChangeListener {
 		}
 	}
 
-	private void setupDesktopHandler (JFrame ownerFrame) {
-        if (Desktop.isDesktopSupported()) {
-            Desktop desktop = Desktop.getDesktop();
-            if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
-                desktop.setAboutHandler(e -> {
-                    showAboutDialog(ownerFrame);
-                });
-            }
-            if (desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
-                desktop.setQuitHandler(new QuitHandler() {
-                    @Override
-                    public void handleQuitRequestWith(QuitEvent e, java.awt.desktop.QuitResponse response) {
-                        // Trigger the ExitAction when the user selects "Quit" from the macOS menu.
-                        exitAction.actionPerformed(new ActionEvent(
-                            applicationFrame, 
-                            ActionEvent.ACTION_PERFORMED, 
-                            "macOS_Quit_Menu"
-                        ));
-                        
-                        // Since ExitAction calls System.exit(0), we instruct the OS to cancel if we get here.
-                        response.cancelQuit();
-                    }
-                });
-            }
-        }
-    }
+	protected boolean performQuit ()
+	{
+        // Trigger the ExitAction when the user selects "Quit" from the macOS menu.
+        exitAction.actionPerformed(new ActionEvent(
+            applicationFrame, 
+            ActionEvent.ACTION_PERFORMED, 
+            "macOS_Quit_Menu"
+        ));
+        
+        return false;
+	}
 	
-	private void showAboutDialog(JFrame ownerFrame) {
+	protected void showAboutDialog(JFrame ownerFrame) {
         AboutDialog.showAboutDialog(ownerFrame, applicationName, applicationVersion);
 	}
 	
@@ -319,15 +306,7 @@ public class ServerApplication implements PropertyChangeListener {
 	}
 
 	public static void main(String[] args) {
-		if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-			try {
-				System.setProperty("apple.awt.application.name", "Concessions");
-				System.setProperty("apple.laf.useScreenMenuBar", "true");
-			    UIManager.setLookAndFeel(new FlatLightLaf());
-			} catch( Exception ex ) {
-			    System.err.println( "Failed to initialize LaF" );
-			}
-		}
+		initializeLaF("CMS Server");
 
 		AnnotationConfigApplicationContext context = null;
 		try {
@@ -336,11 +315,11 @@ public class ServerApplication implements PropertyChangeListener {
 
 	        // Load application.yml from classpath
 	        environment.getPropertySources().addLast(
-	                new ResourcePropertySource("application.yml", "classpath:application.yml"));
+	                new ResourcePropertySource("application-server.yml", "classpath:application-server.yml"));
 			
 			context.register(JpaConfig.class);
 			context.register(AppConfig.class);
-            context.scan("com.concessions.local", "com.concessions.client");
+            context.scan("com.concessions.local", "com.concessions.client", "com.concessions.common");
             context.refresh();
             context.registerShutdownHook();
 
@@ -350,7 +329,7 @@ public class ServerApplication implements PropertyChangeListener {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Failed to start application: " + e.getMessage(), "Fatal Error",
+			JOptionPane.showMessageDialog(null, "Failed to start Server application: " + e.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			if (context != null)
 			{

@@ -22,11 +22,13 @@ public class ApplicationModel extends AbstractModel {
 	
 	private Journal journal;
 	
-	private Menu menu;
-	
 	private LocationConfiguration locationConfiguration;
 	
+	private Menu menu;
+	
 	private long organizationId = -1;
+	
+	private String pin;
 	
 	private TokenResponse tokenResponse;
 	
@@ -75,7 +77,6 @@ public class ApplicationModel extends AbstractModel {
 		firePropertyChange(LOCATION_CONFIGURATION, oldLocationConfiguration, locationConfiguration);
 	}
 
-	
 	public long getOrganizationId() {
 		return organizationId;
 	}
@@ -84,6 +85,14 @@ public class ApplicationModel extends AbstractModel {
 		this.organizationId = organizationId;
 	}
 
+	public String getPIN ()	{
+		return this.pin;
+	}
+	
+	public void setPIN (String pin) {
+		this.pin = pin;
+	}
+	
 	public String getStatusMessage() {
 		return statusMessage;
 	}

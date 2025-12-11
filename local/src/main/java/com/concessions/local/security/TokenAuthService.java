@@ -24,8 +24,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+import com.concessions.common.service.PreferenceService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
-import com.concessions.local.service.PreferenceService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -219,8 +219,6 @@ public class TokenAuthService {
 	 * @return The TokenResponse object, or null if no tokens are found.
 	 */
 	public TokenResponse loadTokenResponse() {
-		System.out.println("preferenceService = " + preferenceService);
-		
 		String accessToken = preferenceService.get(TokenAuthService.class, PREF_ACCESS_TOKEN);
 		String refreshToken = preferenceService.get(TokenAuthService.class, PREF_REFRESH_TOKEN);
 		String expiryEpochSecondsText = preferenceService.get(TokenAuthService.class, PREF_EXPIRY_TIME);

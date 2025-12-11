@@ -1,6 +1,6 @@
 application:
   version: @project.version@
-  name: @project.name@
+  name: @project.name@ Server
   
 apiHostName: https://concessions.connors.ddns.net
 authHostName: login.connors.ddns.net

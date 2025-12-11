@@ -6,9 +6,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import com.concessions.client.rest.base.HeaderProvider;
+import com.concessions.common.service.PreferenceService;
 import com.concessions.local.bean.BearerTokenHeaderProvider;
 import com.concessions.local.bean.TenantDiscriminator;
+import com.concessions.local.server.ServerApplication;
 import com.concessions.local.ui.model.ApplicationModel;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Configuration class for application-wide background task management.
@@ -42,5 +45,15 @@ public class AppConfig {
     @Bean
     public TenantDiscriminator tenantDiscriminator (ApplicationModel model) {
     	return new TenantDiscriminator(model);
+    }
+    
+    @Bean
+    public PreferenceService preferenceService () {
+    	return new PreferenceService(ServerApplication.class);
+    }
+    
+    @Bean
+    public ObjectMapper objectMapper () {
+    	return new ObjectMapper();
     }
 }

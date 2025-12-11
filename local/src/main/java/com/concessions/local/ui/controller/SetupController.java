@@ -1,5 +1,8 @@
 package com.concessions.local.ui.controller;
 
+import static com.concessions.local.base.Constants.LOCATION_CONFIGURATION_PREFERENCE;
+import static com.concessions.local.base.Constants.PIN_PREFERENCE;
+
 import static com.concessions.local.ui.action.AbstractAction.CANCEL_COMMAND;
 import static com.concessions.local.ui.action.AbstractAction.OK_COMMAND;
 
@@ -22,12 +25,12 @@ import com.concessions.client.model.Organization;
 import com.concessions.client.rest.LocationRestClient;
 import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.rest.OrganizationRestClient;
+import com.concessions.common.service.PreferenceService;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.ServerApplication;
 import com.concessions.local.service.LocationConfigurationService;
-import com.concessions.local.service.PreferenceService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.SetupAction;
@@ -136,7 +139,9 @@ public class SetupController {
 				
 				try {
 					organizationConfiguration = locationConfigurationService.create(organizationConfiguration);
-					preferenceService.save(ServerApplication.class, "organizationConfigurationId", String.valueOf(organizationConfiguration.getId()));
+					preferenceService.save(LOCATION_CONFIGURATION_PREFERENCE, String.valueOf(organizationConfiguration.getId()));
+					preferenceService.save(PIN_PREFERENCE, pin);
+					applicationModel.setPIN(pin);
 					applicationModel.setLocationConfiguration(organizationConfiguration);
 					notifySetupCompleted(organizationConfiguration);
 				} catch (Exception ex) {

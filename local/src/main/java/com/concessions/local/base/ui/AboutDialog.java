@@ -1,4 +1,4 @@
-package com.concessions.local.ui;
+package com.concessions.local.base.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;

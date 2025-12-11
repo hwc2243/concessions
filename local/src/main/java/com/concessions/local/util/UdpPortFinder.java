@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class UdpPortFinder {
+	private static final Logger logger = LoggerFactory.getLogger(UdpPortFinder.class);
 
 	private static final int START_PORT = 9371;
 	private static final int MAX_PORT = 9390; // Ending at the beginning of the Dynamic/Private range
@@ -23,7 +27,7 @@ public class UdpPortFinder {
 			try {
 				// Attempt to create and bind the DatagramSocket to the current port
 				DatagramSocket socket = new DatagramSocket(currentPort);
-				System.out.printf("Successfully bound UDP service to port: %d\n", currentPort);
+				logger.debug("Successfully bound UDP service to port: {}", currentPort);
 
 				// Return the successfully bound socket
 				return socket;
@@ -31,7 +35,7 @@ public class UdpPortFinder {
 			} catch (SocketException e) {
 				// Port is already in use or another binding error occurred.
 				// Log the failure (optional) and try the next port.
-				System.out.printf("Port %d is unavailable. Trying next port...\n", currentPort);
+				logger.info("Port {} is unavailable. Trying next port...", currentPort);
 				currentPort++;
 			}
 		}

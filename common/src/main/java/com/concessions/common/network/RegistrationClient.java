@@ -1,6 +1,4 @@
-package com.concessions.local.registration;
-
-import com.concessions.local.dto.WelcomeResponseDTO;
+package com.concessions.common.network;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -11,9 +9,11 @@ import java.net.SocketTimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 // --- Jackson Imports ---
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.concessions.common.network.dto.WelcomeResponseDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 // --- End Jackson Imports ---
 
@@ -22,14 +22,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  * Scans a range of ports, sends a "HELLO" message, and attempts to parse 
  * the "WELCOME:{json}" response into a WelcomeResponseDTO.
  */
-public class LocalRegistrationClient {
+@Component
+public class RegistrationClient {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalRegistrationClient.class);
+    private static final Logger log = LoggerFactory.getLogger(RegistrationClient.class);
     // Initialize Jackson ObjectMapper once for thread-safe use
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
     private static final int START_PORT = 9371;
-    private static final int MAX_PORT = 49151; // End of the Registered Ports range
+    private static final int MAX_PORT = 9390; // End of the Registered Ports range
     private static final int TIMEOUT_MS = 3000; // 3 seconds timeout
     private static final String HELLO_MESSAGE = "HELLO";
     private static final String RESPONSE_PREFIX = "WELCOME:";
@@ -146,7 +147,7 @@ public class LocalRegistrationClient {
     }
     
     public static void main(String[] args) {
-        LocalRegistrationClient client = new LocalRegistrationClient();
+        RegistrationClient client = new RegistrationClient();
         log.info("Starting client discovery...");
         WelcomeResponseDTO dto = client.discoverService();
         
