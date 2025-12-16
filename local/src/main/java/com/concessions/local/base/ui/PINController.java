@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.network.client.ClientService;
-import com.concessions.local.network.dto.PINVerifyRequest;
+import com.concessions.local.network.dto.PINVerifyRequestDTO;
 import com.concessions.local.network.dto.SimpleResponseDTO;
 import com.concessions.local.network.manager.PINManager;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -39,6 +39,8 @@ public class PINController {
 	private List<PINListener> listeners = new java.util.ArrayList<>();
 
 	private PINDialog view;
+	
+	private String pin;
 	
 	public PINController() {
 	}
@@ -70,6 +72,7 @@ public class PINController {
 				if (verifyPIN(pin)) {
 				
 					try {
+						this.pin = pin;
 						preferenceService.save(PIN_PREFERENCE, pin);
 						notifyPINSet(pin);
 					} catch (Exception ex) {
@@ -87,7 +90,24 @@ public class PINController {
 		});
 	}
 
-	private boolean isValidPin(String pin) {
+	public void execute (JFrame frame, String pin) {
+		if (StringUtils.isBlank(pin) || !verifyPIN(pin)) {
+			SwingUtilities.invokeLater(() -> {
+				view.setLocationRelativeTo(frame);
+				view.pack();
+				view.setVisible(true);
+			});
+		} else {
+			notifyPINSet(pin);
+		}
+		
+	}
+
+	public String getPIN () {
+		return this.pin;
+	}
+	
+	protected boolean isValidPin(String pin) {
         if (pin == null || pin.isEmpty()) {
             return false;
         }
@@ -101,18 +121,8 @@ public class PINController {
         return true;
     }
 	
-	public void execute (JFrame frame, String pin) {
-		if (StringUtils.isBlank(pin) || !verifyPIN(pin)) {
-			SwingUtilities.invokeLater(() -> {
-				view.setLocationRelativeTo(frame);
-				view.pack();
-				view.setVisible(true);
-			});
-		}
-	}
-
 	protected boolean verifyPIN (String pin) {
-		PINVerifyRequest pinVerify = new PINVerifyRequest();
+		PINVerifyRequestDTO pinVerify = new PINVerifyRequestDTO();
 		pinVerify.setPIN(pin);
 		try {
 			clientService.sendRequest(PINManager.NAME, PINManager.VERIFY_ACTION, pinVerify, SimpleResponseDTO.class);
@@ -139,6 +149,6 @@ public class PINController {
 	}
 	
 	public interface PINListener {
-		void pinSet (String pin);
+		public void pinSet (String pin);
 	}
 }

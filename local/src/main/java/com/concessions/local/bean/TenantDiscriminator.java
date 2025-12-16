@@ -1,12 +1,12 @@
 package com.concessions.local.bean;
 
-import com.concessions.local.ui.model.ApplicationModel;
+import com.concessions.local.server.model.ServerApplicationModel;
 
 public class TenantDiscriminator implements com.concessions.client.rest.TenantDiscriminator {
 
-	protected ApplicationModel model;
+	protected ServerApplicationModel model;
 	
-	public TenantDiscriminator(ApplicationModel model) {
+	public TenantDiscriminator(ServerApplicationModel model) {
 		this.model = model;
 	}
 	

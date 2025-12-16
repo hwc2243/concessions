@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.security.TokenAuthService;
-import com.concessions.local.ui.model.ApplicationModel;
+import com.concessions.local.server.model.ServerApplicationModel;
 
 @Component
 public class LogoutAction extends AbstractAction {
@@ -21,7 +21,7 @@ public class LogoutAction extends AbstractAction {
 	protected TokenAuthService authService;
 
 	@Autowired
-	protected ApplicationModel applicationModel;
+	protected ServerApplicationModel applicationModel;
 	
 	public LogoutAction() {
 		super("Logout");

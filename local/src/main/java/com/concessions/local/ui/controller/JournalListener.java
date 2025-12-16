@@ -1,15 +1,17 @@
 package com.concessions.local.ui.controller;
 
-import com.concessions.client.model.Journal;
+import com.concessions.local.network.dto.JournalDTO;
 
 public interface JournalListener {
-	void journalClosed(Journal journal);
-
-	void journalOpened(Journal journal);
-
-	void journalStarted(Journal journal);
-
-	void journalSuspended(Journal journal);
+	void journalClosed(JournalDTO journal);
 	
-	void journalSynced(Journal journal);
+	void journalChanged(JournalDTO journal);
+
+	void journalOpened(JournalDTO journal);
+
+	void journalStarted(JournalDTO journal);
+
+	void journalSuspended(JournalDTO journal);
+	
+	void journalSynced(JournalDTO journal);
 }

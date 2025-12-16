@@ -1,9 +1,10 @@
 package com.concessions.local.network.dto;
 
-public class PINVerifyRequest {
-	private String pin;
+public abstract class AbstractPINRequestDTO {
+
+	protected String pin;
 	
-	public PINVerifyRequest() {
+	public AbstractPINRequestDTO() {
 		// TODO Auto-generated constructor stub
 	}
 

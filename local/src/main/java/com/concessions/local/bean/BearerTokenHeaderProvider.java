@@ -8,17 +8,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.concessions.client.rest.base.HeaderProvider;
-import com.concessions.local.ui.model.ApplicationModel;
+import com.concessions.local.server.model.ServerApplicationModel;
 
 public class BearerTokenHeaderProvider implements HeaderProvider {
 	private static final Logger logger = LoggerFactory.getLogger(BearerTokenHeaderProvider.class);
 
 	@Autowired
-	protected ApplicationModel model;
+	protected ServerApplicationModel model;
 	
 	protected Map<String, String> headers = new HashMap<>();
 	
-	public BearerTokenHeaderProvider(ApplicationModel model) {
+	public BearerTokenHeaderProvider(ServerApplicationModel model) {
 		this.model = model;
 	}
 

@@ -3,6 +3,7 @@ package com.concessions.local.pos;
 import static com.concessions.local.base.Constants.DEVICE_ID_PREFERENCE;
 import static com.concessions.local.base.Constants.PIN_PREFERENCE;
 
+import java.beans.PropertyChangeListener;
 import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 
@@ -27,10 +28,29 @@ import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
 import com.concessions.local.model.DeviceTypeType;
+import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.network.client.ClientException;
 import com.concessions.local.network.client.ClientService;
+import com.concessions.local.network.dto.ConfigurationRequestDTO;
+import com.concessions.local.network.dto.ConfigurationResponseDTO;
 import com.concessions.local.network.dto.DeviceRegistrationRequestDTO;
+import com.concessions.local.network.dto.DeviceRegistrationResponseDTO;
+import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.local.network.dto.MenuDTO;
+import com.concessions.local.network.dto.SimpleDeviceRequestDTO;
+import com.concessions.local.network.manager.ConfigurationManager;
+import com.concessions.local.network.manager.DeviceManager;
+import com.concessions.local.network.manager.MenuManager;
+import com.concessions.local.network.manager.OrderManager;
 import com.concessions.local.pos.config.AppConfig;
+import com.concessions.local.pos.controller.OrderSubmissionController;
+import com.concessions.local.pos.model.POSApplicationModel;
 import com.concessions.local.pos.ui.POSApplicationFrame;
+import com.concessions.local.ui.controller.OrderController;
+import com.concessions.local.ui.model.OrderModel;
+import com.concessions.local.ui.view.OrderPanel;
+
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class POSApplication extends AbstractApplication {
@@ -53,6 +73,9 @@ public class POSApplication extends AbstractApplication {
 	private POSApplicationFrame frame;
 	
 	@Autowired
+	private POSApplicationModel model;
+	
+	@Autowired
 	private PreferenceService preferenceService;
 	
 	@Autowired
@@ -62,9 +85,19 @@ public class POSApplication extends AbstractApplication {
 		// TODO Auto-generated constructor stub
 	}
 
+	@PostConstruct
+	protected void initialize () {
+		logger.info("Starting POS Application");
+		pinController.addPINListener(new PINController.PINListener () {
+			public void pinSet (String pin) {
+				model.setPin(pin);
+				executeStartup();
+			}
+		});
+	}
+	
 	public void execute ()
 	{
-		logger.info("Starting POS Application");
 		String deviceId = preferenceService.get(DEVICE_ID_PREFERENCE);
 		if (StringUtils.isBlank(deviceId)) {
 			deviceId = UUID.randomUUID().toString();
@@ -74,6 +107,7 @@ public class POSApplication extends AbstractApplication {
 				ex.printStackTrace();
 			}
 		}
+		model.setDeviceId(deviceId);
 		
 		WelcomeResponseDTO welcomeResponse = registrationClient.discoverService();
 		if (welcomeResponse == null) {
@@ -91,10 +125,101 @@ public class POSApplication extends AbstractApplication {
 		
 		String pin = preferenceService.get(PIN_PREFERENCE);
 		pinController.execute(frame, pin);
-		
+	}
+
+	protected void executeStartup () {
+		model.setStatusMessage("Configuring");
+		executeDeviceRegistration();
+		executeLocationConfiguration();
+		executeMenu();
+		executeStartOrders();
+		model.setStatusMessage("Ready");
+	}
+	
+	protected void executeDeviceRegistration () {
 		DeviceRegistrationRequestDTO deviceRegistration = new DeviceRegistrationRequestDTO();
-		deviceRegistration.setDeviceId(deviceId);
+		deviceRegistration.setDeviceId(model.getDeviceId());
 		deviceRegistration.setDeviceType(DeviceTypeType.POS);
+		deviceRegistration.setPIN(model.getPin());
+		
+		DeviceRegistrationResponseDTO deviceRegistrationResponse;
+		try {
+			deviceRegistrationResponse = clientService.sendRequest(DeviceManager.NAME, DeviceManager.REGISTER, deviceRegistration, DeviceRegistrationResponseDTO.class);
+			model.setDeviceNumber(deviceRegistrationResponse.getDeviceNumber());
+		} catch (ClientException ex) {
+			JOptionPane.showMessageDialog(null, "Failed to register device - " + ex.getMessage(), "Fatal Error",
+					JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	protected void executeLocationConfiguration () {
+		ConfigurationRequestDTO request = new ConfigurationRequestDTO();
+		request.setPIN(model.getPin());
+		
+		ConfigurationResponseDTO response = null;
+		try {
+			response = clientService.sendRequest(ConfigurationManager.NAME, ConfigurationManager.LOCATION, request, ConfigurationResponseDTO.class);
+			LocationConfiguration locationConfiguration = new LocationConfiguration();
+			locationConfiguration.setOrganizationName(response.getOrganizationName());
+			locationConfiguration.setLocationName(response.getLocationName());
+			locationConfiguration.setMenuName(response.getMenuName());
+			model.setLocationConfiguration(locationConfiguration);
+		} catch (ClientException ex) {
+			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
+					JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+			System.exit(1);
+		}
+	}
+	
+	protected void executeMenu () {
+		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
+		request.setPIN(model.getPin());
+		request.setDeviceId(model.getDeviceId());
+		
+		MenuDTO response = null;
+		try
+		{
+			response = clientService.sendRequest(MenuManager.NAME, MenuManager.GET, request, MenuDTO.class);
+			model.setMenu(response);
+		} catch (ClientException ex) {
+			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
+					JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+			System.exit(1);
+		}
+		
+	}
+	
+	protected void executeStartOrders () {
+		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
+		request.setPIN(model.getPin());
+		request.setDeviceId(model.getDeviceId());
+		
+		JournalDTO journal = null;
+		try {
+			journal = clientService.sendRequest(OrderManager.NAME, OrderManager.JOURNAL_GET, request, JournalDTO.class);
+			model.setJournal(journal);
+		} catch (ClientException ex) {
+			JOptionPane.showMessageDialog(null, "Failed to retrieve journal - " + ex.getMessage(), "Fatal Error",
+					JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+			System.exit(1);
+		}
+
+
+		/*
+		OrderModel orderModel = new OrderModel();
+		orderModel.setMenu(model.getMenu());
+		OrderPanel panel = new OrderPanel(orderModel);
+		frame.setMainContent(panel);
+		*/
+		OrderSubmissionController orderSubmissionController = new OrderSubmissionController(model, clientService);
+		OrderController controller = new OrderController(frame);
+		controller.addOrderListener(orderSubmissionController);
+		controller.execute(model.getMenu(), journal);
 	}
 	
 	public static void main(String[] args) {

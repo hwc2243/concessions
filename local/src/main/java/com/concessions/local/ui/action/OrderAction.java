@@ -10,11 +10,15 @@ import javax.swing.KeyStroke;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.controller.OrderController;
 
 @Component
 public class OrderAction extends AbstractAction {
 
+	@Autowired
+	protected ServerApplicationModel model;
+	
 	@Autowired
 	protected OrderController orderController;
 	
@@ -27,7 +31,7 @@ public class OrderAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		orderController.execute();
+		orderController.execute(model.getMenu(), model.getJournal());
 	}
 
 }

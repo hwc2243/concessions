@@ -30,11 +30,11 @@ import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.ServerApplication;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.SetupAction;
-import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.model.SetupModel;
 import com.concessions.local.ui.view.SetupDialog;
 
@@ -46,7 +46,7 @@ public class SetupController {
 	private static final Logger logger = LoggerFactory.getLogger(SetupController.class);
 	
 	@Autowired
-	protected ApplicationModel applicationModel;
+	protected ServerApplicationModel applicationModel;
 	
 	@Autowired
 	protected OrganizationRestClient organizationClient;

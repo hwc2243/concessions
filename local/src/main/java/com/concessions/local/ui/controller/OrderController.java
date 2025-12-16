@@ -1,6 +1,7 @@
 package com.concessions.local.ui.controller;
 
 import java.awt.Color;
+import java.awt.GridLayout;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -18,18 +19,23 @@ import javax.swing.JPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.base.ui.AbstractFrame;
+import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.local.network.dto.JournalMapper;
+import com.concessions.local.network.dto.MenuDTO;
+import com.concessions.local.network.dto.MenuItemDTO;
+import com.concessions.local.network.dto.OrderDTO;
+import com.concessions.local.network.dto.OrderItemDTO;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.DisabledLayerUI;
 import com.concessions.local.ui.action.OrderAction;
-import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
 import com.concessions.local.ui.view.OrderPanel;
 import com.concessions.local.ui.view.OrderPanel.OrderActionListener;
 import com.concessions.client.model.CategoryType;
 import com.concessions.client.model.Journal;
-import com.concessions.client.model.Menu;
-import com.concessions.client.model.MenuItem;
 import com.concessions.client.model.Order;
 import com.concessions.client.model.OrderItem;
 import com.concessions.client.service.OrderItemService;
@@ -45,11 +51,7 @@ public class OrderController
 	@Autowired
 	protected OrderAction orderAction;
 	
-	@Autowired
-	protected ApplicationModel applicationModel;
-	
-	@Autowired
-	protected ApplicationFrame applicationFrame;
+	protected AbstractFrame applicationFrame;
 	
 	@Autowired
 	protected OrderService orderService;
@@ -57,11 +59,7 @@ public class OrderController
 	@Autowired
 	protected OrderItemService orderItemService;
 	
-	private DisabledLayerUI disableLayerUI;
-	
-	private JLayer<JPanel> disableLayer;
-	
-	private Journal journal = null;
+	private JournalDTO journal = null;
 	
 	private OrderModel orderModel;
 	
@@ -69,9 +67,10 @@ public class OrderController
 	
 	private List<OrderListener> listeners = new java.util.ArrayList<>();
 	
-	public OrderController() {
+	public OrderController(@Autowired AbstractFrame applicationFrame) {
+		this.applicationFrame = applicationFrame;
 	}
-
+ 
 	@PostConstruct
 	protected void initialize ()
 	{
@@ -85,24 +84,24 @@ public class OrderController
 		listeners.remove(listener);
 	}
 
-	protected void notifyOrderCreated (Order order) {
+	protected void notifyOrderCreated (OrderDTO order) {
 		listeners.stream().forEach(listener -> listener.onOrderCreated(order));
 	}
 	
-	public void execute ()
+	public void execute (MenuDTO menu, JournalDTO journal)
 	{
-		Menu menu = applicationModel.getMenu();
 		if (menu == null) {
 			JOptionPane.showMessageDialog(applicationFrame, "Failed to start order system, no menu loaded", "Error",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		journal = applicationModel.getJournal();
 		if (journal == null) {
 			JOptionPane.showMessageDialog(applicationFrame, "Failed to start order system, no journal active", "Error",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		
+		this.journal = journal;
 		
 		// the UI creation should happen once in initialize and should then support changing the menuData
 		orderModel = new OrderModel();
@@ -110,11 +109,7 @@ public class OrderController
 		orderPanel = new OrderPanel(orderModel);
 		orderPanel.addOrderActionListener(this);
 
-		disableLayerUI = new DisabledLayerUI();
-        disableLayer = new JLayer<>(orderPanel, disableLayerUI);
-        JPanel mainPane = new JPanel();
-        mainPane.add(disableLayer);
-		applicationFrame.setMainContent(mainPane);
+		applicationFrame.setMainContent(orderPanel);
 	}
 	
 	/**
@@ -141,8 +136,24 @@ public class OrderController
                 "Checkout Complete", 
                 JOptionPane.INFORMATION_MESSAGE);
 
+        OrderDTO order = new OrderDTO();
+        order.setJournalId(journal.getId());
+        order.setOrderTotal(orderModel.getOrderTotal());
+        order.setMenuId(orderModel.getMenu().getId());
+        order.setStartTs(LocalDateTime.now());
 		
-        Order order = orderService.newInstance(journal);
+		orderModel.getOrderEntries().stream().forEach(orderEntry -> {
+			OrderItemDTO orderItem = new OrderItemDTO();
+			orderItem.setMenuItemId(orderEntry.menuItem().getId());
+			orderItem.setName(orderEntry.menuItem().getName());
+			orderItem.setPrice(orderEntry.menuItem().getPrice());
+			order.addOrderItem(orderItem);
+		});
+		
+		notifyOrderCreated(order);
+		
+		/*
+        Order order = orderService.newInstance(JournalMapper.fromDto(journal));
         order.setOrderTotal(orderModel.getOrderTotal());
         order.setMenuId(orderModel.getMenu().getId());
         order.setStartTs(LocalDateTime.now());
@@ -161,10 +172,10 @@ public class OrderController
         } catch (ServiceException ex) {
         	ex.printStackTrace();
         }
+        */
         
 		orderModel.clear();
 		updateTotal();
-		
 	}
 
 	@Override
@@ -174,7 +185,7 @@ public class OrderController
 	}
 
 	@Override
-	public void onItemAdded(MenuItem item) {
+	public void onItemAdded (MenuItemDTO item) {
         // Add the item to the order list model
         orderModel.add(new OrderEntry(item));
         updateTotal();
@@ -187,47 +198,45 @@ public class OrderController
 	}
 	
 	
-	public interface OrderListener {
-		public void onOrderCreated (Order order);
-	}
-
-
 	@Override
-	public void journalClosed(Journal journal) {
-		// HWC this only get initialized the first time the view is activated
-		if (disableLayer != null) {
-			disableLayerUI.setMessage("Journal closed");
-			disableLayer.setEnabled(false);
+	public void journalClosed(JournalDTO journal) {
+		if (orderPanel != null) {
+			orderPanel.disable("Journal closed");
 		}
 		orderAction.setEnabled(false);
 	}
 
 	@Override
-	public void journalOpened(Journal journal) {
-		// HWC this should only get initialized the first time the view is activated
-		if (disableLayer != null) {
-			disableLayer.setEnabled(true);
+	public void journalChanged (JournalDTO journal) {
+	}
+	
+	@Override
+	public void journalOpened(JournalDTO journal) {
+		if (orderPanel != null) {
+			orderPanel.enable();
 		}
 		orderAction.setEnabled(true);
+		this.journal = journal;
 	}
 
 	@Override
-	public void journalStarted(Journal journal) {
+	public void journalStarted(JournalDTO journal) {
 		orderAction.setEnabled(false);
 	}
 
 	@Override
-	public void journalSuspended(Journal journal) {
-		// HWC this only get initialized the first time the view is activated
-		if (disableLayer != null) {
-			disableLayerUI.setMessage("Journal suspended");
-			disableLayer.setEnabled(false);
+	public void journalSuspended(JournalDTO journal) {
+		if (orderPanel != null) {
+			orderPanel.disable("Journal suspended");
 		}
 		orderAction.setEnabled(false);
 	}
 
 	@Override
-	public void journalSynced(Journal journal) {
-		// HWC TODO can't think of anything to do at the moment
+	public void journalSynced(JournalDTO journal) {
+	}
+	
+	public interface OrderListener {
+		public void onOrderCreated (OrderDTO order);
 	}
 }

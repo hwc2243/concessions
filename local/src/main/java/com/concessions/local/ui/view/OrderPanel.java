@@ -4,8 +4,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import com.concessions.client.model.CategoryType;
-import com.concessions.client.model.MenuItem;
-
+import com.concessions.local.network.dto.MenuItemDTO;
+import com.concessions.local.ui.DisabledLayerUI;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
 
@@ -34,26 +34,25 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
     private OrderModel orderModel;
     
     // --- UI Components ---
-    private final JPanel categoryPanel = new JPanel();
     private final JPanel itemCardPanel = new JPanel(new CardLayout()); // Uses CardLayout to swap item panels
-    //private final DefaultListModel<OrderEntry> orderListModel = new DefaultListModel<>();
     private final JLabel totalLabel = new JLabel("$0.00");
     private final JPanel centerTitlePanel = new JPanel(new BorderLayout(5, 5));
     
-    // --- Mock Data ---
-    private final Map<String, JPanel> itemPanels = new LinkedHashMap<>(); // To store panels per category
+    private JPanel contentPane;
+	private DisabledLayerUI disableLayerUI;
+	private JLayer<JPanel> disableLayer;
 
     private List<OrderActionListener> listeners = new ArrayList<>();
     
     public OrderPanel (OrderModel orderModel) {
     	this.orderModel = orderModel;
     	orderModel.addPropertyChangeListener(this);
-    	Map<CategoryType, List<MenuItem>> menuData = orderModel.getMenuData();
+    	Map<CategoryType, List<MenuItemDTO>> menuData = orderModel.getMenuData();
     	
-        // 1. Set up the main layout: Use GridBagLayout for flexible column widths
-        setLayout(new GridBagLayout()); 
-        setBorder(new EmptyBorder(10, 10, 10, 10)); // Outer padding
-
+    	contentPane = new JPanel();
+    	contentPane.setLayout(new GridBagLayout());	
+        contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
+        
         // Setup GridBagConstraints for components
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH; // Fill both horizontal and vertical space
@@ -65,19 +64,19 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
         gbc.gridx = 0;
         // Narrowest: Weight 1.0 (approx 20% of extra width)
         gbc.weightx = 1.0; 
-        add(createLeftPane(new TreeSet(menuData.keySet())), gbc);
+        contentPane.add(createLeftPane(new TreeSet(menuData.keySet())), gbc);
 
         // --- 2. Center Pane (Menu Items) ---
         gbc.gridx = 1;
         // Widest: Weight 2.5 (approx 50% of extra width)
         gbc.weightx = 2.5; 
-        add(createCenterPane(menuData), gbc);
+        contentPane.add(createCenterPane(menuData), gbc);
 
         // --- 3. Right Pane (Order) ---
         gbc.gridx = 2;
         // Moderately wide: Weight 1.5 (approx 30% of extra width)
         gbc.weightx = 1.5; 
-        add(createRightPane(), gbc);
+        contentPane.add(createRightPane(), gbc);
         
         // Set initial state
         if (!menuData.isEmpty()) {
@@ -90,8 +89,27 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
             // Set the initial center pane title
             centerTitlePanel.setBorder(BorderFactory.createTitledBorder(initialCategory.getName()));
         }
+        
+        disableLayerUI = new DisabledLayerUI();
+        disableLayer = new JLayer<>(contentPane, disableLayerUI);
+        setLayout(new BorderLayout()); 
+        setBorder(new EmptyBorder(10, 10, 10, 10)); // Outer padding
+        add(disableLayer, BorderLayout.CENTER);
     }
 
+    public void enable () {
+    	disableLayer.setEnabled(true);
+    	disableLayer.repaint();
+    	super.setEnabled(true);
+    }
+    
+    public void disable (String message) {
+    	disableLayerUI.setMessage(message);
+    	disableLayer.setEnabled(false);
+    	disableLayer.repaint();
+    	super.setEnabled(false);
+    }
+    
     public void addOrderActionListener (OrderActionListener listener) {
     	listeners.add(listener);
     }
@@ -102,8 +120,9 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
     
     // --- Pane Initialization Methods ---
     private JScrollPane createLeftPane (Set<CategoryType> categories) {
-        categoryPanel.setLayout(new GridLayout(0, 1, 5, 5)); // One column, vertical gap
-        categoryPanel.setBorder(BorderFactory.createTitledBorder("Categories"));
+    	JPanel categoryPanel = new JPanel();
+    	categoryPanel.setLayout(new GridLayout(0, 1, 5, 5));
+        categoryPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         for (CategoryType category : categories) {
             JButton categoryButton = new JButton(category.getName());
@@ -125,22 +144,23 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
         }
         
         JScrollPane scrollPane = new JScrollPane(categoryPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Categories"));
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        
         return scrollPane;
     }
 
-    private JPanel createCenterPane(Map<CategoryType, List<MenuItem>> menuData) {
+    private JPanel createCenterPane(Map<CategoryType, List<MenuItemDTO>> menuData) {
         
         // Populate the CardLayout with specific panels for each category
-        for (Map.Entry<CategoryType, List<MenuItem>> entry : menuData.entrySet()) {
+        for (Map.Entry<CategoryType, List<MenuItemDTO>> entry : menuData.entrySet()) {
             CategoryType category = entry.getKey();
-            List<MenuItem> items = entry.getValue();
+            List<MenuItemDTO> items = entry.getValue();
             
             // Create a panel for the items of this category
             JPanel categoryItemPanel = new JPanel(new GridLayout(0, 2, 5, 5)); // 2 columns for items
             
-            for (MenuItem item : items) {
+            for (MenuItemDTO item : items) {
                 JButton itemButton = new JButton("<html><center>" + item.getName() + "<br>($" + item.getPrice().setScale(2) + ")</center></html>");
                 itemButton.setBackground(new Color(240, 240, 240));
                 itemButton.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -272,9 +292,9 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
      * Action listener for the MenuItem buttons.
      */
     private class AddItemToOrderAction implements ActionListener {
-        private final MenuItem item;
+        private final MenuItemDTO item;
 
-        public AddItemToOrderAction(MenuItem item) {
+        public AddItemToOrderAction(MenuItemDTO item) {
             this.item = item;
         }
 
@@ -284,7 +304,7 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
         }
     }
     
-    protected void notifyOnItemAdded (MenuItem item) {
+    protected void notifyOnItemAdded (MenuItemDTO item) {
     	listeners.stream().forEach(listener -> listener.onItemAdded(item));
     }
 
@@ -302,7 +322,7 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
     
     public interface OrderActionListener {
     	
-    	void onItemAdded (MenuItem item);
+    	void onItemAdded (MenuItemDTO item);
     	
     	void onItemRemoved (int index);
     	

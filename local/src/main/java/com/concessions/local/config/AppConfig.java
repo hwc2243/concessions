@@ -10,8 +10,10 @@ import com.concessions.common.service.PreferenceService;
 import com.concessions.local.bean.BearerTokenHeaderProvider;
 import com.concessions.local.bean.TenantDiscriminator;
 import com.concessions.local.server.ServerApplication;
-import com.concessions.local.ui.model.ApplicationModel;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Configuration class for application-wide background task management.
@@ -38,12 +40,12 @@ public class AppConfig {
     }
     
     @Bean
-    public HeaderProvider headerProvider (ApplicationModel model) {
+    public HeaderProvider headerProvider (ServerApplicationModel model) {
     	return new BearerTokenHeaderProvider(model);
     }
     
     @Bean
-    public TenantDiscriminator tenantDiscriminator (ApplicationModel model) {
+    public TenantDiscriminator tenantDiscriminator (ServerApplicationModel model) {
     	return new TenantDiscriminator(model);
     }
     
@@ -54,6 +56,8 @@ public class AppConfig {
     
     @Bean
     public ObjectMapper objectMapper () {
-    	return new ObjectMapper();
+		return JsonMapper.builder()
+			     .addModule(new JavaTimeModule())
+			     .build();
     }
 }

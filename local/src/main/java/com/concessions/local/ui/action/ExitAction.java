@@ -14,9 +14,10 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.StatusType;
+import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.controller.JournalController;
-import com.concessions.local.ui.model.ApplicationModel;
 
 @Component
 public class ExitAction extends AbstractAction {
@@ -30,7 +31,7 @@ public class ExitAction extends AbstractAction {
 	protected ApplicationFrame frame;
 	
 	@Autowired
-	protected ApplicationModel model;
+	protected ServerApplicationModel model;
 	
 	@Autowired
 	protected JournalController journalController;
@@ -43,7 +44,7 @@ public class ExitAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Journal journal = model.getJournal();
+		JournalDTO journal = model.getJournal();
 		if (journal != null && journal.getStatus() == StatusType.OPEN) {
 			int result = JOptionPane.showOptionDialog(
 		            frame,

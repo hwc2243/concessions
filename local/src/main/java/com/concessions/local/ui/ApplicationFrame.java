@@ -27,7 +27,9 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.StatusType;
+import com.concessions.local.base.ui.AbstractFrame;
 import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
 import com.concessions.local.ui.action.JournalOpenAction;
@@ -39,12 +41,11 @@ import com.concessions.local.ui.action.LogoutAction;
 import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.controller.JournalController;
-import com.concessions.local.ui.model.ApplicationModel;
 
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class ApplicationFrame extends JFrame implements PropertyChangeListener{
+public class ApplicationFrame extends AbstractFrame implements PropertyChangeListener {
 
 	@Autowired
 	protected ExitAction exitAction;
@@ -80,55 +81,13 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	@Autowired
 	protected SetupAction setupAction;
 	
-	private JLabel orgDisplayLabel;
-	private JLabel locationDisplayLabel;
-	private JLabel menuDisplayLabel;
-	private JLabel statusLabel;
-	
-	private JPanel mainContentPanel;
-	
 	public ApplicationFrame() {
 		super("Concessions Management System");
 
 	}
 	
-	
-	private JPanel initializeCurrentSetupPanel() {
-		// Use GridLayout(1, 3) for one row and three equal columns with 10px horizontal gap
-	    JPanel currentSetupPanel = new JPanel(new GridLayout(1, 3, 10, 0));
-	    
-	    // Add some vertical padding and a background color
-	    currentSetupPanel.setBorder(
-	    		BorderFactory.createCompoundBorder(
-	    				BorderFactory.createEmptyBorder(10, 5, 10, 5), // Outer padding
-	    				BorderFactory.createLineBorder(new Color(220, 220, 220)) // Light border
-	    		));
-	    currentSetupPanel.setBackground(new Color(245, 245, 245)); // Very light gray background
-
-	    // Initialize display labels
-	    orgDisplayLabel = new JLabel("Organization: N/A", SwingConstants.CENTER);
-	    locationDisplayLabel = new JLabel("Location: N/A", SwingConstants.CENTER);
-	    menuDisplayLabel = new JLabel("Menu: N/A", SwingConstants.CENTER);
-	    
-	    // Styling (use a slightly smaller, distinct font for clarity)
-	    Font statusFont = new Font("Arial", Font.BOLD, 12);
-	    orgDisplayLabel.setFont(statusFont);
-	    locationDisplayLabel.setFont(statusFont);
-	    menuDisplayLabel.setFont(statusFont);
-	    
-	    orgDisplayLabel.setForeground(new Color(50, 50, 150)); // Distinct color for Organization
-	    locationDisplayLabel.setForeground(new Color(50, 150, 50)); // Distinct color for Location
-	    menuDisplayLabel.setForeground(new Color(150, 50, 50)); // Distinct color for Menu
-
-	    // Add labels to the panel
-	    currentSetupPanel.add(orgDisplayLabel);
-	    currentSetupPanel.add(locationDisplayLabel);
-	    currentSetupPanel.add(menuDisplayLabel);
-
-	    return currentSetupPanel;
-	}
-	
-	private JMenuBar initializeMenuBar() {
+	@Override
+	protected JMenuBar initializeMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -170,7 +129,7 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 	}
 	
 	@PostConstruct
-	private void initializeUI() {
+	private void initialize () {
 		// Set up the main frame
 		addWindowListener(new WindowAdapter() {
             @Override
@@ -185,69 +144,10 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener{
 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setSize(800, 400);
-		setLayout(new BorderLayout(5, 5));
-		setJMenuBar(initializeMenuBar());
-
-		JPanel currentSetupPanel = initializeCurrentSetupPanel();
-		mainContentPanel = new JPanel(new BorderLayout());
-		mainContentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		mainContentPanel.add(new JLabel("Welcome to the Concession Management System"));
 		
-		JPanel contentWrapperPanel = new JPanel(new BorderLayout(5, 5));
-		
-		contentWrapperPanel.add(currentSetupPanel, BorderLayout.SOUTH);
-		contentWrapperPanel.add(mainContentPanel, BorderLayout.CENTER);
-		
-		add(contentWrapperPanel, BorderLayout.CENTER);
-
-		statusLabel = new JLabel("Initializing...");
-		statusLabel.setFont(new Font("Arial", Font.BOLD, 14));
-		statusLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8)); // Add padding
-
-		JPanel statusBar = new JPanel(new BorderLayout());
-		statusBar.setBorder(
-				BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY), // Top
-																													// separator
-																													// line
-						BorderFactory.createEmptyBorder(0, 0, 0, 0)));
-		statusBar.setBackground(Color.WHITE);
-
-		statusBar.add(statusLabel, BorderLayout.WEST);
-
-		add(statusBar, BorderLayout.SOUTH);
+		super.initializeUI();
 
 		setLocationRelativeTo(null);
 		setVisible(true);
-	}
-	
-	/**
-	 * Clears the existing content in the main content area and displays the new panel.
-	 * * @param contentPanel The JPanel (e.g., ConcessionOrderPanel) to display.
-	 */
-	public void setMainContent(JPanel contentPanel) {
-		mainContentPanel.removeAll();
-		mainContentPanel.add(contentPanel, BorderLayout.CENTER);
-		mainContentPanel.revalidate();
-		mainContentPanel.repaint();
-	}
-
-	@Override
-	public void propertyChange (PropertyChangeEvent evt) {
-		if (ApplicationModel.STATUS_MESSAGE.equals(evt.getPropertyName())) {
-			String newMessage = (String) evt.getNewValue();
-			statusLabel.setText(newMessage);
-		} else if (ApplicationModel.LOCATION_CONFIGURATION.equals(evt.getPropertyName())) {
-			LocationConfiguration organizationConfiguration = (LocationConfiguration)evt.getNewValue();
-			if (organizationConfiguration != null) {
-				orgDisplayLabel.setText("Organization: " + organizationConfiguration.getOrganizationName());
-				locationDisplayLabel.setText("Location: " + organizationConfiguration.getLocationName());
-				menuDisplayLabel.setText("Menu: " + organizationConfiguration.getMenuName());
-			} else {
-				orgDisplayLabel.setText("Organization: N/A");
-				locationDisplayLabel.setText("Location: N/A");
-				menuDisplayLabel.setText("Menu: N/A");
-				
-			}
-		}
 	}
 }

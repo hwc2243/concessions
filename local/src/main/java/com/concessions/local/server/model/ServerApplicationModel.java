@@ -1,30 +1,29 @@
-package com.concessions.local.ui.model;
+package com.concessions.local.server.model;
 
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.base.model.AbstractModel;
+import com.concessions.local.base.model.POSModel;
 import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.local.network.dto.MenuDTO;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
-import com.concessions.client.model.Journal;
-import com.concessions.client.model.Menu;
 
 @Component
-public class ApplicationModel extends AbstractModel {
+public class ServerApplicationModel extends AbstractModel implements POSModel {
 	public static final String CONNECTED = "connected";
 	public static final String JOURNAL = "journal";
 	public static final String MENU = "menu";
 	public static final String LOCATION_CONFIGURATION = "locationConfiguration";
-	public static final String STATUS_MESSAGE = "statusMessage";
 	public static final String TOKEN_RESPONSE = "tokenResponse";
 
-	private String statusMessage;
-	
 	private boolean connected;
 	
-	private Journal journal;
+	private JournalDTO journal;
 	
 	private LocationConfiguration locationConfiguration;
 	
-	private Menu menu;
+	private MenuDTO menu;
 	
 	private long organizationId = -1;
 	
@@ -32,7 +31,7 @@ public class ApplicationModel extends AbstractModel {
 	
 	private TokenResponse tokenResponse;
 	
-	public ApplicationModel() {
+	public ServerApplicationModel() {
 	}
 
 	public boolean isConnected() {
@@ -45,24 +44,24 @@ public class ApplicationModel extends AbstractModel {
 		firePropertyChange(CONNECTED, oldConnected, connected);
 	}
 
-	public Journal getJournal ()
+	public JournalDTO getJournal ()
 	{
 		return this.journal;		
 	}
 	
-	public void setJournal (Journal journal)
+	public void setJournal (JournalDTO journal)
 	{
-		Journal oldJournal = this.journal;
+		JournalDTO oldJournal = this.journal;
 		this.journal = journal;
 		firePropertyChange(JOURNAL, oldJournal, journal);
 	}
 	
-	public Menu getMenu() {
+	public MenuDTO getMenu() {
 		return menu;
 	}
 
-	public void setMenu(Menu menu) {
-		Menu oldMenu = this.menu;
+	public void setMenu (MenuDTO menu) {
+		MenuDTO oldMenu = this.menu;
 		this.menu = menu;
 		firePropertyChange(MENU, oldMenu, menu);
 	}
@@ -91,16 +90,6 @@ public class ApplicationModel extends AbstractModel {
 	
 	public void setPIN (String pin) {
 		this.pin = pin;
-	}
-	
-	public String getStatusMessage() {
-		return statusMessage;
-	}
-	
-	public void setStatusMessage(String statusMessage) {
-		String oldMessage = this.statusMessage;
-		this.statusMessage = statusMessage;
-		firePropertyChange(STATUS_MESSAGE, oldMessage, statusMessage);
 	}
 	
 	public TokenResponse getTokenResponse() {

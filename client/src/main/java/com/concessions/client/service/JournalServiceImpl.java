@@ -66,7 +66,7 @@ public class JournalServiceImpl
 
 	@Override
 	@Transactional
-	public synchronized void addOrder (Journal journal, Order order) throws ServiceException {
+	public synchronized Journal addOrder (Journal journal, Order order) throws ServiceException {
 		if (order.getJournalId() != null && !"".equals(order.getJournalId())) {
 			if (!order.getJournalId().equals(journal.getId())) {
 				throw new ServiceException("Order is assigned to another journal already");
@@ -78,6 +78,6 @@ public class JournalServiceImpl
 		
 		journal.setOrderCount(journal.getOrderCount() + 1);
 		journal.setSalesTotal(journal.getSalesTotal().add(order.getOrderTotal()));
-		update(journal);
+		return update(journal);
 	}
 }

@@ -23,8 +23,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import com.concessions.client.model.Journal;
 import com.concessions.client.model.StatusType;
+import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.ui.CurrencyRenderer;
 import com.concessions.local.ui.LocalDateTimeRenderer;
 import com.concessions.local.ui.controller.JournalController;
@@ -40,7 +40,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
 		this(controller, new ArrayList<>());
 	}
 
-	public JournalPanel (JournalController controller, List<Journal> journals) {
+	public JournalPanel (JournalController controller, List<JournalDTO> journals) {
 		this.controller = controller;
 		controller.addJournalListener(this);
 		
@@ -85,7 +85,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
         
         JMenuItem viewDetailsItem = new JMenuItem("View Orders");
         viewDetailsItem.addActionListener(e -> {
-        	Journal journal = getSelectedJournal();
+        	JournalDTO journal = getSelectedJournal();
         	if (journal != null) {
         		controller.viewOrders(journal);
         	}
@@ -94,7 +94,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
         
         JMenuItem openJournalItem = new JMenuItem("Open");
         openJournalItem.addActionListener(e -> {
-        	Journal journal = getSelectedJournal();
+        	JournalDTO journal = getSelectedJournal();
         	if (journal != null) {
         		controller.open(journal);
         	}
@@ -103,7 +103,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
         
         JMenuItem suspendJournalItem = new JMenuItem("Suspend");
         suspendJournalItem.addActionListener(e -> {
-        	Journal journal = getSelectedJournal();
+        	JournalDTO journal = getSelectedJournal();
         	if (journal != null) {
         		controller.suspend(journal);
         	}
@@ -112,7 +112,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
         
         JMenuItem closeJournalItem = new JMenuItem("Close");
         closeJournalItem.addActionListener(e -> {
-        	Journal journal = getSelectedJournal();
+        	JournalDTO journal = getSelectedJournal();
         	if (journal != null) {
         		controller.close(journal);
         	}
@@ -122,7 +122,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
         
         JMenuItem syncJournalItem = new JMenuItem("Sync");
         syncJournalItem.addActionListener(e -> {
-        	Journal journal = getSelectedJournal();
+        	JournalDTO journal = getSelectedJournal();
         	if (journal != null) {
         		controller.sync(journal);
         	}
@@ -155,7 +155,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
                 
                 // Convert view row to model row index
                 int modelRow = journalTable.convertRowIndexToModel(r);
-                Journal journal = tableModel.getJournalAt(modelRow);
+                JournalDTO journal = tableModel.getJournalAt(modelRow);
                 
                 // Dynamically enable/disable "Close Journal"
                 for (Component comp : popupMenu.getComponents()) {
@@ -185,8 +185,8 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
         }
     }
 	
-	private Journal getSelectedJournal () {
-		Journal journal = null;
+	private JournalDTO getSelectedJournal () {
+		JournalDTO journal = null;
 		int selectedRow = journalTable.getSelectedRow();
         if (selectedRow != -1) {
             int modelRow = journalTable.convertRowIndexToModel(selectedRow);
@@ -196,12 +196,12 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
 	}
 	
 	class JournalTableModel extends AbstractTableModel {
-	    private final List<Journal> data;
+	    private final List<JournalDTO> data;
 	    private final String[] columnNames = {
 	        "Status", "Order Count", "Sales Total", "Start Time", "End Time", "Sync Time"
 	    };
 
-	    public JournalTableModel(List<Journal> data) {
+	    public JournalTableModel(List<JournalDTO> data) {
 	        this.data = data;
 	    }
 
@@ -222,7 +222,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
 
 	    @Override
 	    public Object getValueAt(int rowIndex, int columnIndex) {
-	        Journal journal = data.get(rowIndex);
+	        JournalDTO journal = data.get(rowIndex);
 	        return switch (columnIndex) {
 	        	case 0 -> journal.getStatus();
 	        	case 1 -> journal.getOrderCount();
@@ -245,17 +245,17 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
 	        };
 	    }
 	    
-	    public Journal getJournalAt (int rowIndex) {
+	    public JournalDTO getJournalAt (int rowIndex) {
 	    	return data.get(rowIndex);
 	    }
 
-	    public void journalAdded (Journal journal) {
+	    public void journalAdded (JournalDTO journal) {
 	    	data.add(journal);
 	    	
 	    	this.fireTableRowsInserted(data.size() - 1, data.size() - 1);
 	    }
 	    
-	    public void journalUpdated (Journal journal) {
+	    public void journalUpdated (JournalDTO journal) {
 	    	int rowIndex = data.indexOf(journal);
 	    	if (rowIndex >= 0) {
 	    		data.set(rowIndex, journal);
@@ -265,28 +265,33 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
 	}
 
 	@Override
-	public void journalClosed (Journal journal) {
+	public void journalClosed (JournalDTO journal) {
 		tableModel.journalUpdated(journal);
 		
 	}
 
 	@Override
-	public void journalOpened(Journal journal) {
+	public void journalChanged (JournalDTO journal) {
+		tableModel.journalUpdated(journal);
+	}
+	
+	@Override
+	public void journalOpened(JournalDTO journal) {
 		tableModel.journalUpdated(journal);
 	}
 
 	@Override
-	public void journalStarted(Journal journal) {
+	public void journalStarted(JournalDTO journal) {
 		tableModel.journalAdded(journal);
 	}
 
 	@Override
-	public void journalSuspended(Journal journal) {
+	public void journalSuspended(JournalDTO journal) {
 		tableModel.journalUpdated(journal);
 	}
 
 	@Override
-	public void journalSynced(Journal journal) {
+	public void journalSynced(JournalDTO journal) {
 		tableModel.journalUpdated(journal);
 	}
 }

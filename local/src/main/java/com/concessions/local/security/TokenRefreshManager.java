@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.concessions.local.security.TokenAuthService.TokenResponse;
-import com.concessions.local.ui.model.ApplicationModel;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.util.NetworkUtil;
 
 import jakarta.annotation.PostConstruct;
@@ -29,7 +29,7 @@ public class TokenRefreshManager {
     private ScheduledFuture<?> refreshTask;
     
     @Autowired
-    private ApplicationModel applicationModel;
+    private ServerApplicationModel applicationModel;
 
     @Autowired
     private TokenAuthService authService; 

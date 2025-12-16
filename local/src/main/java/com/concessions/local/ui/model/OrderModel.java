@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 import javax.swing.AbstractListModel;
 
 import com.concessions.client.model.CategoryType;
-import com.concessions.client.model.Menu;
-import com.concessions.client.model.MenuItem;
+import com.concessions.local.network.dto.MenuDTO;
+import com.concessions.local.network.dto.MenuItemDTO;
 
 public class OrderModel extends AbstractListModel {
 	
@@ -23,7 +23,7 @@ public class OrderModel extends AbstractListModel {
 
 	public static final String ORDER_TOTAL = "ORDER_TOTAL";
 	
-    public record OrderEntry(MenuItem menuItem) {
+    public record OrderEntry(MenuItemDTO menuItem) {
         @Override
         public String toString() {
             return String.format("%-25s $%s", menuItem.getName(), menuItem.getPrice().setScale(2));
@@ -32,9 +32,9 @@ public class OrderModel extends AbstractListModel {
 	
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
-	private Menu menu = null;
+	private MenuDTO menu = null;
 	
-    private Map<CategoryType, List<MenuItem>> menuData = new LinkedHashMap<>();
+    private Map<CategoryType, List<MenuItemDTO>> menuData = new LinkedHashMap<>();
     
     protected List<OrderEntry> orderEntries = new ArrayList<>();
 
@@ -43,19 +43,19 @@ public class OrderModel extends AbstractListModel {
 	public OrderModel () {
 	}
 
-	public Menu getMenu () {
+	public MenuDTO getMenu () {
 		return this.menu;
 	}
 	
-	public void setMenu (Menu menu) {
-		Map<CategoryType, List<MenuItem>> oldMenuData = this.menuData;
+	public void setMenu (MenuDTO menu) {
+		Map<CategoryType, List<MenuItemDTO>> oldMenuData = this.menuData;
 		this.menu = menu;
 		this.menuData = menu.getMenuItems().stream()
-	            .collect(Collectors.groupingBy(MenuItem::getCategory));
+	            .collect(Collectors.groupingBy(MenuItemDTO::getCategory));
 		this.firePropertyChange(MENU_DATA, menuData, oldMenuData);
 	}
 	
-	public Map<CategoryType, List<MenuItem>> getMenuData ()
+	public Map<CategoryType, List<MenuItemDTO>> getMenuData ()
 	{
 		return this.menuData;
 	}

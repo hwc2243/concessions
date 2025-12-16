@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
-import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.view.DeviceCodeDialog;
 import com.concessions.local.util.NetworkUtil;
 
@@ -33,7 +33,7 @@ public class DeviceCodeController {
 	protected ApplicationFrame applicationFrame;
 
 	@Autowired
-	protected ApplicationModel applicationModel;
+	protected ServerApplicationModel applicationModel;
 
 	@Autowired
 	protected DeviceCodeDialog deviceCodeModal;

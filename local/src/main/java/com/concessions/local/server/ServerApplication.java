@@ -37,8 +37,11 @@ import com.concessions.local.config.JpaConfig;
 import com.concessions.local.model.Device;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.local.network.dto.MenuMapper;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServiceException;
@@ -54,7 +57,6 @@ import com.concessions.local.ui.controller.DeviceCodeController;
 import com.concessions.local.ui.controller.JournalController;
 import com.concessions.local.ui.controller.JournalListener;
 import com.concessions.local.ui.controller.SetupController;
-import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.view.DeviceCodeDialog;
 
 import jakarta.annotation.PostConstruct;
@@ -74,7 +76,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	protected ApplicationFrame applicationFrame;
 	
 	@Autowired
-	protected ApplicationModel applicationModel;
+	protected ServerApplicationModel applicationModel;
 	
 	@Autowired
 	protected DeviceCodeDialog deviceCodeModal;
@@ -178,24 +180,28 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 		journalController.addJournalListener(new JournalListener() {
 			
 			@Override
-			public void journalStarted(Journal journal) {
+			public void journalStarted(JournalDTO journal) {
 			}
 
 			@Override
-			public void journalOpened(Journal journal) {
+			public void journalChanged (JournalDTO journal) {
+			}
+			
+			@Override
+			public void journalOpened(JournalDTO journal) {
 				journalCloseAction.setEnabled(true);
 				journalSuspendAction.setEnabled(true);
 			}
 
 			@Override
-			public void journalClosed(Journal journal) {
+			public void journalClosed(JournalDTO journal) {
 			}
 
 			@Override
-			public void journalSuspended(Journal journal) {
+			public void journalSuspended(JournalDTO journal) {
 			}
 			
-			public void journalSynced (Journal journal) {
+			public void journalSynced (JournalDTO journal) {
 				// HWC TODO can't think of anything to do at the moment
 			}
 		});
@@ -269,7 +275,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 				menu = menuRestClient.get(organizationConfiguration.getMenuId()).get();
 				menuService.create(menu);
 			}
-			applicationModel.setMenu(menu);
+			applicationModel.setMenu(MenuMapper.toDto(menu));
 			journalController.initialize();
 			journalStartAction.setEnabled(true);
 		}
@@ -297,8 +303,8 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (ApplicationModel.CONNECTED.equals(evt.getPropertyName()) ||
-				ApplicationModel.TOKEN_RESPONSE.equals(evt.getPropertyName())) {
+		if (ServerApplicationModel.CONNECTED.equals(evt.getPropertyName()) ||
+				ServerApplicationModel.TOKEN_RESPONSE.equals(evt.getPropertyName())) {
 			setupAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() != null);
 			loginAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() == null);
 			logoutAction.setEnabled(applicationModel.getTokenResponse() != null);

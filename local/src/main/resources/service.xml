@@ -3,6 +3,10 @@
 	<entity name="device" db-name="device">
 		<attribute name="deviceId" type="string" />
 		<attribute name="deviceType" type="enum" enum-values="SERVER KITCHEN POS" />
+		
+		<finder unique="true">
+            <finder-attribute name="deviceId"/>
+        </finder>
 	</entity>
 	
 	<entity name="locationConfiguration" persistence="true" db-name="location_configuration">

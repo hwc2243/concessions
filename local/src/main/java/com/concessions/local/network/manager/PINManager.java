@@ -2,14 +2,11 @@ package com.concessions.local.network.manager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.network.dto.PINVerifyRequest;
+import com.concessions.local.network.dto.PINVerifyRequestDTO;
 import com.concessions.local.network.dto.SimpleResponseDTO;
-import com.concessions.local.ui.model.ApplicationModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 
@@ -20,19 +17,8 @@ public class PINManager extends AbstractManager {
 	public static final String NAME = "PIN";
 	public static final String VERIFY_ACTION = "VERIFY";
 	
-	@Autowired
-	protected ObjectMapper mapper;
-	
-	@Autowired
-	protected ApplicationModel model;
-	
 	public PINManager() {
 		// TODO Auto-generated constructor stub
-	}
-
-	@PostConstruct
-	protected void register () {
-		ManagerRegistry.registerManager(this);
 	}
 	
 	@Override
@@ -55,12 +41,9 @@ public class PINManager extends AbstractManager {
 	
 	protected SimpleResponseDTO processVerify (String payload) throws ServerException {
 		try {
-			PINVerifyRequest request = mapper.readValue(payload, PINVerifyRequest.class);
-			if (request.getPIN().equals(model.getPIN())) {
-				return success;
-			} else {
-				throw new ServerException("PIN validation failed");
-			}
+			PINVerifyRequestDTO request = mapper.readValue(payload, PINVerifyRequestDTO.class);
+			validatePIN(request);
+			return success;
 		} catch (JsonProcessingException ex) {
 			throw new ServerException("Failed to process message: " + ex.getMessage(), ex);
 		}

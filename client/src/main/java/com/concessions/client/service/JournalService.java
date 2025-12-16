@@ -10,7 +10,7 @@ import com.concessions.client.model.Order;
 
 public interface JournalService extends BaseJournalService<Journal,Long>
 {
-	public void addOrder (Journal journal, Order order) throws ServiceException;
+	public Journal addOrder (Journal journal, Order order) throws ServiceException;
 	
 	public List<Journal> findNotClosedJournals () throws ServiceException;
 	

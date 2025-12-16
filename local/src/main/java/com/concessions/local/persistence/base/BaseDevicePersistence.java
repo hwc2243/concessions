@@ -9,4 +9,6 @@ import com.concessions.local.model.Device;
 
 public interface BaseDevicePersistence<T extends Device, ID> extends JpaRepository<T, ID>
 {
+
+    public T findFirstByDeviceId (String deviceId);
 } 

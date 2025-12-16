@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -29,9 +30,12 @@ import com.concessions.client.service.JournalService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
 import com.concessions.common.dto.JournalSummaryDTO;
+import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.local.network.dto.JournalMapper;
+import com.concessions.local.network.dto.OrderDTO;
+import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.controller.OrderController.OrderListener;
-import com.concessions.local.ui.model.ApplicationModel;
 import com.concessions.local.ui.view.JournalOrdersPanel;
 import com.concessions.local.ui.view.JournalPanel;
 import com.concessions.local.util.ListChunker;
@@ -40,7 +44,7 @@ import com.concessions.local.util.MoneyUtil;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class JournalController implements OrderListener {
+public class JournalController {
 
 	private static final Logger logger = LoggerFactory.getLogger(JournalController.class);
 
@@ -62,7 +66,7 @@ public class JournalController implements OrderListener {
 	protected OrderService orderService;
 
 	@Autowired
-	protected ApplicationModel model;
+	protected ServerApplicationModel model;
 
 	private List<JournalListener> listeners = new ArrayList<>();
 
@@ -72,7 +76,6 @@ public class JournalController implements OrderListener {
 
 	@PostConstruct
 	protected void postConstruct () {
-		orderController.addOrderListener(this);
 		addJournalListener(orderController);
 	}
 	
@@ -80,7 +83,7 @@ public class JournalController implements OrderListener {
 		try {
 			List<Journal> journals = journalService.findAllByStatus(StatusType.OPEN);
 			if (journals.size() == 1) {
-				open(journals.iterator().next());
+				open(JournalMapper.toDto(journals.iterator().next()));
 			}
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -88,7 +91,10 @@ public class JournalController implements OrderListener {
 	}
 	public void view() {
 		try {
-			List<Journal> journals = journalService.findAll();
+			List<JournalDTO> journals = journalService.findAll()
+					.stream()
+					.map(JournalMapper::toDto)
+					.collect(Collectors.toList());
 			JournalPanel journalPanel = new JournalPanel(this, journals);
 			applicationFrame.setMainContent(journalPanel);
 		} catch (ServiceException ex) {
@@ -97,7 +103,7 @@ public class JournalController implements OrderListener {
 		}
 	}
 
-	public void viewOrders(Journal journal) {
+	public void viewOrders(JournalDTO journal) {
 		List<Order> orders = orderService.findByJournalId(journal.getId());
 		if (orders.isEmpty()) {
 			JOptionPane.showMessageDialog(null, "No orders in journal.", "Information",
@@ -133,8 +139,12 @@ public class JournalController implements OrderListener {
 		}
 	}
 
+	public void change(JournalDTO journal) {
+		notifyJournalChanged(journal);
+	}
+	
 	public void close() {
-		Journal journal = model.getJournal();
+		JournalDTO journal = model.getJournal();
 		try {
 			if (journal == null) {
 				List<Journal> journals = journalService.findNotClosedJournals();
@@ -146,7 +156,7 @@ public class JournalController implements OrderListener {
 							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				journal = journals.get(0);
+				journal = JournalMapper.toDto(journals.get(0));
 			}
 			close(journal);
 		} catch (ServiceException ex) {
@@ -155,11 +165,11 @@ public class JournalController implements OrderListener {
 
 	}
 
-	public void close(Journal journal) {
+	public void close (JournalDTO journal) {
 		try {
 			journal.setStatus(StatusType.CLOSE);
 			journal.setEndTs(LocalDateTime.now());
-			journalService.update(journal);
+			journalService.update(JournalMapper.fromDto(journal));
 			notifyJournalClosed(journal);
 			
 			// HWC TODO add logic to check if network is connected and if so attempt sync
@@ -170,7 +180,7 @@ public class JournalController implements OrderListener {
 	}
 
 	public void open() {
-		Journal journal = model.getJournal();
+		JournalDTO journal = model.getJournal();
 		try {
 			if (journal == null) {
 				List<Journal> journals = journalService.findNotClosedJournals();
@@ -182,7 +192,7 @@ public class JournalController implements OrderListener {
 							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				journal = journals.get(0);
+				journal = JournalMapper.toDto(journals.get(0));
 			}
 			if (journal.getStatus() == null) {
 				journal.setStatus(StatusType.OPEN);
@@ -191,7 +201,7 @@ public class JournalController implements OrderListener {
 			case NEW:
 			case SUSPEND:
 				journal.setStatus(StatusType.OPEN);
-				journalService.update(journal);
+				journalService.update(JournalMapper.fromDto(journal));
 			case OPEN:
 				notifyJournalOpened(journal);
 				break;
@@ -206,11 +216,11 @@ public class JournalController implements OrderListener {
 		}
 	}
 	
-	public void open (Journal journal) {
+	public void open (JournalDTO journal) {
 		logger.info("Opening journal : " + journal.getId());
 		journal.setStatus(StatusType.OPEN);
 		try {
-			journalService.update(journal);
+			journalService.update(JournalMapper.fromDto(journal));
 			model.setJournal(journal);
 			notifyJournalOpened(journal);
 		} catch (ServiceException ex) {
@@ -230,7 +240,7 @@ public class JournalController implements OrderListener {
 						"Error", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			Journal journal = journalService.newInstance();
+			JournalDTO journal = JournalMapper.toDto(journalService.newInstance());
 			logger.info("Creating journal : " + journal.getId());
 			model.setJournal(journal);
 			notifyJournalStarted(journal);
@@ -241,7 +251,7 @@ public class JournalController implements OrderListener {
 	}
 
 	public void suspend() {
-		Journal journal = model.getJournal();
+		JournalDTO journal = model.getJournal();
 		try {
 			if (journal == null) {
 				List<Journal> journals = journalService.findNotClosedJournals();
@@ -253,7 +263,7 @@ public class JournalController implements OrderListener {
 							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				journal = journals.get(0);
+				journal = JournalMapper.toDto(journals.get(0));
 			}
 			switch (journal.getStatus()) {
 			case NEW:
@@ -277,11 +287,11 @@ public class JournalController implements OrderListener {
 		}
 	}
 	
-	public void suspend (Journal journal) {
+	public void suspend (JournalDTO journal) {
 		logger.info("Suspending journal : " + journal.getId());
 		journal.setStatus(StatusType.SUSPEND);
 		try {
-			journalService.update(journal);
+			journalService.update(JournalMapper.fromDto(journal));
 			notifyJournalSuspended(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -290,7 +300,7 @@ public class JournalController implements OrderListener {
 		}
 	}
 
-	public void sync (Journal journal) {
+	public void sync (JournalDTO journal) {
 		if (journal.getStatus() != StatusType.CLOSE ) {
 			JOptionPane.showMessageDialog(null, "Journal has to be closed before syncing", "Error",
 					JOptionPane.ERROR_MESSAGE);
@@ -317,7 +327,8 @@ public class JournalController implements OrderListener {
 				        JournalSummaryDTO::merge
 				    );
 			
-			CompletableFuture<Journal> futureJournal = journalRestClient.create(journal);
+			Journal journalEntity = JournalMapper.fromDto(journal);
+			CompletableFuture<Journal> futureJournal = journalRestClient.create(journalEntity);
 			Journal createdJournal = futureJournal.join();
 			
 			List<List<Order>> batches = ListChunker.chunkList(orders, BATCH_SIZE);
@@ -328,27 +339,15 @@ public class JournalController implements OrderListener {
 				futureChunkedOrders.join();
 			}
 			
-			futureJournal = journalRestClient.reconcile(journal, summary);
-			journal = futureJournal.get();
-			journalService.update(journal);
+			futureJournal = journalRestClient.reconcile(journalEntity, summary);
+			journalEntity = futureJournal.get();
+			journalService.update(journalEntity);
 			notifyJournalSynced(journal);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	@Override
-	public void onOrderCreated (Order order) {
-		logger.info("Received a new order for {}.", MoneyUtil.formatAsMoney(order.getOrderTotal()));
-		Journal journal = model.getJournal();
-		try {
-			journalService.addOrder(journal, order);
-		} catch (ServiceException ex) {
-			// HWC TODO this should be a cancellable event and this should cancel it
-			ex.printStackTrace();
-		}
-	}
-
 	public void addJournalListener(JournalListener listener) {
 		listeners.add(listener);
 	}
@@ -357,11 +356,15 @@ public class JournalController implements OrderListener {
 		listeners.remove(listener);
 	}
 
-	protected void notifyJournalClosed(Journal journal) {
+	protected void notifyJournalClosed(JournalDTO journal) {
 		listeners.stream().forEach(listener -> listener.journalClosed(journal));
 	}
 
-	protected void notifyJournalOpened(Journal journal) {
+	protected void notifyJournalChanged(JournalDTO journal) {
+		listeners.stream().forEach(listener -> listener.journalChanged(journal));
+	}
+
+	protected void notifyJournalOpened(JournalDTO journal) {
 		// HWC TODO this is the best way to handle this, components that need to know
 		// about
 		// the journal should use a JournalListener
@@ -369,15 +372,15 @@ public class JournalController implements OrderListener {
 		listeners.stream().forEach(listener -> listener.journalOpened(journal));
 	}
 
-	protected void notifyJournalStarted(Journal journal) {
+	protected void notifyJournalStarted(JournalDTO journal) {
 		listeners.stream().forEach(listener -> listener.journalStarted(journal));
 	}
 
-	protected void notifyJournalSuspended(Journal journal) {
+	protected void notifyJournalSuspended(JournalDTO journal) {
 		listeners.stream().forEach(listener -> listener.journalSuspended(journal));
 	}
 	
-	protected void notifyJournalSynced (Journal journal) {
+	protected void notifyJournalSynced (JournalDTO journal) {
 		listeners.stream().forEach(listener -> listener.journalSynced(journal));
 	}
 }

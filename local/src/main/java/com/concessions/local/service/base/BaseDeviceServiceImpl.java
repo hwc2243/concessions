@@ -41,6 +41,12 @@ public abstract class BaseDeviceServiceImpl<T extends Device, ID>
   }
 
   @Override
+  public T fetchByDeviceId (String deviceId)
+  {
+	return baseDevicePersistence.findFirstByDeviceId(deviceId);
+  }
+
+  @Override
   public T get (ID id) throws ServiceException
   {
     Optional<T> optional = baseDevicePersistence.findById(id);

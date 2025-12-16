@@ -3,6 +3,7 @@ package com.concessions.local.ui.model;
 import com.concessions.client.model.Location;
 import com.concessions.client.model.Menu;
 import com.concessions.client.model.Organization;
+import com.concessions.local.base.model.AbstractModel;
 
 import java.util.List;
 
