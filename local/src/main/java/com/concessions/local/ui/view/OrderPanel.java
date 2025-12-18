@@ -3,6 +3,8 @@ package com.concessions.local.ui.view;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.concessions.client.model.CategoryType;
 import com.concessions.local.network.dto.MenuItemDTO;
 import com.concessions.local.ui.DisabledLayerUI;
@@ -97,19 +99,26 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
         add(disableLayer, BorderLayout.CENTER);
     }
 
-    public void enable () {
-    	disableLayer.setEnabled(true);
-    	disableLayer.repaint();
-    	super.setEnabled(true);
-    }
+    public void setInteractiveState (boolean enabled) {
+		setInteractiveState(enabled, null);
+	}
     
-    public void disable (String message) {
-    	disableLayerUI.setMessage(message);
-    	disableLayer.setEnabled(false);
-    	disableLayer.repaint();
-    	super.setEnabled(false);
-    }
-    
+    public void setInteractiveState (boolean enabled, String message) {
+		if (enabled) {
+			disableLayer.setEnabled(true);
+		} else {
+			if (StringUtils.isEmpty(message)) {
+				message = "Disabled";
+			}
+			disableLayerUI.setMessage(message);
+			disableLayer.setEnabled(false);
+		}
+		
+		disableLayer.repaint();
+		
+		super.setEnabled(enabled);
+	}
+	
     public void addOrderActionListener (OrderActionListener listener) {
     	listeners.add(listener);
     }

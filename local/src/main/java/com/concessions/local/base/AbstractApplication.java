@@ -8,10 +8,16 @@ import java.awt.event.ActionEvent;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.concessions.local.network.Messenger;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public abstract class AbstractApplication {
 
+	@Autowired
+	protected Messenger messenger;
+	
 	public AbstractApplication() {
 		// TODO Auto-generated constructor stub
 	}

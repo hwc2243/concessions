@@ -11,7 +11,8 @@ import jakarta.annotation.PostConstruct;
 
 public abstract class AbstractManager {
 
-	@Autowired
+	// HWC not the best method but then not all instances are ServerApplicaionModel
+	@Autowired (required=false)
 	protected ServerApplicationModel model;
 
 	@Autowired

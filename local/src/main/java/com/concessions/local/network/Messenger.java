@@ -1,4 +1,4 @@
-package com.concessions.local.network.client;
+package com.concessions.local.network;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,14 +11,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.concessions.local.network.client.ClientException;
 import com.concessions.local.network.dto.SimpleResponseDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class ClientService {
+public class Messenger {
 
-	private static final Logger logger = LoggerFactory.getLogger(ClientService.class);
+	private static final Logger logger = LoggerFactory.getLogger(Messenger.class);
 
 	@Autowired
 	protected ObjectMapper mapper;
@@ -26,7 +27,7 @@ public class ClientService {
 	private String serverIp;
 	private int serverPort;
 	
-	public ClientService () {
+	public Messenger () {
 	}
 	
 	public void initialize (String serverIp, int serverPort) {
@@ -35,6 +36,10 @@ public class ClientService {
 	}
 
 	public <T> T sendRequest (String service, String action, Object payloadObject, Class<T> responseClass) throws ClientException {
+		return sendRequest(this.serverIp, this.serverPort, service, action, payloadObject, responseClass);
+	}
+	
+	public <T> T sendRequest (String serverIp, int serverPort, String service, String action, Object payloadObject, Class<T> responseClass) throws ClientException {
 		String message = null;
 		
 		try {

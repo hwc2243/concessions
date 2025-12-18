@@ -17,7 +17,6 @@ public class OrderManager extends AbstractManager {
 
 	public static final String NAME = "ORDER";
 	
-	public static final String JOURNAL_GET = "JOURNAL_GET";
 	public static final String SUBMIT = "SUBMIT";
 	
 	@Autowired
@@ -38,23 +37,10 @@ public class OrderManager extends AbstractManager {
 	@Override
 	public Object process (String action, String payload) throws ServerException {
 		switch (action) {
-		case JOURNAL_GET:
-			return processJournalGet(payload);
 		case SUBMIT:
 			return processSubmit(payload);
 		}
 		throw new ServerException("Not implemented");
-	}
-	
-	public JournalDTO processJournalGet (String payload) throws ServerException {
-		try {
-			SimpleDeviceRequestDTO request = mapper.readValue(payload, SimpleDeviceRequestDTO.class);
-			validatePIN(request);
-			JournalDTO response = model.getJournal();
-			return response;
-		} catch (JsonProcessingException ex) {
-			throw new ServerException("Failed to process message: " + ex.getMessage(), ex);
-		}
 	}
 	
 	public SimpleResponseDTO processSubmit (String payload) throws ServerException {

@@ -1,7 +1,7 @@
 package com.concessions.local.pos.controller;
 
+import com.concessions.local.network.Messenger;
 import com.concessions.local.network.client.ClientException;
-import com.concessions.local.network.client.ClientService;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.OrderDTO;
 import com.concessions.local.network.dto.OrderRequestDTO;
@@ -12,11 +12,11 @@ import com.concessions.local.ui.controller.OrderController.OrderListener;
 
 public class OrderSubmissionController implements OrderListener {
 
-	protected ClientService clientService;
+	protected Messenger clientService;
 	
 	protected POSApplicationModel model;
 	
-	public OrderSubmissionController (POSApplicationModel model, ClientService clientService) {
+	public OrderSubmissionController (POSApplicationModel model, Messenger clientService) {
 		this.model = model;
 		this.clientService = clientService;
 	}

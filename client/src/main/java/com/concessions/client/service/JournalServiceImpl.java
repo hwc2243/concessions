@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.concessions.client.service.base.BaseJournalServiceImpl;
+import com.concessions.common.dto.JournalSummaryDTO;
 import com.concessions.client.model.StatusType;
 
 import jakarta.transaction.Transactional;
@@ -79,5 +80,33 @@ public class JournalServiceImpl
 		journal.setOrderCount(journal.getOrderCount() + 1);
 		journal.setSalesTotal(journal.getSalesTotal().add(order.getOrderTotal()));
 		return update(journal);
+	}
+	
+	@Override
+	public Journal recalcJournal (Journal journal) throws ServiceException {
+		List<Order> orders = orderService.findByJournalId(journal.getId());
+		if (orders != null && !orders.isEmpty()) {
+			JournalSummaryDTO calcdSummary = orders.stream()
+				    .collect(
+				        // Supplier: Create a new OrderSummary object (The initial container)
+				        JournalSummaryDTO::new, 
+				        
+				        // Accumulator: Add one Order's data to the container
+				        (s, order) -> { 
+				            s.incrementCount();
+				            s.addToTotal(order.getOrderTotal());
+				        }, 
+				        
+				        // Combiner: Merge two containers (Used if running in parallel)
+				        JournalSummaryDTO::merge
+				    );
+			journal.setOrderCount(calcdSummary.getOrderCount());
+			journal.setSalesTotal(calcdSummary.getSalesTotal());
+		} else {
+			journal.setOrderCount(0L);
+			journal.setSalesTotal(BigDecimal.ZERO);
+		}
+		
+		return journal;
 	}
 }

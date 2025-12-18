@@ -1,13 +1,13 @@
-package com.concessions.local.pos.config;
+package com.concessions.local.kitchen.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.concessions.common.service.PreferenceService;
+import com.concessions.local.kitchen.KitchenApplication;
 import com.concessions.local.network.Messenger;
 import com.concessions.local.network.manager.ManagerRegistry;
 import com.concessions.local.pos.POSApplication;
-import com.concessions.local.ui.JournalNotifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -22,7 +22,7 @@ public class AppConfig {
 	@Bean
 	public PreferenceService preferenceService ()
 	{
-		return new PreferenceService(POSApplication.class);
+		return new PreferenceService(KitchenApplication.class);
 	}
 	
 	@Bean
@@ -40,10 +40,5 @@ public class AppConfig {
 	@Bean
 	public Messenger messenger () {
 		return new Messenger();
-	}
-	
-	@Bean
-	public JournalNotifier journalNotifier () {
-		return new JournalNotifier();
 	}
 }

@@ -45,6 +45,12 @@ public abstract class BaseDevice<T extends BaseDevice> extends AbstractBaseEntit
   @Enumerated(EnumType.STRING)
   protected DeviceTypeType deviceType = null;
   
+  @Column
+  protected String deviceIp = null;
+  
+  @Column
+  protected Integer devicePort = null;
+  
 
   
   public Long getId ()
@@ -80,6 +86,26 @@ public abstract class BaseDevice<T extends BaseDevice> extends AbstractBaseEntit
   public void setDeviceType (DeviceTypeType deviceType)
   {
     this.deviceType = deviceType;
+  }
+
+  public String getDeviceIp ()
+  {
+    return this.deviceIp;
+  }
+  
+  public void setDeviceIp (String deviceIp)
+  {
+    this.deviceIp = deviceIp;
+  }
+
+  public Integer getDevicePort ()
+  {
+    return this.devicePort;
+  }
+  
+  public void setDevicePort (Integer devicePort)
+  {
+    this.devicePort = devicePort;
   }
 
 

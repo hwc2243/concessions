@@ -22,7 +22,6 @@ public class DeviceManager extends AbstractManager {
 
 	public static final String NAME = "DEVICE";
 	public static final String REGISTER = "REGISTER";
-	
 
 	@Autowired
 	protected DeviceService deviceService;
@@ -55,12 +54,16 @@ public class DeviceManager extends AbstractManager {
 				device = new Device();
 				device.setDeviceId(request.getDeviceId());
 				device.setDeviceType(request.getDeviceType());
+				device.setDeviceIp(request.getDeviceIp());
+				device.setDevicePort(request.getDevicePort());
 				device = deviceService.create(device);
 			} else {
 				if (!device.getDeviceType().equals(request.getDeviceType())) {
 					device.setDeviceType(request.getDeviceType());
-					device = deviceService.update(device);
 				}
+				device.setDeviceIp(request.getDeviceIp());
+				device.setDevicePort(request.getDevicePort());
+				device = deviceService.update(device);
 			}
 			DeviceRegistrationResponseDTO response = new DeviceRegistrationResponseDTO();
 			response.setDeviceNumber(String.valueOf(device.getId()));

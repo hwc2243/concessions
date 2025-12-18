@@ -4,3 +4,7 @@ application:
   
 apiHostName: https://concessions.connors.ddns.net
 authHostName: login.connors.ddns.net
+
+local:
+    network:
+        server: true

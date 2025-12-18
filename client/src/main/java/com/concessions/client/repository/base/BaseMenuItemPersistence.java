@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.concessions.client.model.base.BaseMenuItem;
 import com.concessions.client.model.MenuItem;
+import com.concessions.client.model.CategoryType;
 
 public interface BaseMenuItemPersistence<T extends MenuItem, ID> extends JpaRepository<T, ID>
 {

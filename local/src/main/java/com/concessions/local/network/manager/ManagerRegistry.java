@@ -14,7 +14,6 @@ public class ManagerRegistry {
 	protected static Map<String, AbstractManager> registry = new HashMap<>();
 	
 	public ManagerRegistry() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public static void registerManager (AbstractManager manager)

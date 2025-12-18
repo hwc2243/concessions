@@ -29,6 +29,7 @@ import com.concessions.local.network.dto.OrderItemDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.DisabledLayerUI;
+import com.concessions.local.ui.JournalNotifier.JournalListener;
 import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
@@ -38,6 +39,7 @@ import com.concessions.client.model.CategoryType;
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Order;
 import com.concessions.client.model.OrderItem;
+import com.concessions.client.model.StatusType;
 import com.concessions.client.service.OrderItemService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
@@ -45,51 +47,48 @@ import com.concessions.client.service.ServiceException;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class OrderController 
-	implements OrderActionListener, JournalListener {
-	
+public class OrderController implements OrderActionListener, JournalListener {
+
 	@Autowired
 	protected OrderAction orderAction;
-	
+
 	protected AbstractFrame applicationFrame;
-	
+
 	@Autowired
 	protected OrderService orderService;
-	
+
 	@Autowired
 	protected OrderItemService orderItemService;
-	
+
 	private JournalDTO journal = null;
-	
+
 	private OrderModel orderModel;
-	
+
 	private OrderPanel orderPanel;
-	
+
 	private List<OrderListener> listeners = new java.util.ArrayList<>();
-	
+
 	public OrderController(@Autowired AbstractFrame applicationFrame) {
 		this.applicationFrame = applicationFrame;
 	}
- 
+
 	@PostConstruct
-	protected void initialize ()
-	{
+	protected void initialize() {
 	}
-	
-	public void addOrderListener (OrderListener listener) {
+
+	public void addOrderListener(OrderListener listener) {
 		listeners.add(listener);
 	}
 
-	public void removeOrderListener (OrderListener listener) {
+	public void removeOrderListener(OrderListener listener) {
 		listeners.remove(listener);
 	}
 
-	protected void notifyOrderCreated (OrderDTO order) {
+	protected void notifyOrderCreated(OrderDTO order) {
 		listeners.stream().forEach(listener -> listener.onOrderCreated(order));
 	}
-	
-	public void execute (MenuDTO menu, JournalDTO journal)
-	{
+
+	public void execute(MenuDTO menu, JournalDTO journal) {
 		if (menu == null) {
 			JOptionPane.showMessageDialog(applicationFrame, "Failed to start order system, no menu loaded", "Error",
 					JOptionPane.ERROR_MESSAGE);
@@ -100,29 +99,44 @@ public class OrderController
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		
+
 		this.journal = journal;
-		
-		// the UI creation should happen once in initialize and should then support changing the menuData
+
+		// the UI creation should happen once in initialize and should then support
+		// changing the menuData
 		orderModel = new OrderModel();
 		orderModel.setMenu(menu);
 		orderPanel = new OrderPanel(orderModel);
 		orderPanel.addOrderActionListener(this);
+		switch (journal.getStatus()) {
+		case NEW:
+			orderPanel.setInteractiveState(false, "Journal has not been started");
+			break;
+		case SUSPEND:
+			orderPanel.setInteractiveState(false, "Journal is suspended");
+			break;
+		case CLOSE:
+		case SYNC:
+			orderPanel.setInteractiveState(false, "Journal is closed");
+			break;
+		default:
+			break;
+		}
 
 		applicationFrame.setMainContent(orderPanel);
 	}
-	
+
 	/**
-     * Recalculates the order total from the list model and updates the total label.
-     */
-    private void updateTotal() {
-        BigDecimal currentTotal = BigDecimal.ZERO;
-        for (int i = 0; i < orderModel.getSize(); i++) {
-            OrderEntry entry = orderModel.get(i);
-            currentTotal = currentTotal.add(entry.menuItem().getPrice());
-        }
-        orderModel.setOrderTotal(currentTotal);
-    }
+	 * Recalculates the order total from the list model and updates the total label.
+	 */
+	private void updateTotal() {
+		BigDecimal currentTotal = BigDecimal.ZERO;
+		for (int i = 0; i < orderModel.getSize(); i++) {
+			OrderEntry entry = orderModel.get(i);
+			currentTotal = currentTotal.add(entry.menuItem().getPrice());
+		}
+		orderModel.setOrderTotal(currentTotal);
+	}
 
 	@Override
 	public void onCheckout() {
@@ -131,17 +145,16 @@ public class OrderController
 					JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
-        JOptionPane.showMessageDialog(applicationFrame, 
-                "Order Total: $" + orderModel.getOrderTotal().setScale(2, RoundingMode.HALF_UP).toString() + "\nProcessing checkout...", 
-                "Checkout Complete", 
-                JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(applicationFrame, "Order Total: $"
+				+ orderModel.getOrderTotal().setScale(2, RoundingMode.HALF_UP).toString() + "\nProcessing checkout...",
+				"Checkout Complete", JOptionPane.INFORMATION_MESSAGE);
 
-        OrderDTO order = new OrderDTO();
-        order.setJournalId(journal.getId());
-        order.setOrderTotal(orderModel.getOrderTotal());
-        order.setMenuId(orderModel.getMenu().getId());
-        order.setStartTs(LocalDateTime.now());
-		
+		OrderDTO order = new OrderDTO();
+		order.setJournalId(journal.getId());
+		order.setOrderTotal(orderModel.getOrderTotal());
+		order.setMenuId(orderModel.getMenu().getId());
+		order.setStartTs(LocalDateTime.now());
+
 		orderModel.getOrderEntries().stream().forEach(orderEntry -> {
 			OrderItemDTO orderItem = new OrderItemDTO();
 			orderItem.setMenuItemId(orderEntry.menuItem().getId());
@@ -149,31 +162,27 @@ public class OrderController
 			orderItem.setPrice(orderEntry.menuItem().getPrice());
 			order.addOrderItem(orderItem);
 		});
-		
-		notifyOrderCreated(order);
-		
-		/*
-        Order order = orderService.newInstance(JournalMapper.fromDto(journal));
-        order.setOrderTotal(orderModel.getOrderTotal());
-        order.setMenuId(orderModel.getMenu().getId());
-        order.setStartTs(LocalDateTime.now());
 
-		orderModel.getOrderEntries().stream().forEach(orderEntry -> {
-			OrderItem orderItem = orderItemService.newInstance();
-			orderItem.setMenuItemId(orderEntry.menuItem().getId());
-			orderItem.setName(orderEntry.menuItem().getName());
-			orderItem.setPrice(orderEntry.menuItem().getPrice());
-			order.addOrderItem(orderItem);
-		});
-		
-        try {
-        	Order persistedOrder = orderService.create(order);
-        	notifyOrderCreated(persistedOrder);
-        } catch (ServiceException ex) {
-        	ex.printStackTrace();
-        }
-        */
-        
+		notifyOrderCreated(order);
+
+		/*
+		 * Order order = orderService.newInstance(JournalMapper.fromDto(journal));
+		 * order.setOrderTotal(orderModel.getOrderTotal());
+		 * order.setMenuId(orderModel.getMenu().getId());
+		 * order.setStartTs(LocalDateTime.now());
+		 * 
+		 * orderModel.getOrderEntries().stream().forEach(orderEntry -> { OrderItem
+		 * orderItem = orderItemService.newInstance();
+		 * orderItem.setMenuItemId(orderEntry.menuItem().getId());
+		 * orderItem.setName(orderEntry.menuItem().getName());
+		 * orderItem.setPrice(orderEntry.menuItem().getPrice());
+		 * order.addOrderItem(orderItem); });
+		 * 
+		 * try { Order persistedOrder = orderService.create(order);
+		 * notifyOrderCreated(persistedOrder); } catch (ServiceException ex) {
+		 * ex.printStackTrace(); }
+		 */
+
 		orderModel.clear();
 		updateTotal();
 	}
@@ -185,10 +194,10 @@ public class OrderController
 	}
 
 	@Override
-	public void onItemAdded (MenuItemDTO item) {
-        // Add the item to the order list model
-        orderModel.add(new OrderEntry(item));
-        updateTotal();
+	public void onItemAdded(MenuItemDTO item) {
+		// Add the item to the order list model
+		orderModel.add(new OrderEntry(item));
+		updateTotal();
 	}
 
 	@Override
@@ -196,47 +205,54 @@ public class OrderController
 		orderModel.remove(index);
 		updateTotal();
 	}
-	
-	
+
 	@Override
 	public void journalClosed(JournalDTO journal) {
 		if (orderPanel != null) {
-			orderPanel.disable("Journal closed");
+			orderPanel.setInteractiveState(false, "Journal closed");
 		}
-		orderAction.setEnabled(false);
+		if (orderAction != null) {
+			orderAction.setEnabled(false);
+		}
 	}
 
 	@Override
-	public void journalChanged (JournalDTO journal) {
+	public void journalChanged(JournalDTO journal) {
 	}
-	
+
 	@Override
 	public void journalOpened(JournalDTO journal) {
 		if (orderPanel != null) {
-			orderPanel.enable();
+			orderPanel.setInteractiveState(true);
 		}
-		orderAction.setEnabled(true);
+		if (orderAction != null) {
+			orderAction.setEnabled(true);
+		}
 		this.journal = journal;
 	}
 
 	@Override
 	public void journalStarted(JournalDTO journal) {
-		orderAction.setEnabled(false);
+		if (orderAction != null) {
+			orderAction.setEnabled(false);
+		}
 	}
 
 	@Override
 	public void journalSuspended(JournalDTO journal) {
 		if (orderPanel != null) {
-			orderPanel.disable("Journal suspended");
+			orderPanel.setInteractiveState(false, "Journal suspended");
 		}
-		orderAction.setEnabled(false);
+		if (orderAction != null) {
+			orderAction.setEnabled(false);
+		}
 	}
 
 	@Override
 	public void journalSynced(JournalDTO journal) {
 	}
-	
+
 	public interface OrderListener {
-		public void onOrderCreated (OrderDTO order);
+		public void onOrderCreated(OrderDTO order);
 	}
 }

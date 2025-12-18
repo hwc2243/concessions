@@ -26,10 +26,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import com.concessions.client.model.StatusType;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.ui.CurrencyRenderer;
+import com.concessions.local.ui.JournalNotifier.JournalListener;
 import com.concessions.local.ui.LocalDateTimeRenderer;
 import com.concessions.local.ui.controller.JournalController;
 
-public class JournalPanel extends JPanel implements com.concessions.local.ui.controller.JournalListener {
+public class JournalPanel extends JPanel implements JournalListener {
 
 	private JournalController controller;
     private final JournalTableModel tableModel;
@@ -42,7 +43,7 @@ public class JournalPanel extends JPanel implements com.concessions.local.ui.con
 
 	public JournalPanel (JournalController controller, List<JournalDTO> journals) {
 		this.controller = controller;
-		controller.addJournalListener(this);
+		//controller.addJournalListener(this);
 		
 		setLayout(new BorderLayout());
         setBorder(new EmptyBorder(10, 10, 10, 10));

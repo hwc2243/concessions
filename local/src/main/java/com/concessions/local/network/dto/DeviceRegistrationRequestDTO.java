@@ -4,10 +4,13 @@ import com.concessions.local.model.DeviceTypeType;
 
 public class DeviceRegistrationRequestDTO extends AbstractDeviceRequestDTO {
 
-	private DeviceTypeType deviceType;
+	protected DeviceTypeType deviceType;
+	
+	protected String deviceIp;
+	
+	protected int devicePort;
 	
 	public DeviceRegistrationRequestDTO() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public DeviceTypeType getDeviceType() {
@@ -16,5 +19,21 @@ public class DeviceRegistrationRequestDTO extends AbstractDeviceRequestDTO {
 
 	public void setDeviceType(DeviceTypeType deviceType) {
 		this.deviceType = deviceType;
+	}
+
+	public String getDeviceIp() {
+		return deviceIp;
+	}
+
+	public void setDeviceIp(String deviceIp) {
+		this.deviceIp = deviceIp;
+	}
+
+	public int getDevicePort() {
+		return devicePort;
+	}
+
+	public void setDevicePort(int devicePort) {
+		this.devicePort = devicePort;
 	}
 }

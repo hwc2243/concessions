@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.concessions.local.model.base.BaseDevice;
 import com.concessions.local.model.Device;
+import com.concessions.local.model.DeviceTypeType;
 
 public interface BaseDevicePersistence<T extends Device, ID> extends JpaRepository<T, ID>
 {
 
     public T findFirstByDeviceId (String deviceId);
+
+    public List<T> findByDeviceType (DeviceTypeType deviceType);
 } 

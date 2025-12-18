@@ -35,6 +35,7 @@ import com.concessions.local.network.dto.JournalMapper;
 import com.concessions.local.network.dto.OrderDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
+import com.concessions.local.ui.JournalNotifier;
 import com.concessions.local.ui.controller.OrderController.OrderListener;
 import com.concessions.local.ui.view.JournalOrdersPanel;
 import com.concessions.local.ui.view.JournalPanel;
@@ -54,6 +55,9 @@ public class JournalController {
 	protected ApplicationFrame applicationFrame;
 
 	@Autowired
+	protected JournalNotifier journalNotifier;
+	
+	@Autowired
 	protected JournalService journalService;
 	
 	@Autowired
@@ -68,15 +72,14 @@ public class JournalController {
 	@Autowired
 	protected ServerApplicationModel model;
 
-	private List<JournalListener> listeners = new ArrayList<>();
-
 	public JournalController() {
 		// TODO Auto-generated constructor stub
 	}
 
 	@PostConstruct
 	protected void postConstruct () {
-		addJournalListener(orderController);
+		// HWC TODO this should be part of orderController
+		journalNotifier.addJournalListener(orderController);
 	}
 	
 	public void initialize () {
@@ -89,6 +92,7 @@ public class JournalController {
 			ex.printStackTrace();
 		}
 	}
+	
 	public void view() {
 		try {
 			List<JournalDTO> journals = journalService.findAll()
@@ -96,6 +100,7 @@ public class JournalController {
 					.map(JournalMapper::toDto)
 					.collect(Collectors.toList());
 			JournalPanel journalPanel = new JournalPanel(this, journals);
+			journalNotifier.addJournalListener(journalPanel);
 			applicationFrame.setMainContent(journalPanel);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -140,7 +145,7 @@ public class JournalController {
 	}
 
 	public void change(JournalDTO journal) {
-		notifyJournalChanged(journal);
+		journalNotifier.notifyJournalChanged(journal);
 	}
 	
 	public void close() {
@@ -170,7 +175,7 @@ public class JournalController {
 			journal.setStatus(StatusType.CLOSE);
 			journal.setEndTs(LocalDateTime.now());
 			journalService.update(JournalMapper.fromDto(journal));
-			notifyJournalClosed(journal);
+			journalNotifier.notifyJournalClosed(journal);
 			
 			// HWC TODO add logic to check if network is connected and if so attempt sync
 			sync(journal);
@@ -203,7 +208,7 @@ public class JournalController {
 				journal.setStatus(StatusType.OPEN);
 				journalService.update(JournalMapper.fromDto(journal));
 			case OPEN:
-				notifyJournalOpened(journal);
+				open(journal);
 				break;
 			case CLOSE:
 				JOptionPane.showMessageDialog(null, "The current journal has been closed and can not be reopned.",
@@ -218,11 +223,13 @@ public class JournalController {
 	
 	public void open (JournalDTO journal) {
 		logger.info("Opening journal : " + journal.getId());
-		journal.setStatus(StatusType.OPEN);
 		try {
-			journalService.update(JournalMapper.fromDto(journal));
+			Journal journalEntity = journalService.recalcJournal(JournalMapper.fromDto(journal));
+			journalEntity.setStatus(StatusType.OPEN);
+			journalEntity = journalService.update(journalEntity);
+			journal = JournalMapper.toDto(journalEntity);
 			model.setJournal(journal);
-			notifyJournalOpened(journal);
+			journalNotifier.notifyJournalOpened(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(null, "Failed to open journal", "Error",
@@ -243,7 +250,7 @@ public class JournalController {
 			JournalDTO journal = JournalMapper.toDto(journalService.newInstance());
 			logger.info("Creating journal : " + journal.getId());
 			model.setJournal(journal);
-			notifyJournalStarted(journal);
+			journalNotifier.notifyJournalStarted(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(null, "Failed to start new journal", "Error", JOptionPane.ERROR_MESSAGE);
@@ -292,7 +299,7 @@ public class JournalController {
 		journal.setStatus(StatusType.SUSPEND);
 		try {
 			journalService.update(JournalMapper.fromDto(journal));
-			notifyJournalSuspended(journal);
+			journalNotifier.notifyJournalSuspended(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(null, "Failed to suspend journal", "Error",
@@ -342,45 +349,11 @@ public class JournalController {
 			futureJournal = journalRestClient.reconcile(journalEntity, summary);
 			journalEntity = futureJournal.get();
 			journalService.update(journalEntity);
-			notifyJournalSynced(journal);
+			journalNotifier.notifyJournalSynced(journal);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void addJournalListener(JournalListener listener) {
-		listeners.add(listener);
-	}
 
-	public void removeJournalListener(JournalListener listener) {
-		listeners.remove(listener);
-	}
-
-	protected void notifyJournalClosed(JournalDTO journal) {
-		listeners.stream().forEach(listener -> listener.journalClosed(journal));
-	}
-
-	protected void notifyJournalChanged(JournalDTO journal) {
-		listeners.stream().forEach(listener -> listener.journalChanged(journal));
-	}
-
-	protected void notifyJournalOpened(JournalDTO journal) {
-		// HWC TODO this is the best way to handle this, components that need to know
-		// about
-		// the journal should use a JournalListener
-		model.setJournal(journal);
-		listeners.stream().forEach(listener -> listener.journalOpened(journal));
-	}
-
-	protected void notifyJournalStarted(JournalDTO journal) {
-		listeners.stream().forEach(listener -> listener.journalStarted(journal));
-	}
-
-	protected void notifyJournalSuspended(JournalDTO journal) {
-		listeners.stream().forEach(listener -> listener.journalSuspended(journal));
-	}
-	
-	protected void notifyJournalSynced (JournalDTO journal) {
-		listeners.stream().forEach(listener -> listener.journalSynced(journal));
-	}
 }

@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.common.service.PreferenceService;
-import com.concessions.local.network.client.ClientService;
+import com.concessions.local.network.Messenger;
 import com.concessions.local.network.dto.PINVerifyRequestDTO;
 import com.concessions.local.network.dto.SimpleResponseDTO;
 import com.concessions.local.network.manager.PINManager;
@@ -31,7 +31,7 @@ public class PINController {
 	private static final Logger logger = LoggerFactory.getLogger(PINController.class);
 	
 	@Autowired
-	protected ClientService clientService;
+	protected Messenger clientService;
 	
 	@Autowired
 	protected PreferenceService preferenceService;

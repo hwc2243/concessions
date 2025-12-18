@@ -15,6 +15,7 @@ import com.concessions.client.repository.base.BaseJournalPersistence;
 
 import com.concessions.client.model.base.Multitenant;
 import com.concessions.client.service.base.MultitenantServiceImpl;
+import com.concessions.client.model.StatusType;
 
 public abstract class BaseJournalServiceImpl<T extends Journal & Multitenant, ID>
   extends MultitenantServiceImpl<T, ID>

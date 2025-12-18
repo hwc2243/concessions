@@ -1,9 +1,8 @@
-package com.concessions.local.pos;
+package com.concessions.local.kitchen;
 
 import static com.concessions.local.base.Constants.DEVICE_ID_PREFERENCE;
 import static com.concessions.local.base.Constants.PIN_PREFERENCE;
 
-import java.beans.PropertyChangeListener;
 import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 
@@ -29,34 +28,21 @@ import com.concessions.common.network.RegistrationClient;
 import com.concessions.common.network.dto.WelcomeResponseDTO;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.base.AbstractApplication;
-import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
+import com.concessions.local.kitchen.config.AppConfig;
+import com.concessions.local.kitchen.model.KitchenApplicationModel;
+import com.concessions.local.kitchen.ui.KitchenApplicationFrame;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.Messenger;
 import com.concessions.local.network.client.ClientException;
-import com.concessions.local.network.client.LocalNetworkClient;
 import com.concessions.local.network.dto.ConfigurationRequestDTO;
 import com.concessions.local.network.dto.ConfigurationResponseDTO;
 import com.concessions.local.network.dto.DeviceRegistrationRequestDTO;
 import com.concessions.local.network.dto.DeviceRegistrationResponseDTO;
-import com.concessions.local.network.dto.JournalDTO;
-import com.concessions.local.network.dto.MenuDTO;
-import com.concessions.local.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.local.network.manager.ConfigurationManager;
 import com.concessions.local.network.manager.DeviceManager;
-import com.concessions.local.network.manager.JournalManager;
-import com.concessions.local.network.manager.MenuManager;
-import com.concessions.local.network.manager.OrderManager;
-import com.concessions.local.pos.config.AppConfig;
-import com.concessions.local.pos.controller.OrderSubmissionController;
-import com.concessions.local.pos.model.POSApplicationModel;
-import com.concessions.local.pos.ui.POSApplicationFrame;
-import com.concessions.local.ui.JournalNotifier;
-import com.concessions.local.ui.controller.OrderController;
-import com.concessions.local.ui.model.OrderModel;
-import com.concessions.local.ui.view.OrderPanel;
 
 import jakarta.annotation.PostConstruct;
 
@@ -67,32 +53,41 @@ import jakarta.annotation.PostConstruct;
 	    havingValue = "true",
 	    matchIfMissing = false // This ensures if the property is not defined, the component is NOT created.
 	)
-public class POSApplication extends AbstractClientApplication {
+public class KitchenApplication extends AbstractApplication {
 
-	private static final Logger logger = LoggerFactory.getLogger(POSApplication.class);
-	
-	@Value("${application.name:Concessions Management System POS}")
+	private static final Logger logger = LoggerFactory.getLogger(KitchenApplication.class);
+
+	@Value("${application.name:Concessions Management System Kitchen}")
 	protected String applicationName;
 	
 	@Value("${application.version:SNAPSHOT}")
 	protected String applicationVersion;
 
 	@Autowired
-	private POSApplicationFrame frame;
+	private Messenger clientService;
 	
 	@Autowired
-	private POSApplicationModel model;
+	private PINController pinController;
 	
 	@Autowired
-	protected JournalNotifier journalNotifier;
-
-	public POSApplication() {
+	private KitchenApplicationFrame frame;
+	
+	@Autowired
+	private KitchenApplicationModel model;
+	
+	@Autowired
+	private PreferenceService preferenceService;
+	
+	@Autowired
+	protected RegistrationClient registrationClient;
+	
+	public KitchenApplication() {
 		// TODO Auto-generated constructor stub
 	}
 
 	@PostConstruct
 	protected void initialize () {
-		logger.info("Starting POS Application");
+		logger.info("Starting Kitchen Application");
 		pinController.addPINListener(new PINController.PINListener () {
 			public void pinSet (String pin) {
 				model.setPin(pin);
@@ -101,8 +96,7 @@ public class POSApplication extends AbstractClientApplication {
 		});
 	}
 	
-	public void execute ()
-	{
+	protected void execute () {
 		String deviceId = preferenceService.get(DEVICE_ID_PREFERENCE);
 		if (StringUtils.isBlank(deviceId)) {
 			deviceId = UUID.randomUUID().toString();
@@ -119,7 +113,7 @@ public class POSApplication extends AbstractClientApplication {
 			logger.error("Failed to locate server.");
 			System.exit(1);
 		}
-		messenger.initialize(welcomeResponse.getServerIp(), welcomeResponse.getServerPort());
+		clientService.initialize(welcomeResponse.getServerIp(), welcomeResponse.getServerPort());
 		
 		// Show the main application window
 		SwingUtilities.invokeLater(() -> {
@@ -131,27 +125,23 @@ public class POSApplication extends AbstractClientApplication {
 		String pin = preferenceService.get(PIN_PREFERENCE);
 		pinController.execute(frame, pin);
 	}
-
-	protected void executeStartup () {
+	
+	public void executeStartup () {
 		model.setStatusMessage("Configuring");
 		executeDeviceRegistration();
 		executeLocationConfiguration();
-		executeMenu();
-		executeStartOrders();
 		model.setStatusMessage("Ready");
 	}
 	
 	protected void executeDeviceRegistration () {
 		DeviceRegistrationRequestDTO deviceRegistration = new DeviceRegistrationRequestDTO();
 		deviceRegistration.setDeviceId(model.getDeviceId());
-		deviceRegistration.setDeviceType(DeviceTypeType.POS);
-		deviceRegistration.setDeviceIp(localNetworkClient.getListenerIp());
-		deviceRegistration.setDevicePort(localNetworkClient.getListenerPort());
+		deviceRegistration.setDeviceType(DeviceTypeType.KITCHEN);
 		deviceRegistration.setPIN(model.getPin());
 		
 		DeviceRegistrationResponseDTO deviceRegistrationResponse;
 		try {
-			deviceRegistrationResponse = messenger.sendRequest(DeviceManager.NAME, DeviceManager.REGISTER, deviceRegistration, DeviceRegistrationResponseDTO.class);
+			deviceRegistrationResponse = clientService.sendRequest(DeviceManager.NAME, DeviceManager.REGISTER, deviceRegistration, DeviceRegistrationResponseDTO.class);
 			model.setDeviceNumber(deviceRegistrationResponse.getDeviceNumber());
 		} catch (ClientException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to register device - " + ex.getMessage(), "Fatal Error",
@@ -167,7 +157,7 @@ public class POSApplication extends AbstractClientApplication {
 		
 		ConfigurationResponseDTO response = null;
 		try {
-			response = messenger.sendRequest(ConfigurationManager.NAME, ConfigurationManager.LOCATION, request, ConfigurationResponseDTO.class);
+			response = clientService.sendRequest(ConfigurationManager.NAME, ConfigurationManager.LOCATION, request, ConfigurationResponseDTO.class);
 			LocationConfiguration locationConfiguration = new LocationConfiguration();
 			locationConfiguration.setOrganizationName(response.getOrganizationName());
 			locationConfiguration.setLocationName(response.getLocationName());
@@ -180,50 +170,19 @@ public class POSApplication extends AbstractClientApplication {
 			System.exit(1);
 		}
 	}
-	
-	protected void executeMenu () {
-		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
-		request.setPIN(model.getPin());
-		request.setDeviceId(model.getDeviceId());
-		
-		MenuDTO response = null;
-		try
-		{
-			response = messenger.sendRequest(MenuManager.NAME, MenuManager.GET, request, MenuDTO.class);
-			model.setMenu(response);
-		} catch (ClientException ex) {
-			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
-					JOptionPane.ERROR_MESSAGE);
-			ex.printStackTrace();
-			System.exit(1);
-		}
+	@Override
+	protected void showAboutDialog(JFrame frame) {
+		AboutDialog.showAboutDialog(frame, applicationName, applicationVersion);
 	}
-	
-	protected void executeStartOrders () {
-		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
-		request.setPIN(model.getPin());
-		request.setDeviceId(model.getDeviceId());
-		
-		JournalDTO journal = null;
-		try {
-			journal = messenger.sendRequest(JournalManager.NAME, JournalManager.JOURNAL_GET, request, JournalDTO.class);
-			model.setJournal(journal);
-		} catch (ClientException ex) {
-			JOptionPane.showMessageDialog(null, "Failed to retrieve journal - " + ex.getMessage(), "Fatal Error",
-					JOptionPane.ERROR_MESSAGE);
-			ex.printStackTrace();
-			System.exit(1);
-		}
 
-		OrderSubmissionController orderSubmissionController = new OrderSubmissionController(model, messenger);
-		OrderController controller = new OrderController(frame);
-		journalNotifier.addJournalListener(controller);
-		controller.addOrderListener(orderSubmissionController);
-		controller.execute(model.getMenu(), journal);
+	@Override
+	protected boolean performQuit() {
+		// TODO Auto-generated method stub
+		return false;
 	}
-	
+
 	public static void main(String[] args) {
-		initializeLaF("CMS POS");
+		initializeLaF("CMS Kitchen");
 	
 		AnnotationConfigApplicationContext context = null;
 		try {
@@ -237,17 +196,17 @@ public class POSApplication extends AbstractClientApplication {
 	        environment.getPropertySources().addLast(yamlPropertySource);
 			
 			context.register(AppConfig.class);
-            context.scan("com.concessions.local.pos", "com.concessions.local.base", "com.concessions.local.network.client", "com.concessions.common");
+            context.scan("com.concessions.local.kitchen", "com.concessions.local.base", "com.concessions.local.network.client", "com.concessions.common");
             context.refresh();
             context.registerShutdownHook();
 
-			POSApplication application = context.getBean(POSApplication.class);	
+			KitchenApplication application = context.getBean(KitchenApplication.class);	
 			application.execute();
 
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Failed to start POS application: " + e.getMessage(), "Fatal Error",
+			JOptionPane.showMessageDialog(null, "Failed to start Kitchen application: " + e.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			if (context != null)
 			{
@@ -255,15 +214,5 @@ public class POSApplication extends AbstractClientApplication {
 			}
 			System.exit(1);
 		}
-	}
-
-	@Override
-	protected void showAboutDialog (JFrame frame) {
-        AboutDialog.showAboutDialog(frame, applicationName, applicationVersion);
-	}
-
-	@Override
-	protected boolean performQuit() {
-		return true;
 	}
 }

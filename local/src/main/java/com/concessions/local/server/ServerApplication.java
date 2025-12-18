@@ -7,7 +7,7 @@ import static com.concessions.local.base.Constants.PIN_PREFERENCE;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
+import java.util.List;
 import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 
@@ -20,8 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
@@ -37,8 +40,11 @@ import com.concessions.local.config.JpaConfig;
 import com.concessions.local.model.Device;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.network.client.ClientException;
+import com.concessions.local.network.client.JournalClientManager;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.MenuMapper;
+import com.concessions.local.network.dto.SimpleResponseDTO;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.model.ServerApplicationModel;
@@ -46,6 +52,7 @@ import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
+import com.concessions.local.ui.JournalNotifier;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
 import com.concessions.local.ui.action.JournalStartAction;
@@ -55,7 +62,6 @@ import com.concessions.local.ui.action.LogoutAction;
 import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.controller.DeviceCodeController;
 import com.concessions.local.ui.controller.JournalController;
-import com.concessions.local.ui.controller.JournalListener;
 import com.concessions.local.ui.controller.SetupController;
 import com.concessions.local.ui.view.DeviceCodeDialog;
 
@@ -98,6 +104,9 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	
 	@Autowired
 	protected JournalController journalController;
+	
+	@Autowired
+	protected JournalNotifier journalNotifier;
 	
 	@Autowired
 	protected ExitAction exitAction;
@@ -177,7 +186,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			}
 		});
 		
-		journalController.addJournalListener(new JournalListener() {
+		journalNotifier.addJournalListener(new JournalNotifier.JournalListener() {
 			
 			@Override
 			public void journalStarted(JournalDTO journal) {
@@ -191,18 +200,32 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			public void journalOpened(JournalDTO journal) {
 				journalCloseAction.setEnabled(true);
 				journalSuspendAction.setEnabled(true);
+				journalChange(journal);
 			}
 
 			@Override
 			public void journalClosed(JournalDTO journal) {
+				journalChange(journal);
 			}
 
 			@Override
 			public void journalSuspended(JournalDTO journal) {
+				journalChange(journal);
 			}
 			
 			public void journalSynced (JournalDTO journal) {
 				// HWC TODO can't think of anything to do at the moment
+			}
+			
+			protected void journalChange (JournalDTO journal) {
+				List<Device> posDevices = deviceService.findByDeviceType(DeviceTypeType.POS);
+				for (Device device : posDevices) {
+					try {
+						messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), JournalClientManager.NAME, JournalClientManager.CHANGE, journal, SimpleResponseDTO.class);
+					} catch (ClientException ex) {
+						ex.printStackTrace();
+					}
+				}
 			}
 		});
 		
@@ -319,9 +342,11 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			context = new AnnotationConfigApplicationContext();
 			ConfigurableEnvironment environment = context.getEnvironment();
 
-	        // Load application.yml from classpath
-	        environment.getPropertySources().addLast(
-	                new ResourcePropertySource("application-server.yml", "classpath:application-server.yml"));
+			YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
+			ClassPathResource resource = new ClassPathResource("application-server.yml");
+			PropertySource<?> yamlPropertySource = loader.load("application-server.yml", resource)
+			                                            .get(0); // Take the first (and usually only) document
+	        environment.getPropertySources().addLast(yamlPropertySource);
 			
 			context.register(JpaConfig.class);
 			context.register(AppConfig.class);

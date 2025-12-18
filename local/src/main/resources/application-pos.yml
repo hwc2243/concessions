@@ -1,3 +1,7 @@
 application:
-  version: @project.version@
-  name: @project.name@ POS
+    version: @project.version@
+    name: @project.name@ POS
+
+local:
+    network:
+        client: true

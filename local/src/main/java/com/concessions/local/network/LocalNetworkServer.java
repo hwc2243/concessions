@@ -13,15 +13,24 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.concessions.common.network.dto.WelcomeResponseDTO;
+import com.concessions.local.model.Device;
+import com.concessions.local.network.client.HealthCheckManager;
 import com.concessions.local.network.dto.SimpleResponseDTO;
 import com.concessions.local.network.manager.ManagerRegistry;
+import com.concessions.local.service.DeviceService;
 import com.concessions.local.util.UdpPortFinder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -35,9 +44,23 @@ import jakarta.annotation.PreDestroy;
  * and port in JSON format.
  */
 @Component
-public class LocalNetworkManager {
+@ConditionalOnProperty(prefix = "local.network", name = "server", havingValue = "true", matchIfMissing = false // This
+																												// ensures
+																												// if
+																												// the
+																												// property
+																												// is
+																												// not
+																												// defined,
+																												// the
+																												// component
+																												// is
+																												// NOT
+																												// created.
+)
+public class LocalNetworkServer {
 
-	private static final Logger logger = LoggerFactory.getLogger(LocalNetworkManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(LocalNetworkServer.class);
 
 	private static final String HELLO_MESSAGE = "HELLO";
 	private static final int BUFFER_SIZE = 256;
@@ -47,13 +70,23 @@ public class LocalNetworkManager {
 	private ServerSocket tcpServerSocket;
 	private DatagramSocket udpDiscoverySocket;
 	private final UdpPortFinder udpPortFinder = new UdpPortFinder();
+	private ScheduledExecutorService healthCheckScheduler;
+
+	@Value("${local.network.healhCheckInterval:60}")
+	protected int healthCheckInterval;
 
 	@Autowired
-	private ObjectMapper mapper;
+	protected DeviceService deviceService;
 
 	@Autowired
-	private ManagerRegistry registry;
-	
+	protected ManagerRegistry registry;
+
+	@Autowired
+	protected ObjectMapper mapper;
+
+	@Autowired
+	protected Messenger messenger;
+
 	@PostConstruct
 	public void start() throws IOException {
 		// find the best local ip address for our server
@@ -61,21 +94,33 @@ public class LocalNetworkManager {
 
 		// Find and bind the TCP Server Socket
 		findAndBindAvailableTcpPort();
-		logger.info("RegistrationManager bound successfully on {}:{}", serverIp, tcpServerPort);
+		logger.info("LocalNetworkServer bound successfully on {}:{}", serverIp, tcpServerPort);
 
 		// Find and bind the UDP Discovery Socket
 		udpDiscoverySocket = udpPortFinder.findAndBindAvailablePort();
 
 		// Start the UDP Listener thread
-		Thread udpListenerThread = new Thread(this::startUdpListener, "NetworkManager-Discovery-Listener");
+		Thread udpListenerThread = new Thread(this::startUdpListener, "LocalNetworkServer-Discovery-Listener");
 		udpListenerThread.start();
 
 		// Start the TCP Listener thread to accept client connections
-		Thread tcpListenerThread = new Thread(this::startTcpListener, "NetworkManager-TCP-Listener");
+		Thread tcpListenerThread = new Thread(this::startTcpListener, "LocalNetworkServer-TCP-Listener");
 		tcpListenerThread.start();
 
-		logger.info("RegistrationManager is active. IP Address: {}, TCP Port: {}, UDP Port: {}", serverIp,
-				tcpServerPort, udpDiscoverySocket.getLocalPort());
+		// Initialize the health check scheduler
+		healthCheckScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+			Thread t = Executors.defaultThreadFactory().newThread(r);
+			t.setName("LocalNetworkServer-Health-Checker");
+			t.setDaemon(true); // Allow the application to exit if this is the only remaining thread
+			return t;
+		});
+
+		healthCheckScheduler.scheduleAtFixedRate(this::deviceHealthChecker, 60, // initial delay in seconds
+				healthCheckInterval, // period in seconds
+				TimeUnit.SECONDS);
+
+		logger.info("LocalNetworkServer is active. IP Address: {}, TCP Port: {}, UDP Port: {}", serverIp, tcpServerPort,
+				udpDiscoverySocket.getLocalPort());
 	}
 
 	/**
@@ -95,10 +140,10 @@ public class LocalNetworkManager {
 				logger.info("[TCP] Accepted connection from: {}", clientSocket.getRemoteSocketAddress());
 
 				// Start the TCP Listener thread to accept client connections
-				Thread requestHandlerThread = new Thread(() -> startRequestHandler(clientSocket), 
-                        "NetworkManager-Request-Handler-" + clientSocket.getRemoteSocketAddress());
+				Thread requestHandlerThread = new Thread(() -> startRequestHandler(clientSocket),
+						"LocalNetworkServer-Request-Handler-" + clientSocket.getRemoteSocketAddress());
 				requestHandlerThread.start();
-				
+
 			}
 		} catch (SocketException e) {
 			if (!tcpServerSocket.isClosed()) {
@@ -109,46 +154,52 @@ public class LocalNetworkManager {
 		}
 	}
 
-	private void startRequestHandler (Socket socket) {
+	private void startRequestHandler(Socket socket) {
 		String service = null;
 		String action = null;
 		String payload = null;
-		
+
 		try (
-			// Use BufferedReader to easily read lines of text from the socket's input stream
-			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		) {
-			logger.debug("[{}] Starting request handler for: {}", Thread.currentThread().getName(), socket.getRemoteSocketAddress());
+				// Use BufferedReader to easily read lines of text from the socket's input
+				// stream
+				BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
+			logger.debug("[{}] Starting request handler for: {}", Thread.currentThread().getName(),
+					socket.getRemoteSocketAddress());
 
 			// 1. Read the full message string
 			String requestLine = reader.readLine();
 
 			if (requestLine == null) {
-				logger.warn("[{}] Received empty or null request from: {}", Thread.currentThread().getName(), socket.getRemoteSocketAddress());
+				logger.warn("[{}] Received empty or null request from: {}", Thread.currentThread().getName(),
+						socket.getRemoteSocketAddress());
 				return;
 			}
-			
+
 			logger.debug("[{}] Raw request: {}", Thread.currentThread().getName(), requestLine);
 
-			// 2. Parse the string into service, action, and payload using "|" as the delimiter
+			// 2. Parse the string into service, action, and payload using "|" as the
+			// delimiter
 			String[] parts = requestLine.split("\\|", 3); // Limit split to 3 parts
 
 			if (parts.length < 3) {
-				logger.error("[{}] Malformed request (expected 3 parts, got {}): {}", Thread.currentThread().getName(), parts.length, requestLine);
-				// If malformed, we can skip processing and let the finally block close the socket.
-				return; 
+				logger.error("[{}] Malformed request (expected 3 parts, got {}): {}", Thread.currentThread().getName(),
+						parts.length, requestLine);
+				// If malformed, we can skip processing and let the finally block close the
+				// socket.
+				return;
 			}
 
 			// 3. Assign the parts to the variables (trimming whitespace is good practice)
 			service = parts[0].trim();
 			action = parts[1].trim();
 			payload = parts[2].trim();
-			
-			logger.info("[{}] Parsed Request: Service={}, Action={}, Payload={}", Thread.currentThread().getName(), service, action, payload);
+
+			logger.info("[{}] Parsed Request: Service={}, Action={}, Payload={}", Thread.currentThread().getName(),
+					service, action, payload);
 
 			try {
 				Object response = registry.handleRequest(service, action, payload);
-				sendResponse(socket, "OK|" + mapper.writeValueAsString(response)); 
+				sendResponse(socket, "OK|" + mapper.writeValueAsString(response));
 			} catch (Exception ex) {
 				SimpleResponseDTO response = new SimpleResponseDTO();
 				response.setMessage(ex.getMessage());
@@ -156,24 +207,25 @@ public class LocalNetworkManager {
 			}
 
 		} catch (IOException e) {
-			logger.error("[{}] I/O error processing request from {}: {}", Thread.currentThread().getName(), 
-                          socket.getRemoteSocketAddress(), e.getMessage(), e);
+			logger.error("[{}] I/O error processing request from {}: {}", Thread.currentThread().getName(),
+					socket.getRemoteSocketAddress(), e.getMessage(), e);
 		} catch (Exception e) {
-			logger.error("[{}] Unexpected error for {}: {}", Thread.currentThread().getName(), 
-                          socket.getRemoteSocketAddress(), e.getMessage(), e);
+			logger.error("[{}] Unexpected error for {}: {}", Thread.currentThread().getName(),
+					socket.getRemoteSocketAddress(), e.getMessage(), e);
 		} finally {
 			// CRITICAL: Close the socket when processing is finished in the worker thread
 			try {
 				if (socket != null && !socket.isClosed()) {
 					socket.close();
-					logger.debug("[{}] Closed connection from: {}", Thread.currentThread().getName(), socket.getRemoteSocketAddress());
+					logger.debug("[{}] Closed connection from: {}", Thread.currentThread().getName(),
+							socket.getRemoteSocketAddress());
 				}
 			} catch (IOException e) {
 				logger.error("[{}] Error closing socket: {}", Thread.currentThread().getName(), e.getMessage(), e);
 			}
 		}
 	}
-	
+
 	/**
 	 * The main loop for the UDP discovery service.
 	 */
@@ -218,26 +270,71 @@ public class LocalNetworkManager {
 		} catch (IOException e) {
 			logger.error("UDP Listener I/O error: {}", e.getMessage(), e);
 		} finally {
-			closeSockets();
+			shutdown();
 		}
+	}
+
+	private void deviceHealthChecker() {
+		logger.info("Executing scheduled device health check...");
+		try {
+			List<Device> localDevices = deviceService.findAll();
+
+			if (localDevices == null || localDevices.isEmpty()) {
+				logger.debug("No local devices found to check.");
+				return;
+			}
+
+			for (Device device : localDevices) {
+				String ip = device.getDeviceIp();
+				Integer port = device.getDevicePort();
+				String deviceId = device.getDeviceId();
+
+				if (ip != null && !ip.trim().isEmpty() && port != null && port > 0) {
+					logger.debug("Checking health for Device ID: {} at {}:{}", deviceId, ip, port);
+
+					if (!performHealthCheck(device)) {
+						device.setDeviceIp(null);
+						device.setDevicePort(0);
+						deviceService.update(device);
+					}
+				} else {
+					logger.debug("Skipping health check for Device ID: {} - Missing IP/Port.", deviceId);
+				}
+			}
+		} catch (Exception ex) {
+			logger.error("Error during device health checker execution: {}", ex.getMessage(), ex);
+		}
+	}
+
+	private boolean performHealthCheck(Device device) {
+		try {
+			messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), HealthCheckManager.NAME, HealthCheckManager.CHECK, "", SimpleResponseDTO.class);
+			return true;
+		} catch (Exception ex) {
+			logger.error("Health check failure for Device ID: {} at {}:{} - {}", device.getDeviceId(),
+					device.getDeviceIp(), device.getDevicePort(), ex.getMessage(), ex);
+		}
+		return false;
 	}
 
 	private void sendResponse(Socket socket, String responseString) {
 		try {
-			// Using PrintWriter with auto-flushing enabled (true) for convenience and immediate delivery
+			// Using PrintWriter with auto-flushing enabled (true) for convenience and
+			// immediate delivery
 			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-			
+
 			// 1. Send the response string followed by a newline character (\n)
-			// The newline is crucial for the client's BufferedReader.readLine() to recognize the end of the message.
+			// The newline is crucial for the client's BufferedReader.readLine() to
+			// recognize the end of the message.
 			writer.println(responseString);
-			
+
 			logger.debug("[{}] Sent response: {}", Thread.currentThread().getName(), responseString);
 		} catch (IOException e) {
-			logger.error("[{}] Failed to send response to {}: {}", Thread.currentThread().getName(), 
-                          socket.getRemoteSocketAddress(), e.getMessage());
+			logger.error("[{}] Failed to send response to {}: {}", Thread.currentThread().getName(),
+					socket.getRemoteSocketAddress(), e.getMessage());
 		}
 	}
-	
+
 	/**
 	 * Attempts to find the local machine's non-loopback IP address.
 	 */
@@ -277,7 +374,9 @@ public class LocalNetworkManager {
 	}
 
 	@PreDestroy
-	private void closeSockets() {
+	private void shutdown() {
+		if (healthCheckScheduler != null)
+			healthCheckScheduler.shutdownNow();
 		if (udpDiscoverySocket != null && !udpDiscoverySocket.isClosed()) {
 			udpDiscoverySocket.close();
 		}
@@ -291,7 +390,7 @@ public class LocalNetworkManager {
 	}
 
 	public static void main(String[] args) {
-		LocalNetworkManager manager = new LocalNetworkManager();
+		LocalNetworkServer manager = new LocalNetworkServer();
 		try {
 			manager.start();
 
@@ -304,7 +403,7 @@ public class LocalNetworkManager {
 			logger.error("Local Registration Controller interrupted.", e);
 			Thread.currentThread().interrupt();
 		} finally {
-			manager.closeSockets();
+			manager.shutdown();
 		}
 	}
 }

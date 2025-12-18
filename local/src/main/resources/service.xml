@@ -3,9 +3,15 @@
 	<entity name="device" db-name="device">
 		<attribute name="deviceId" type="string" />
 		<attribute name="deviceType" type="enum" enum-values="SERVER KITCHEN POS" />
+		<attribute name="deviceIp" type="string" />
+		<attribute name="devicePort" type="int" />
 		
 		<finder unique="true">
             <finder-attribute name="deviceId"/>
+        </finder>
+        
+        <finder>
+        	<finder-attribute name="deviceType"/>
         </finder>
 	</entity>
 	

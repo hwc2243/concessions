@@ -13,6 +13,8 @@ import com.concessions.local.service.ServiceException;
 import com.concessions.local.persistence.DevicePersistence;
 import com.concessions.local.persistence.base.BaseDevicePersistence;
 
+import com.concessions.local.model.DeviceTypeType;
+
 public abstract class BaseDeviceServiceImpl<T extends Device, ID>
   implements BaseDeviceService<T, ID> {
 
@@ -44,6 +46,12 @@ public abstract class BaseDeviceServiceImpl<T extends Device, ID>
   public T fetchByDeviceId (String deviceId)
   {
 	return baseDevicePersistence.findFirstByDeviceId(deviceId);
+  }
+
+  @Override
+  public List<T> findByDeviceType (DeviceTypeType deviceType)
+  {
+	return baseDevicePersistence.findByDeviceType(deviceType);
   }
 
   @Override

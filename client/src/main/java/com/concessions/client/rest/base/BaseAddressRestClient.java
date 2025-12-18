@@ -29,7 +29,25 @@ public abstract class BaseAddressRestClient<T extends Address>
 			return CompletableFuture.failedFuture(e);
 		}
 	}
-	
+
+/*
+    public CompletableFuture<T> get (long id) {
+    // 1. supplyAsync moves the execution to a worker thread (usually ForkJoinPool.commonPool())
+    return CompletableFuture.supplyAsync(() -> {
+        try {
+            // 2. This synchronous call (doGet) now executes on a background thread.
+            // Note: We use the target type here, which is Organization in your case
+            return doGet(hostPath, apiPath + "/" + id, new TypeToken<Organization>() {}.getType());
+        } catch (IOException | InterruptedException e) {
+            // 3. If an exception occurs, it must be thrown inside the supplier
+            // This causes the CompletableFuture to complete exceptionally.
+            throw new RuntimeException(e);
+        }
+    });
+    // The .exceptionally() or .handle() method is often used after this 
+    // to process the exception on the main thread if needed.
+    }
+*/	
 	public CompletableFuture<T> get (long id) {
 		try {
 			T address = doGet(hostPath, apiPath + "/" + id, new TypeToken<Address>() {}.getType());

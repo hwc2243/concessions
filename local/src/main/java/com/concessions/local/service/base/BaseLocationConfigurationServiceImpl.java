@@ -13,6 +13,7 @@ import com.concessions.local.service.ServiceException;
 import com.concessions.local.persistence.LocationConfigurationPersistence;
 import com.concessions.local.persistence.base.BaseLocationConfigurationPersistence;
 
+
 public abstract class BaseLocationConfigurationServiceImpl<T extends LocationConfiguration, ID>
   implements BaseLocationConfigurationService<T, ID> {
 
