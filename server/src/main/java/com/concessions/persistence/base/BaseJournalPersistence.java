@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.concessions.model.base.BaseJournal;
 import com.concessions.model.Journal;
+import com.concessions.model.StatusType;
 
 public interface BaseJournalPersistence<T extends Journal, ID> extends JpaRepository<T, ID>
 {

@@ -1,6 +1,8 @@
 package com.concessions.local.network.client;
 
-public class ClientException extends Exception {
+import com.concessions.common.network.NetworkException;
+
+public class ClientException extends NetworkException {
 
 	public ClientException() {
 		super();

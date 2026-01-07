@@ -21,10 +21,15 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
+import com.concessions.common.network.MessengerException;
+import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.RegistrationClient;
+import com.concessions.common.network.dto.ConfigurationResponseDTO;
+import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
+import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
+import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.WelcomeResponseDTO;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.base.AbstractApplication;
@@ -35,14 +40,8 @@ import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import com.concessions.local.kitchen.ui.KitchenApplicationFrame;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.Messenger;
-import com.concessions.local.network.client.ClientException;
-import com.concessions.local.network.dto.ConfigurationRequestDTO;
-import com.concessions.local.network.dto.ConfigurationResponseDTO;
-import com.concessions.local.network.dto.DeviceRegistrationRequestDTO;
-import com.concessions.local.network.dto.DeviceRegistrationResponseDTO;
-import com.concessions.local.network.manager.ConfigurationManager;
-import com.concessions.local.network.manager.DeviceManager;
+import com.concessions.local.network.server.ConfigurationManager;
+import com.concessions.local.network.server.DeviceManager;
 
 import jakarta.annotation.PostConstruct;
 
@@ -63,9 +62,6 @@ public class KitchenApplication extends AbstractApplication {
 	@Value("${application.version:SNAPSHOT}")
 	protected String applicationVersion;
 
-	@Autowired
-	private Messenger clientService;
-	
 	@Autowired
 	private PINController pinController;
 	
@@ -113,7 +109,7 @@ public class KitchenApplication extends AbstractApplication {
 			logger.error("Failed to locate server.");
 			System.exit(1);
 		}
-		clientService.initialize(welcomeResponse.getServerIp(), welcomeResponse.getServerPort());
+		messenger.initialize(welcomeResponse.getServerIp(), welcomeResponse.getServerPort());
 		
 		// Show the main application window
 		SwingUtilities.invokeLater(() -> {
@@ -136,14 +132,14 @@ public class KitchenApplication extends AbstractApplication {
 	protected void executeDeviceRegistration () {
 		DeviceRegistrationRequestDTO deviceRegistration = new DeviceRegistrationRequestDTO();
 		deviceRegistration.setDeviceId(model.getDeviceId());
-		deviceRegistration.setDeviceType(DeviceTypeType.KITCHEN);
+		deviceRegistration.setDeviceType(DeviceTypeType.KITCHEN.name());
 		deviceRegistration.setPIN(model.getPin());
 		
 		DeviceRegistrationResponseDTO deviceRegistrationResponse;
 		try {
-			deviceRegistrationResponse = clientService.sendRequest(DeviceManager.NAME, DeviceManager.REGISTER, deviceRegistration, DeviceRegistrationResponseDTO.class);
+			deviceRegistrationResponse = messenger.sendRequest(NetworkConstants.DEVICE_SERVICE, NetworkConstants.DEVICE_REGISTER_ACTION, deviceRegistration, DeviceRegistrationResponseDTO.class);
 			model.setDeviceNumber(deviceRegistrationResponse.getDeviceNumber());
-		} catch (ClientException ex) {
+		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to register device - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
@@ -152,18 +148,18 @@ public class KitchenApplication extends AbstractApplication {
 	}
 
 	protected void executeLocationConfiguration () {
-		ConfigurationRequestDTO request = new ConfigurationRequestDTO();
+		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
 		request.setPIN(model.getPin());
 		
 		ConfigurationResponseDTO response = null;
 		try {
-			response = clientService.sendRequest(ConfigurationManager.NAME, ConfigurationManager.LOCATION, request, ConfigurationResponseDTO.class);
+			response = messenger.sendRequest(NetworkConstants.CONFIGURATION_SERVICE, NetworkConstants.CONFIGURATION_LOCATION_ACTION, request, ConfigurationResponseDTO.class);
 			LocationConfiguration locationConfiguration = new LocationConfiguration();
 			locationConfiguration.setOrganizationName(response.getOrganizationName());
 			locationConfiguration.setLocationName(response.getLocationName());
 			locationConfiguration.setMenuName(response.getMenuName());
 			model.setLocationConfiguration(locationConfiguration);
-		} catch (ClientException ex) {
+		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();

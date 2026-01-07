@@ -1,6 +1,6 @@
 package com.concessions.client.model;
 
-import com.concessions.client.model.CategoryType;
+import com.concessions.dto.CategoryType;
 import java.math.BigDecimal;
 
 import java.io.Serializable;

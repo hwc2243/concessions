@@ -24,12 +24,12 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Order;
-import com.concessions.client.model.StatusType;
 import com.concessions.client.rest.JournalRestClient;
 import com.concessions.client.service.JournalService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
 import com.concessions.common.dto.JournalSummaryDTO;
+import com.concessions.dto.StatusType;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.JournalMapper;
 import com.concessions.local.network.dto.OrderDTO;

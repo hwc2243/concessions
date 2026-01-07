@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.concessions.client.model.MenuItem;
+import com.concessions.dto.MenuItemDTO;
 
 public class MenuItemMapper {
 

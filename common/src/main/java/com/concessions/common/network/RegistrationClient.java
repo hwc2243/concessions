@@ -4,11 +4,16 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.Collections;
+import java.util.Enumeration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 // --- Jackson Imports ---
@@ -24,10 +29,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  */
 @Component
 public class RegistrationClient {
-
     private static final Logger log = LoggerFactory.getLogger(RegistrationClient.class);
-    // Initialize Jackson ObjectMapper once for thread-safe use
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private ObjectMapper mapper;
     
     private static final int START_PORT = 9371;
     private static final int MAX_PORT = 9390; // End of the Registered Ports range
@@ -36,15 +40,26 @@ public class RegistrationClient {
     private static final String RESPONSE_PREFIX = "WELCOME:";
     private static final int BUFFER_SIZE = 512;
 
+    @Autowired
+    public RegistrationClient (ObjectMapper mapper) {
+    	this.mapper = mapper;
+    }
     /**
      * Finds the service by scanning UDP ports and sending a discovery message.
      * * @return The WelcomeResponseDTO if the service is found, or null otherwise.
      */
     public WelcomeResponseDTO discoverService() {
-        InetAddress localHost;
+        InetAddress targetAddress;
         try {
             // Find the local IP address to send the discovery packet to
-            localHost = InetAddress.getLocalHost();
+        	if (isAndroid()) {
+                targetAddress = getBroadcastAddress();
+                log.debug("Android detected. Using broadcast address: {}", targetAddress);
+            } else {
+                // For non-Android (standard JVM), getLocalHost or specific subnets usually work better
+                targetAddress = InetAddress.getLocalHost();
+                log.debug("Standard JVM detected. Using local host address: {}", targetAddress);
+            }
         } catch (IOException e) {
             log.error("Could not determine local host address.", e);
             return null;
@@ -53,8 +68,9 @@ public class RegistrationClient {
         // Use a DatagramSocket bound to an ephemeral port for the client
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setSoTimeout(TIMEOUT_MS);
+            socket.setBroadcast(true);
             log.info("Starting UDP service discovery scan on {}:{} to {}", 
-                localHost.getHostAddress(), START_PORT, MAX_PORT);
+                targetAddress.getHostAddress(), START_PORT, MAX_PORT);
 
             byte[] helloData = HELLO_MESSAGE.getBytes();
             
@@ -65,7 +81,7 @@ public class RegistrationClient {
                 DatagramPacket sendPacket = new DatagramPacket(
                     helloData, 
                     helloData.length, 
-                    localHost, 
+                    targetAddress, 
                     port
                 );
                 
@@ -108,6 +124,31 @@ public class RegistrationClient {
         }
     }
 
+    private boolean isAndroid() {
+        String vendor = System.getProperty("java.vendor");
+        return vendor != null && vendor.toLowerCase().contains("android");
+    }
+    
+    private InetAddress getBroadcastAddress() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            for (NetworkInterface networkInterface : Collections.list(interfaces)) {
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) continue;
+
+                for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+                    InetAddress broadcast = interfaceAddress.getBroadcast();
+                    if (broadcast != null) {
+                        return broadcast;
+                    }
+                }
+            }
+            // Fallback
+            return InetAddress.getByName("255.255.255.255");
+        } catch (Exception e) {
+            log.error("Error calculating broadcast address", e);
+            try { return InetAddress.getByName("255.255.255.255"); } catch (Exception ex) { return null; }
+        }
+    }
     /**
      * Parses the response string "WELCOME:{ "serverIp": "x.x.x.x", "serverPort": "x" }"
      * and maps it to a WelcomeResponseDTO using Jackson.
@@ -125,7 +166,7 @@ public class RegistrationClient {
             String jsonPart = response.substring(RESPONSE_PREFIX.length()).trim();
             
             // Use Jackson's ObjectMapper to deserialize the JSON string
-            WelcomeResponseDTO dto = objectMapper.readValue(jsonPart, WelcomeResponseDTO.class);
+            WelcomeResponseDTO dto = mapper.readValue(jsonPart, WelcomeResponseDTO.class);
             
             // Basic validation
             if (dto.getServerIp() != null && dto.getServerPort() > 0) {
@@ -147,7 +188,9 @@ public class RegistrationClient {
     }
     
     public static void main(String[] args) {
-        RegistrationClient client = new RegistrationClient();
+    	ObjectMapper mapper = new ObjectMapper();
+        RegistrationClient client = new RegistrationClient(mapper);
+        
         log.info("Starting client discovery...");
         WelcomeResponseDTO dto = client.discoverService();
         

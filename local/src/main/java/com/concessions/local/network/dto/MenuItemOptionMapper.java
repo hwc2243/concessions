@@ -1,6 +1,7 @@
 package com.concessions.local.network.dto;
 
 import com.concessions.client.model.MenuItemOption;
+import com.concessions.dto.MenuItemOptionDTO;
 
 public class MenuItemOptionMapper {
 

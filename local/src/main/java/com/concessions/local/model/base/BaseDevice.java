@@ -62,7 +62,7 @@ public abstract class BaseDevice<T extends BaseDevice> extends AbstractBaseEntit
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

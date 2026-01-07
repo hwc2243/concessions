@@ -3,9 +3,10 @@ package com.concessions.local.pos.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.concessions.common.network.LocalNetworkListener;
+import com.concessions.common.network.ManagerRegistry;
+import com.concessions.common.network.Messenger;
 import com.concessions.common.service.PreferenceService;
-import com.concessions.local.network.Messenger;
-import com.concessions.local.network.manager.ManagerRegistry;
 import com.concessions.local.pos.POSApplication;
 import com.concessions.local.ui.JournalNotifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,5 +46,11 @@ public class AppConfig {
 	@Bean
 	public JournalNotifier journalNotifier () {
 		return new JournalNotifier();
+	}
+	
+	@Bean(initMethod = "start", destroyMethod = "shutdown")
+	public LocalNetworkListener localNetworkListener (ManagerRegistry registry, ObjectMapper mapper) {
+		return new LocalNetworkListener(registry, mapper);
+		
 	}
 }

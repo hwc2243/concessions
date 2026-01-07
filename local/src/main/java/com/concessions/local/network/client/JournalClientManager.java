@@ -3,10 +3,10 @@ package com.concessions.local.network.client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.common.network.AbstractManager;
+import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.local.network.dto.JournalDTO;
-import com.concessions.local.network.dto.SimpleResponseDTO;
-import com.concessions.local.network.manager.AbstractManager;
-import com.concessions.local.network.manager.ServerException;
+import com.concessions.local.network.server.ServerException;
 import com.concessions.local.ui.JournalNotifier;
 import com.fasterxml.jackson.core.JsonProcessingException;
 

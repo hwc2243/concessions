@@ -25,28 +25,26 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
-import com.concessions.client.model.Journal;
 import com.concessions.client.model.Menu;
 import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.service.MenuService;
+import com.concessions.common.network.MessengerException;
+import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.ui.AboutDialog;
-import com.concessions.local.config.AppConfig;
-import com.concessions.local.config.JpaConfig;
 import com.concessions.local.model.Device;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.client.ClientException;
 import com.concessions.local.network.client.JournalClientManager;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.MenuMapper;
-import com.concessions.local.network.dto.SimpleResponseDTO;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.server.config.AppConfig;
+import com.concessions.local.server.config.JpaConfig;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
@@ -221,8 +219,10 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 				List<Device> posDevices = deviceService.findByDeviceType(DeviceTypeType.POS);
 				for (Device device : posDevices) {
 					try {
-						messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), JournalClientManager.NAME, JournalClientManager.CHANGE, journal, SimpleResponseDTO.class);
-					} catch (ClientException ex) {
+						if (StringUtils.isNotBlank(device.getDeviceIp()) && device.getDevicePort() > 0) {
+							messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), JournalClientManager.NAME, JournalClientManager.CHANGE, journal, SimpleResponseDTO.class);
+						}
+					} catch (MessengerException ex) {
 						ex.printStackTrace();
 					}
 				}
@@ -350,7 +350,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			
 			context.register(JpaConfig.class);
 			context.register(AppConfig.class);
-            context.scan("com.concessions.local", "com.concessions.client", "com.concessions.common");
+            // context.scan("com.concessions.local", "com.concessions.client", "com.concessions.common");
             context.refresh();
             context.registerShutdownHook();
 

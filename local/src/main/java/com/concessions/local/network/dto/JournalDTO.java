@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import com.concessions.client.model.StatusType;
+import com.concessions.dto.StatusType;
+
 
 public class JournalDTO {
 

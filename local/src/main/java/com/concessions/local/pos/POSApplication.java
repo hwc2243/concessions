@@ -25,30 +25,28 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
+import com.concessions.common.network.MessengerException;
+import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.RegistrationClient;
+import com.concessions.common.network.dto.ConfigurationResponseDTO;
+import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
+import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
+import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.WelcomeResponseDTO;
 import com.concessions.common.service.PreferenceService;
+import com.concessions.dto.MenuDTO;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.Messenger;
-import com.concessions.local.network.client.ClientException;
-import com.concessions.local.network.client.LocalNetworkClient;
-import com.concessions.local.network.dto.ConfigurationRequestDTO;
-import com.concessions.local.network.dto.ConfigurationResponseDTO;
-import com.concessions.local.network.dto.DeviceRegistrationRequestDTO;
-import com.concessions.local.network.dto.DeviceRegistrationResponseDTO;
 import com.concessions.local.network.dto.JournalDTO;
-import com.concessions.local.network.dto.MenuDTO;
-import com.concessions.local.network.dto.SimpleDeviceRequestDTO;
-import com.concessions.local.network.manager.ConfigurationManager;
-import com.concessions.local.network.manager.DeviceManager;
-import com.concessions.local.network.manager.JournalManager;
-import com.concessions.local.network.manager.MenuManager;
-import com.concessions.local.network.manager.OrderManager;
+import com.concessions.local.network.server.ConfigurationManager;
+import com.concessions.local.network.server.DeviceManager;
+import com.concessions.local.network.server.JournalManager;
+import com.concessions.local.network.server.MenuManager;
+import com.concessions.local.network.server.OrderManager;
 import com.concessions.local.pos.config.AppConfig;
 import com.concessions.local.pos.controller.OrderSubmissionController;
 import com.concessions.local.pos.model.POSApplicationModel;
@@ -144,16 +142,16 @@ public class POSApplication extends AbstractClientApplication {
 	protected void executeDeviceRegistration () {
 		DeviceRegistrationRequestDTO deviceRegistration = new DeviceRegistrationRequestDTO();
 		deviceRegistration.setDeviceId(model.getDeviceId());
-		deviceRegistration.setDeviceType(DeviceTypeType.POS);
-		deviceRegistration.setDeviceIp(localNetworkClient.getListenerIp());
-		deviceRegistration.setDevicePort(localNetworkClient.getListenerPort());
+		deviceRegistration.setDeviceType(DeviceTypeType.POS.name());
+		deviceRegistration.setDeviceIp(localNetworkListener.getListenerIp());
+		deviceRegistration.setDevicePort(localNetworkListener.getListenerPort());
 		deviceRegistration.setPIN(model.getPin());
 		
 		DeviceRegistrationResponseDTO deviceRegistrationResponse;
 		try {
-			deviceRegistrationResponse = messenger.sendRequest(DeviceManager.NAME, DeviceManager.REGISTER, deviceRegistration, DeviceRegistrationResponseDTO.class);
+			deviceRegistrationResponse = messenger.sendRequest(NetworkConstants.DEVICE_SERVICE, NetworkConstants.DEVICE_REGISTER_ACTION, deviceRegistration, DeviceRegistrationResponseDTO.class);
 			model.setDeviceNumber(deviceRegistrationResponse.getDeviceNumber());
-		} catch (ClientException ex) {
+		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to register device - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
@@ -162,18 +160,18 @@ public class POSApplication extends AbstractClientApplication {
 	}
 
 	protected void executeLocationConfiguration () {
-		ConfigurationRequestDTO request = new ConfigurationRequestDTO();
+		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
 		request.setPIN(model.getPin());
 		
 		ConfigurationResponseDTO response = null;
 		try {
-			response = messenger.sendRequest(ConfigurationManager.NAME, ConfigurationManager.LOCATION, request, ConfigurationResponseDTO.class);
+			response = messenger.sendRequest(NetworkConstants.CONFIGURATION_SERVICE, NetworkConstants.CONFIGURATION_LOCATION_ACTION, request, ConfigurationResponseDTO.class);
 			LocationConfiguration locationConfiguration = new LocationConfiguration();
 			locationConfiguration.setOrganizationName(response.getOrganizationName());
 			locationConfiguration.setLocationName(response.getLocationName());
 			locationConfiguration.setMenuName(response.getMenuName());
 			model.setLocationConfiguration(locationConfiguration);
-		} catch (ClientException ex) {
+		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
@@ -189,9 +187,9 @@ public class POSApplication extends AbstractClientApplication {
 		MenuDTO response = null;
 		try
 		{
-			response = messenger.sendRequest(MenuManager.NAME, MenuManager.GET, request, MenuDTO.class);
+			response = messenger.sendRequest(NetworkConstants.MENU_SERVICE, NetworkConstants.MENU_GET_ACTION, request, MenuDTO.class);
 			model.setMenu(response);
-		} catch (ClientException ex) {
+		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
@@ -208,7 +206,7 @@ public class POSApplication extends AbstractClientApplication {
 		try {
 			journal = messenger.sendRequest(JournalManager.NAME, JournalManager.JOURNAL_GET, request, JournalDTO.class);
 			model.setJournal(journal);
-		} catch (ClientException ex) {
+		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to retrieve journal - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();

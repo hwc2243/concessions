@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.common.network.Messenger;
+import com.concessions.common.network.NetworkConstants;
+import com.concessions.common.network.dto.PINVerifyRequestDTO;
+import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.common.service.PreferenceService;
-import com.concessions.local.network.Messenger;
-import com.concessions.local.network.dto.PINVerifyRequestDTO;
-import com.concessions.local.network.dto.SimpleResponseDTO;
-import com.concessions.local.network.manager.PINManager;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 
 import jakarta.annotation.PostConstruct;
@@ -125,7 +125,7 @@ public class PINController {
 		PINVerifyRequestDTO pinVerify = new PINVerifyRequestDTO();
 		pinVerify.setPIN(pin);
 		try {
-			clientService.sendRequest(PINManager.NAME, PINManager.VERIFY_ACTION, pinVerify, SimpleResponseDTO.class);
+			clientService.sendRequest(NetworkConstants.PIN_SERVICE, NetworkConstants.PIN_VERIFY_ACTION, pinVerify, SimpleResponseDTO.class);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return false;

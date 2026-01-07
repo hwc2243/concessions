@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.concessions.client.service.base.BaseJournalServiceImpl;
 import com.concessions.common.dto.JournalSummaryDTO;
-import com.concessions.client.model.StatusType;
+import com.concessions.dto.StatusType;
 
 import jakarta.transaction.Transactional;
 

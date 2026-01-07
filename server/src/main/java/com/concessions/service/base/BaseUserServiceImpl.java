@@ -13,6 +13,7 @@ import com.concessions.service.ServiceException;
 import com.concessions.persistence.UserPersistence;
 import com.concessions.persistence.base.BaseUserPersistence;
 
+
 public abstract class BaseUserServiceImpl<T extends User, ID>
   implements BaseUserService<T, ID> {
 

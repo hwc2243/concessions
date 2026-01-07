@@ -2,10 +2,10 @@ package com.concessions.local.pos.model;
 
 import org.springframework.stereotype.Component;
 
+import com.concessions.dto.MenuDTO;
 import com.concessions.local.base.model.AbstractClientModel;
 import com.concessions.local.base.model.POSModel;
 import com.concessions.local.network.dto.JournalDTO;
-import com.concessions.local.network.dto.MenuDTO;
 
 @Component
 public class POSApplicationModel extends AbstractClientModel implements POSModel {

@@ -1,6 +1,6 @@
 package com.concessions.client.model.base;
 
-import com.concessions.client.model.StatusType;
+import com.concessions.dto.StatusType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDateTime;

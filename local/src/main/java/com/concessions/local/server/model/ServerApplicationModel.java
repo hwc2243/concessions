@@ -2,11 +2,11 @@ package com.concessions.local.server.model;
 
 import org.springframework.stereotype.Component;
 
+import com.concessions.dto.MenuDTO;
 import com.concessions.local.base.model.AbstractModel;
 import com.concessions.local.base.model.POSModel;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.dto.JournalDTO;
-import com.concessions.local.network.dto.MenuDTO;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 
 @Component

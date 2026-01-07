@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
-import com.concessions.client.model.StatusType;
+import com.concessions.dto.StatusType;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;

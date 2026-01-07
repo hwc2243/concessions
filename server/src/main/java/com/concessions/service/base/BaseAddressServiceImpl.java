@@ -13,6 +13,7 @@ import com.concessions.service.ServiceException;
 import com.concessions.persistence.AddressPersistence;
 import com.concessions.persistence.base.BaseAddressPersistence;
 
+
 public abstract class BaseAddressServiceImpl<T extends Address, ID>
   implements BaseAddressService<T, ID> {
 

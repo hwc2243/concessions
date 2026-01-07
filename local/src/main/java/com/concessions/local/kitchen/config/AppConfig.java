@@ -3,11 +3,10 @@ package com.concessions.local.kitchen.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.concessions.common.network.ManagerRegistry;
+import com.concessions.common.network.Messenger;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.kitchen.KitchenApplication;
-import com.concessions.local.network.Messenger;
-import com.concessions.local.network.manager.ManagerRegistry;
-import com.concessions.local.pos.POSApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

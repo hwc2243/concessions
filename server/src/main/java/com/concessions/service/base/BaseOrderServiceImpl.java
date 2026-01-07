@@ -13,6 +13,7 @@ import com.concessions.service.ServiceException;
 import com.concessions.persistence.OrderPersistence;
 import com.concessions.persistence.base.BaseOrderPersistence;
 
+
 public abstract class BaseOrderServiceImpl<T extends Order, ID>
   implements BaseOrderService<T, ID> {
 

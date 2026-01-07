@@ -5,8 +5,8 @@ import javax.swing.border.EmptyBorder;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.concessions.client.model.CategoryType;
-import com.concessions.local.network.dto.MenuItemDTO;
+import com.concessions.dto.CategoryType;
+import com.concessions.dto.MenuItemDTO;
 import com.concessions.local.ui.DisabledLayerUI;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;

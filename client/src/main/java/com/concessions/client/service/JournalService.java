@@ -1,7 +1,7 @@
 package com.concessions.client.service;
 
 import com.concessions.client.service.base.BaseJournalService;
-import com.concessions.client.model.StatusType;
+import com.concessions.dto.StatusType;
 
 import java.util.List;
 

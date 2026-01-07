@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 
 import javax.swing.AbstractListModel;
 
-import com.concessions.client.model.CategoryType;
-import com.concessions.local.network.dto.MenuDTO;
-import com.concessions.local.network.dto.MenuItemDTO;
+import com.concessions.dto.CategoryType;
+import com.concessions.dto.MenuDTO;
+import com.concessions.dto.MenuItemDTO;
 
 public class OrderModel extends AbstractListModel {
 	

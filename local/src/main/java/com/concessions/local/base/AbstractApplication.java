@@ -10,7 +10,7 @@ import javax.swing.UIManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.concessions.local.network.Messenger;
+import com.concessions.common.network.Messenger;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public abstract class AbstractApplication {

@@ -19,11 +19,12 @@ import javax.swing.JPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.dto.MenuDTO;
+import com.concessions.dto.MenuItemDTO;
+
 import com.concessions.local.base.ui.AbstractFrame;
 import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.JournalMapper;
-import com.concessions.local.network.dto.MenuDTO;
-import com.concessions.local.network.dto.MenuItemDTO;
 import com.concessions.local.network.dto.OrderDTO;
 import com.concessions.local.network.dto.OrderItemDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
@@ -35,11 +36,9 @@ import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
 import com.concessions.local.ui.view.OrderPanel;
 import com.concessions.local.ui.view.OrderPanel.OrderActionListener;
-import com.concessions.client.model.CategoryType;
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Order;
 import com.concessions.client.model.OrderItem;
-import com.concessions.client.model.StatusType;
 import com.concessions.client.service.OrderItemService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;

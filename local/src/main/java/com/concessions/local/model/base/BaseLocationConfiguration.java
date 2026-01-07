@@ -69,7 +69,7 @@ public abstract class BaseLocationConfiguration<T extends BaseLocationConfigurat
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

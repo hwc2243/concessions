@@ -1,9 +1,10 @@
 package com.concessions.client.model;
 
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import com.concessions.client.model.StatusType;
+import com.concessions.dto.StatusType;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalDateTime;
+import java.time.LocalDateTime;
 
 import java.io.Serializable;
 
@@ -29,20 +30,46 @@ public class Journal extends BaseJournal<Journal>
     // Private constructor to force the use of the Builder
     private Journal(Builder builder)
     {
+        this.status = builder.status;
+        this.menuId = builder.menuId;
+        this.orderCount = builder.orderCount;
+        this.salesTotal = builder.salesTotal;
         this.startTs = builder.startTs;
         this.endTs = builder.endTs;
-        this.status = builder.status;
-        this.salesTotal = builder.salesTotal;
+        this.syncTs = builder.syncTs;
         this.organizationId = builder.organizationId;
     }
 
     public static class Builder {
 
+        private StatusType status = null;
+        private Long menuId = null;
+        private Long orderCount = null;
+        private BigDecimal salesTotal = null;
         private LocalDateTime startTs = null;
         private LocalDateTime endTs = null;
-        private StatusType status = null;
-        private BigDecimal salesTotal = null;
+        private LocalDateTime syncTs = null;
         private Long organizationId = null;
+
+        public Builder status(StatusType status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder menuId(Long menuId) {
+            this.menuId = menuId;
+            return this;
+        }
+
+        public Builder orderCount(Long orderCount) {
+            this.orderCount = orderCount;
+            return this;
+        }
+
+        public Builder salesTotal(BigDecimal salesTotal) {
+            this.salesTotal = salesTotal;
+            return this;
+        }
 
         public Builder startTs(LocalDateTime startTs) {
             this.startTs = startTs;
@@ -54,13 +81,8 @@ public class Journal extends BaseJournal<Journal>
             return this;
         }
 
-        public Builder status(StatusType status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder salesTotal(BigDecimal salesTotal) {
-            this.salesTotal = salesTotal;
+        public Builder syncTs(LocalDateTime syncTs) {
+            this.syncTs = syncTs;
             return this;
         }
 

@@ -15,7 +15,7 @@ import com.concessions.client.repository.base.BaseMenuItemPersistence;
 
 import com.concessions.client.model.base.Multitenant;
 import com.concessions.client.service.base.MultitenantServiceImpl;
-import com.concessions.client.model.CategoryType;
+import com.concessions.dto.CategoryType;
 
 public abstract class BaseMenuItemServiceImpl<T extends MenuItem & Multitenant, ID>
   extends MultitenantServiceImpl<T, ID>

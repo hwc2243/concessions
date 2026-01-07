@@ -1,24 +1,23 @@
 package com.concessions.local.pos.controller;
 
-import com.concessions.local.network.Messenger;
-import com.concessions.local.network.client.ClientException;
-import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.common.network.Messenger;
+import com.concessions.common.network.MessengerException;
+import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.local.network.dto.OrderDTO;
 import com.concessions.local.network.dto.OrderRequestDTO;
-import com.concessions.local.network.dto.SimpleResponseDTO;
-import com.concessions.local.network.manager.OrderManager;
+import com.concessions.local.network.server.OrderManager;
 import com.concessions.local.pos.model.POSApplicationModel;
 import com.concessions.local.ui.controller.OrderController.OrderListener;
 
 public class OrderSubmissionController implements OrderListener {
 
-	protected Messenger clientService;
+	protected Messenger messenger;
 	
 	protected POSApplicationModel model;
 	
 	public OrderSubmissionController (POSApplicationModel model, Messenger clientService) {
 		this.model = model;
-		this.clientService = clientService;
+		this.messenger = clientService;
 	}
 
 	@Override
@@ -28,8 +27,8 @@ public class OrderSubmissionController implements OrderListener {
 		request.setDeviceId(model.getDeviceId());
 		request.setOrder(order);
 		try {
-			clientService.sendRequest(OrderManager.NAME, OrderManager.SUBMIT, request, SimpleResponseDTO.class);
-		} catch (ClientException ex) {
+			messenger.sendRequest(OrderManager.NAME, OrderManager.SUBMIT, request, SimpleResponseDTO.class);
+		} catch (MessengerException ex) {
 			ex.printStackTrace();
 		}
 	}

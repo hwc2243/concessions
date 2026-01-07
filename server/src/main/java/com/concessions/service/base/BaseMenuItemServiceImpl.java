@@ -13,6 +13,8 @@ import com.concessions.service.ServiceException;
 import com.concessions.persistence.MenuItemPersistence;
 import com.concessions.persistence.base.BaseMenuItemPersistence;
 
+import com.concessions.model.CategoryType;
+
 import com.concessions.model.base.Multitenant;
 import com.concessions.service.base.MultitenantServiceImpl;
 

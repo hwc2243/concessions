@@ -1,6 +1,6 @@
 package com.concessions.client.model.base;
 
-import com.concessions.client.model.CategoryType;
+import com.concessions.dto.CategoryType;
 import java.math.BigDecimal;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
