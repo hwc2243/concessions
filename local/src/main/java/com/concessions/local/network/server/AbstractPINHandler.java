@@ -2,30 +2,19 @@ package com.concessions.local.network.server;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.concessions.common.network.AbstractManager;
+import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.NetworkException;
+import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.AbstractPINRequestDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
 
-public abstract class AbstractPINManager extends AbstractManager {
+public abstract class AbstractPINHandler extends AbstractHandler {
 
 	@Autowired
 	protected ServerApplicationModel model;
 	
-	public AbstractPINManager() {
+	public AbstractPINHandler() {
 		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object process(String action, String payload) throws NetworkException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	protected void validatePIN (AbstractPINRequestDTO request) throws ServerException {

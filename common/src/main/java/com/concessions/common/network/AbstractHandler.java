@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 
-public abstract class AbstractManager implements NetworkConstants {
+public abstract class AbstractHandler implements NetworkConstants {
 
 	@Autowired
 	protected ObjectMapper mapper;
@@ -15,7 +15,7 @@ public abstract class AbstractManager implements NetworkConstants {
 	protected SimpleResponseDTO success;
 	protected SimpleResponseDTO failure;
 	
-	public AbstractManager() {
+	public AbstractHandler() {
 		success = new SimpleResponseDTO();
 		success.setMessage("Success");
 
@@ -23,7 +23,7 @@ public abstract class AbstractManager implements NetworkConstants {
 		failure.setMessage("Failure");
 	}
 
-	public AbstractManager (ObjectMapper mapper) {
+	public AbstractHandler (ObjectMapper mapper) {
 		this();
 		
 		this.mapper = mapper;
@@ -32,7 +32,7 @@ public abstract class AbstractManager implements NetworkConstants {
 	@PostConstruct
 	public void register ()
 	{
-		ManagerRegistry.registerManager(this);
+		HandlerRegistry.registerManager(this);
 	}
 	
 	public abstract String getName ();

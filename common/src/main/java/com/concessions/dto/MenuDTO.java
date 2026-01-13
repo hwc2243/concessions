@@ -2,6 +2,7 @@ package com.concessions.dto;
 
 
 import java.util.List;
+import java.util.Objects;
 
 public class MenuDTO
 {
@@ -79,6 +80,25 @@ public class MenuDTO
   {
     this.menuItems = menuItems;
   }
+
+
+    @Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+			
+		MenuDTO other = (MenuDTO) obj;
+		return id == other.id;
+	}
 
   public static class Builder {
 

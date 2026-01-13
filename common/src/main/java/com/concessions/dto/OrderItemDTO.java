@@ -3,6 +3,7 @@ package com.concessions.dto;
 import java.math.BigDecimal;
 
 import java.util.List;
+import java.util.Objects;
 
 public class OrderItemDTO
 {
@@ -68,6 +69,25 @@ public class OrderItemDTO
     this.price = price;
   }
   
+
+    @Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+			
+		OrderItemDTO other = (OrderItemDTO) obj;
+		return this.getId().equals(other.getId());
+	}
+
   public static class Builder {
 
 	private String id;

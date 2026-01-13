@@ -29,13 +29,12 @@ import com.concessions.client.service.JournalService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
 import com.concessions.common.dto.JournalSummaryDTO;
+import com.concessions.common.event.JournalNotifier;
+import com.concessions.dto.JournalDTO;
 import com.concessions.dto.StatusType;
-import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.JournalMapper;
-import com.concessions.local.network.dto.OrderDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
-import com.concessions.local.ui.JournalNotifier;
 import com.concessions.local.ui.controller.OrderController.OrderListener;
 import com.concessions.local.ui.view.JournalOrdersPanel;
 import com.concessions.local.ui.view.JournalPanel;
@@ -175,6 +174,7 @@ public class JournalController {
 			journal.setStatus(StatusType.CLOSE);
 			journal.setEndTs(LocalDateTime.now());
 			journalService.update(JournalMapper.fromDto(journal));
+			model.setJournal(journal);
 			journalNotifier.notifyJournalClosed(journal);
 			
 			// HWC TODO add logic to check if network is connected and if so attempt sync
@@ -205,8 +205,6 @@ public class JournalController {
 			switch (journal.getStatus()) {
 			case NEW:
 			case SUSPEND:
-				journal.setStatus(StatusType.OPEN);
-				journalService.update(JournalMapper.fromDto(journal));
 			case OPEN:
 				open(journal);
 				break;
@@ -299,6 +297,7 @@ public class JournalController {
 		journal.setStatus(StatusType.SUSPEND);
 		try {
 			journalService.update(JournalMapper.fromDto(journal));
+			model.setJournal(journal);
 			journalNotifier.notifyJournalSuspended(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -349,11 +348,10 @@ public class JournalController {
 			futureJournal = journalRestClient.reconcile(journalEntity, summary);
 			journalEntity = futureJournal.get();
 			journalService.update(journalEntity);
+			model.setJournal(journal);
 			journalNotifier.notifyJournalSynced(journal);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-
 }

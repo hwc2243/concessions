@@ -3,7 +3,7 @@ package com.concessions.local.kitchen.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.concessions.common.network.ManagerRegistry;
+import com.concessions.common.network.HandlerRegistry;
 import com.concessions.common.network.Messenger;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.kitchen.KitchenApplication;
@@ -32,8 +32,8 @@ public class AppConfig {
 	}
 	
 	@Bean
-	public ManagerRegistry managerRegistry () {
-		return new ManagerRegistry();
+	public HandlerRegistry managerRegistry () {
+		return new HandlerRegistry();
 	}
 	
 	@Bean

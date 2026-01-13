@@ -57,7 +57,7 @@ public abstract class BaseOrganization<T extends BaseOrganization> extends Abstr
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

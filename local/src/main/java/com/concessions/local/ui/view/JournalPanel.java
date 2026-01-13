@@ -23,10 +23,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import com.concessions.common.event.JournalListener;
+import com.concessions.dto.JournalDTO;
 import com.concessions.dto.StatusType;
-import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.ui.CurrencyRenderer;
-import com.concessions.local.ui.JournalNotifier.JournalListener;
 import com.concessions.local.ui.LocalDateTimeRenderer;
 import com.concessions.local.ui.controller.JournalController;
 

@@ -8,6 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.copy
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,34 +21,49 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.isVisible
 import com.concessions.android.order.OrderScreen
 import com.concessions.android.order.OrderViewModel
 import com.concessions.android.ui.theme.POSTheme
+import com.concessions.dto.JournalDTO
 import com.concessions.dto.MenuDTO
+import com.concessions.dto.OrderDTO
+import com.concessions.dto.OrderItemDTO
+import com.concessions.common.event.JournalListener
 import com.concessions.common.network.MessengerException
 import com.concessions.common.network.NetworkConstants
 import com.concessions.common.network.RegistrationClient
 import com.concessions.common.network.dto.ConfigurationResponseDTO
 import com.concessions.common.network.dto.DeviceRegistrationRequestDTO
 import com.concessions.common.network.dto.DeviceRegistrationResponseDTO
+import com.concessions.common.network.dto.OrderRequestDTO
 import com.concessions.common.network.dto.PINVerifyRequestDTO
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO
 import com.concessions.common.network.dto.SimpleResponseDTO
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime;
 import java.util.UUID
 
 sealed class ScreenState {
@@ -53,9 +72,12 @@ sealed class ScreenState {
     data class VerifyingPin(val pin: String) : ScreenState()
     object RegisteringDevice : ScreenState()
     object FetchingConfiguration : ScreenState()
+    object ProcessingCheckout : ScreenState()
     object OrderEntry : ScreenState()
-    data class Error(val message: String) : ScreenState()
+    data class Error(val message: String, val isFatal: Boolean = true) : ScreenState()
 }
+
+data class OverlayState(val isVisible: Boolean = false, val message: String = "")
 
 class MainActivity : ComponentActivity() {
 
@@ -73,7 +95,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        val mapper = jacksonObjectMapper()
+        val mapper = jacksonObjectMapper().apply {
+            registerModule(JavaTimeModule())
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        }
 
         // Setup Device ID (runs once)
         var deviceId = prefs.getString(DEVICE_ID_PREF, null)
@@ -90,7 +115,53 @@ class MainActivity : ComponentActivity() {
         setContent {
             POSTheme {
                 var screenState by remember { mutableStateOf<ScreenState>(ScreenState.Discovering) }
+                var overlayState by remember { mutableStateOf(OverlayState()) }
                 var retryTrigger by remember { mutableStateOf(0) }
+                val scope = rememberCoroutineScope()
+
+                DisposableEffect(Unit) {
+                    val journalListener = object : JournalListener {
+                        override fun journalClosed(journal: JournalDTO) {
+                            Log.i(LOGTAG, "Journal network event: CLOSED")
+                            viewModel.setJournal(journal)
+                            overlayState = OverlayState(isVisible = true, message = "Journal is Closed")
+                        }
+
+                        override fun journalChanged(journal: JournalDTO) {
+                            Log.i(LOGTAG, "Journal network event: CHANGED")
+                            viewModel.setJournal(journal)
+                        }
+
+                        override fun journalOpened(journal: JournalDTO) {
+                            Log.i(LOGTAG, "Journal network event: OPENED")
+                            viewModel.setJournal(journal)
+                            overlayState = OverlayState(isVisible = false)
+                        }
+
+                        override fun journalStarted(journal: JournalDTO) {
+                            Log.i(LOGTAG, "Journal network event: STARTED")
+                            viewModel.setJournal(journal)
+                        }
+
+                        override fun journalSuspended(journal: JournalDTO) {
+                            Log.i(LOGTAG, "Journal network event: SUSPENDED")
+                            viewModel.setJournal(journal)
+                            overlayState = OverlayState(isVisible = true, message = "Journal is Suspended")
+                        }
+
+                        override fun journalSynced(journal: JournalDTO) {
+                            Log.i(LOGTAG, "Journal network event: SYNCED")
+                            viewModel.setJournal(journal)
+                        }
+                    }
+
+                    viewModel.journalNotifier.addJournalListener(journalListener)
+
+                    // onDispose is called when the composable leaves the screen
+                    onDispose {
+                        viewModel.journalNotifier.removeJournalListener(journalListener)
+                    }
+                }
 
                 // This effect runs the discovery logic and updates the state
                 LaunchedEffect(retryTrigger) {
@@ -169,8 +240,19 @@ class MainActivity : ComponentActivity() {
                             screenState = ScreenState.RegisteringDevice
                         } catch (e: Exception) {
                             Log.e(LOGTAG, "PIN verification failed with exception", e)
-                            prefs.edit().remove(PIN_PREF).apply()
-                            screenState = ScreenState.Error("PIN verification failed: ${e.message}")
+                            val isConnectionError = e is java.net.ConnectException || e.cause is java.net.ConnectException
+
+                            if (isConnectionError) {
+                                // Transition to Error state, flagged as fatal so retry goes to Discovering
+                                screenState = ScreenState.Error(
+                                    message = "Connection to server lost",
+                                    isFatal = true
+                                )
+                            } else {
+                                // For actual PIN mismatches or logic errors, clear the saved PIN and show error
+                                prefs.edit().remove(PIN_PREF).apply()
+                                screenState = ScreenState.Error("PIN verification failed: ${e.message}")
+                            }
                         }
                     }
                 }
@@ -214,7 +296,17 @@ class MainActivity : ComponentActivity() {
                             screenState = ScreenState.FetchingConfiguration
                         } catch (e: MessengerException) {
                             Log.e(LOGTAG, "Device registration failed", e)
-                            screenState = ScreenState.Error("Device registration failed: ${e.message}")
+                            val isConnectionError = e is java.net.ConnectException || e.cause is java.net.ConnectException
+
+                            if (isConnectionError) {
+                                // Transition to Error state, flagged as fatal so retry goes to Discovering
+                                screenState = ScreenState.Error(
+                                    message = "Connection to server lost",
+                                    isFatal = true
+                                )
+                            } else {
+                                screenState = ScreenState.Error("Device registration failed: ${e.message}")// For actual PIN mismatches or logic errors, clear the saved PIN and show error
+                            }
                         }
                     }
                 }
@@ -241,11 +333,15 @@ class MainActivity : ComponentActivity() {
                                     ConfigurationResponseDTO::class.java
                                 )
                             }
-
+                            if (response == null) {
+                                Log.e(LOGTAG, "Configuration response was null.")
+                                screenState = ScreenState.Error("No configuration available", isFatal = false)
+                                return@LaunchedEffect
+                            }
                             viewModel.locationContext.organizationName = response?.organizationName
                             viewModel.locationContext.locationName = response?.locationName
                             viewModel.locationContext.menuName = response?.menuName
-                            Log.i(LOGTAG, "Location Configuration fetched successfully.")
+                            Log.i(LOGTAG, "Configuration fetched successfully.")
 
                             val menuResponse = withContext(Dispatchers.IO) {
                                 messenger.sendRequest(
@@ -255,13 +351,53 @@ class MainActivity : ComponentActivity() {
                                     MenuDTO::class.java
                                 )
                             }
+                            if (menuResponse == null) {
+                                Log.e(LOGTAG, "Menu response was null.")
+                                screenState = ScreenState.Error("No menu available", isFatal = false)
+                                return@LaunchedEffect
+                            }
                             viewModel.setMenu(menuResponse)
-
                             menuResponse?.let { orderViewModel.setMenu(it) }
+                            Log.i(LOGTAG, "Menu fetched successfully.")
+
+                            val journalResponse = withContext(Dispatchers.IO) {
+                                messenger.sendRequest(
+                                    NetworkConstants.JOURNAL_SERVICE,
+                                    NetworkConstants.JOURNAL_GET_ACTION,
+                                    deviceRequest,
+                                    JournalDTO::class.java
+                                )
+                            }
+                            if (journalResponse == null) {
+                                Log.e(LOGTAG, "Journal response was null.")
+                                screenState = ScreenState.Error("No journal available", isFatal = false)
+                                return@LaunchedEffect
+                            }
+                            viewModel.setJournal(journalResponse)
+                            Log.i(LOGTAG, "Journal fetched successfully.")
 
                             screenState = ScreenState.OrderEntry
                         } catch (e: Exception) {
-                            screenState = ScreenState.Error("Failed to fetch configuration: ${e.message}")
+                            val isConnectionError = e is java.net.ConnectException || e.cause is java.net.ConnectException
+
+                            if (isConnectionError) {
+                                // Transition to Error state, flagged as fatal so retry goes to Discovering
+                                screenState = ScreenState.Error(
+                                    message = "Connection to server lost",
+                                    isFatal = true
+                                )
+                            } else {
+                                screenState = ScreenState.Error("Failed to fetch configuration: ${e.message}")
+                            }
+                        }
+                    }
+                }
+
+                // This effect ensures the overlay status is correct whenever we are in the OrderEntry state
+                LaunchedEffect(screenState) {
+                    if (screenState is ScreenState.OrderEntry) {
+                        viewModel.journal.value?.let {
+                            viewModel.journalNotifier.publishJournalStatus(it)
                         }
                     }
                 }
@@ -282,13 +418,81 @@ class MainActivity : ComponentActivity() {
                             is ScreenState.VerifyingPin -> LoadingUI("Verifying PIN...")
                             is ScreenState.RegisteringDevice -> LoadingUI("Registering device...")
                             is ScreenState.FetchingConfiguration -> LoadingUI("Fetching configuration...")
-                            is ScreenState.OrderEntry -> OrderScreen(orderViewModel = orderViewModel)
+                            is ScreenState.ProcessingCheckout -> LoadingUI("Processing Checkout...")
+                            is ScreenState.OrderEntry -> {
+                                Box(Modifier.fillMaxSize()) {
+                                    OrderScreen(
+                                        orderViewModel = orderViewModel,
+                                        onCheckout = {
+                                            scope.launch {
+                                                val currentOrderItems =
+                                                    orderViewModel.uiState.value.currentOrderItems
+                                                if (currentOrderItems.isEmpty()) {
+                                                    Log.i(
+                                                        LOGTAG,
+                                                        "Checkout clicked with empty order."
+                                                    )
+                                                    return@launch // Maybe show a toast message
+                                                }
+
+                                                val order = OrderDTO().apply {
+                                                    journalId = viewModel.journal.value?.id
+                                                    orderTotal =
+                                                        orderViewModel.uiState.value.orderTotal
+                                                    menuId = viewModel.menu.value?.id
+                                                    startTs = LocalDateTime.now()
+
+                                                    val items = currentOrderItems.map { menuItem ->
+                                                        OrderItemDTO().apply {
+                                                            menuItemId = menuItem.id
+                                                            name = menuItem.name
+                                                            price = menuItem.price
+                                                        }
+                                                    }
+                                                    this.orderItems = items.toMutableList()
+                                                }
+
+                                                screenState = ScreenState.ProcessingCheckout
+                                                try {
+                                                    var orderRequest = OrderRequestDTO()
+                                                    orderRequest.setPIN(viewModel.deviceContext.pin!!)
+                                                    orderRequest.setDeviceId(viewModel.deviceContext.deviceId!!)
+                                                    orderRequest.setOrder(order);
+                                                    withContext(Dispatchers.IO) {
+                                                        viewModel.messenger?.sendRequest(
+                                                            NetworkConstants.ORDER_SERVICE,
+                                                            NetworkConstants.ORDER_SUBMIT_ACTION,
+                                                            orderRequest,
+                                                            SimpleResponseDTO::class.java
+                                                        )
+                                                    }
+                                                    orderViewModel.clearOrder()
+                                                    Log.i(LOGTAG, "Checkout successful.")
+                                                    screenState = ScreenState.OrderEntry
+                                                } catch (e: Exception) {
+                                                    Log.e(LOGTAG,"Checkout failed",e)
+                                                    screenState = ScreenState.Error("Checkout failed: ${e.message}")
+                                                }
+                                            }
+                                        }
+                                    )
+                                    // Display the overlay on top if it's visible
+                                    if (overlayState.isVisible) {
+                                        DisabledOverlay(message = overlayState.message)
+                                    }
+                                }
+                            }
                             is ScreenState.Error -> ErrorUI(
                                 message = state.message,
                                 onRetry = {
-                                    // Reset to the initial state to trigger discovery again
-                                    screenState = ScreenState.Discovering
-                                    retryTrigger++
+                                    if (state.isFatal) {
+                                        // For fatal errors, restart the whole discovery process
+                                        screenState = ScreenState.Discovering
+                                        retryTrigger++
+                                 } else {
+                                        // For non-fatal, just re-trigger the current state
+                                        screenState = ScreenState.FetchingConfiguration
+                                    }
                                 }
                             )
                         }
@@ -299,6 +503,33 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Composable
+fun DisabledOverlay(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Gray background with 70% opacity
+            .background(Color.Black.copy(alpha = 0.7f))
+            // Consume all clicks to prevent interaction with the screen below
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {}
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
 // Helper composable for loading states
 @Composable
 fun LoadingUI(message: String) {
@@ -317,15 +548,5 @@ fun ErrorUI(message: String, onRetry: () -> Unit) {
         Button(onClick = onRetry) {
             Text("Retry")
         }
-    }
-}
-// The old Greeting composable is no longer necessary as Text() is used directly.
-// You can remove it or keep it if you plan to add more styling later.
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    POSTheme {
-        Text("Hello Android!")
     }
 }

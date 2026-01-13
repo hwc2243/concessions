@@ -78,7 +78,7 @@ public abstract class BaseUser<T extends BaseUser> extends AbstractBaseEntity
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

@@ -61,7 +61,7 @@ public abstract class BaseMenuItemOption<T extends BaseMenuItemOption> extends A
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

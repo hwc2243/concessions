@@ -84,7 +84,7 @@ public abstract class BaseJournal<T extends BaseJournal> extends AbstractBaseEnt
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

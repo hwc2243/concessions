@@ -30,16 +30,19 @@ import org.springframework.stereotype.Component;
 import com.concessions.client.model.Menu;
 import com.concessions.client.rest.MenuRestClient;
 import com.concessions.client.service.MenuService;
+import com.concessions.common.event.JournalListener;
+import com.concessions.common.event.JournalNotifier;
+import com.concessions.common.network.JournalClientHandler;
 import com.concessions.common.network.MessengerException;
+import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.common.service.PreferenceService;
+import com.concessions.dto.JournalDTO;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.model.Device;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.client.JournalClientManager;
-import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.MenuMapper;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
@@ -50,7 +53,6 @@ import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
-import com.concessions.local.ui.JournalNotifier;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
 import com.concessions.local.ui.action.JournalStartAction;
@@ -184,7 +186,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			}
 		});
 		
-		journalNotifier.addJournalListener(new JournalNotifier.JournalListener() {
+		journalNotifier.addJournalListener(new JournalListener() {
 			
 			@Override
 			public void journalStarted(JournalDTO journal) {
@@ -212,7 +214,6 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			}
 			
 			public void journalSynced (JournalDTO journal) {
-				// HWC TODO can't think of anything to do at the moment
 			}
 			
 			protected void journalChange (JournalDTO journal) {
@@ -220,7 +221,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 				for (Device device : posDevices) {
 					try {
 						if (StringUtils.isNotBlank(device.getDeviceIp()) && device.getDevicePort() > 0) {
-							messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), JournalClientManager.NAME, JournalClientManager.CHANGE, journal, SimpleResponseDTO.class);
+							messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), NetworkConstants.JOURNAL_SERVICE, NetworkConstants.JOURNAL_CHANGE_ACTION, journal, SimpleResponseDTO.class);
 						}
 					} catch (MessengerException ex) {
 						ex.printStackTrace();

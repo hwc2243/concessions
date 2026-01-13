@@ -2,10 +2,10 @@ package com.concessions.local.pos.controller;
 
 import com.concessions.common.network.Messenger;
 import com.concessions.common.network.MessengerException;
+import com.concessions.common.network.NetworkConstants;
+import com.concessions.common.network.dto.OrderRequestDTO;
 import com.concessions.common.network.dto.SimpleResponseDTO;
-import com.concessions.local.network.dto.OrderDTO;
-import com.concessions.local.network.dto.OrderRequestDTO;
-import com.concessions.local.network.server.OrderManager;
+import com.concessions.dto.OrderDTO;
 import com.concessions.local.pos.model.POSApplicationModel;
 import com.concessions.local.ui.controller.OrderController.OrderListener;
 
@@ -27,7 +27,7 @@ public class OrderSubmissionController implements OrderListener {
 		request.setDeviceId(model.getDeviceId());
 		request.setOrder(order);
 		try {
-			messenger.sendRequest(OrderManager.NAME, OrderManager.SUBMIT, request, SimpleResponseDTO.class);
+			messenger.sendRequest(NetworkConstants.ORDER_SERVICE, NetworkConstants.ORDER_SUBMIT_ACTION, request, SimpleResponseDTO.class);
 		} catch (MessengerException ex) {
 			ex.printStackTrace();
 		}

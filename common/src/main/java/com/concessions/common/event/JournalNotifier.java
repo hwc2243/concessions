@@ -1,11 +1,11 @@
-package com.concessions.local.ui;
+package com.concessions.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.concessions.local.network.dto.JournalDTO;
+import com.concessions.dto.JournalDTO;
 
 @Component
 public class JournalNotifier {
@@ -23,6 +23,29 @@ public class JournalNotifier {
 		listeners.remove(listener);
 	}
 
+	public void publishJournalStatus (JournalDTO journal) {
+		switch (journal.getStatus()) {
+		case CLOSE:
+			notifyJournalClosed(journal);
+			break;
+		case OPEN:
+			notifyJournalOpened(journal);
+			break;
+		case NEW:
+			notifyJournalStarted(journal);
+			break;
+		case SUSPEND:
+			notifyJournalSuspended(journal);
+			break;
+		case SYNC:
+			notifyJournalSynced(journal);
+			break;
+		default:
+			notifyJournalChanged(journal);
+			break;
+		}
+	}
+	
 	public void notifyJournalClosed(JournalDTO journal) {
 		listeners.stream().forEach(listener -> listener.journalClosed(journal));
 	}
@@ -45,20 +68,6 @@ public class JournalNotifier {
 	
 	public void notifyJournalSynced (JournalDTO journal) {
 		listeners.stream().forEach(listener -> listener.journalSynced(journal));
-	}
-
-	public interface JournalListener {
-		void journalClosed(JournalDTO journal);
-		
-		void journalChanged(JournalDTO journal);
-
-		void journalOpened(JournalDTO journal);
-
-		void journalStarted(JournalDTO journal);
-
-		void journalSuspended(JournalDTO journal);
-		
-		void journalSynced(JournalDTO journal);
 	}
 
 }

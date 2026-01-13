@@ -1,10 +1,14 @@
 package com.concessions.android
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.concessions.dto.JournalDTO
 import com.concessions.dto.MenuDTO
-import com.concessions.common.network.HealthCheckManager
+import com.concessions.common.event.JournalNotifier
+import com.concessions.common.network.HealthCheckHandler
+import com.concessions.common.network.JournalClientHandler
 import com.concessions.common.network.LocalNetworkListener
-import com.concessions.common.network.ManagerRegistry
+import com.concessions.common.network.HandlerRegistry
 import com.concessions.common.network.Messenger
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -20,13 +24,21 @@ class MainViewModel : ViewModel() {
     var localNetworkListener: LocalNetworkListener? = null
         private set
 
-    var menu: MenuDTO? = null
-        private set
+    val menu = mutableStateOf<MenuDTO?>(null)
+
+    val journal = mutableStateOf<JournalDTO?>(null)
+
+    val journalNotifier = JournalNotifier()
 
     fun setMenu(newMenu: MenuDTO?) {
-        this.menu = newMenu
+        this.menu.value = newMenu
     }
 
+    fun setJournal(newJournal: JournalDTO?) {
+        this.journal.value = newJournal
+    }
+
+    // This method will create)
     fun createMessenger(mapper: ObjectMapper, serverIp: String, serverPort: Int) {
         // Create the Messenger instance only if it doesn't already exist
         if (messenger == null) {
@@ -36,10 +48,12 @@ class MainViewModel : ViewModel() {
 
     fun createLocalNetworkListener(mapper: ObjectMapper) {
         if (localNetworkListener == null) {
-            var managerRegistry = ManagerRegistry()
-            var healthCheckManager = HealthCheckManager(mapper)
+            val handlerRegistry = HandlerRegistry()
+            val healthCheckManager = HealthCheckHandler(mapper)
             healthCheckManager?.register()
-            localNetworkListener = LocalNetworkListener(managerRegistry, mapper)
+            val journalClientManager = JournalClientHandler(mapper,journalNotifier);
+            journalClientManager?.register()
+            localNetworkListener = LocalNetworkListener(handlerRegistry, mapper)
             localNetworkListener?.start()
         }
     }

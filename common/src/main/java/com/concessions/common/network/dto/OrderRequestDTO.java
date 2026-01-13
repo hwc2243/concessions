@@ -1,6 +1,6 @@
-package com.concessions.local.network.dto;
+package com.concessions.common.network.dto;
 
-import com.concessions.common.network.dto.AbstractDeviceRequestDTO;
+import com.concessions.dto.OrderDTO;
 
 public class OrderRequestDTO extends AbstractDeviceRequestDTO {
 

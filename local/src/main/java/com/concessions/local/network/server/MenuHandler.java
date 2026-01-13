@@ -2,14 +2,15 @@ package com.concessions.local.network.server;
 
 import org.springframework.stereotype.Component;
 
+import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.dto.MenuDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 @Component
-public class MenuManager extends AbstractPINManager {
+public class MenuHandler extends AbstractDeviceHandler {
 
-	public MenuManager() {
+	public MenuHandler() {
 		// TODO Auto-generated constructor stub
 	}
 
@@ -31,6 +32,7 @@ public class MenuManager extends AbstractPINManager {
 		try {
 			SimpleDeviceRequestDTO request = mapper.readValue(payload, SimpleDeviceRequestDTO.class);
 			validatePIN(request);
+			validateDevice(request);
 			return model.getMenu();
 		} catch (JsonProcessingException ex) {
 			throw new ServerException("Failed to process message: " + ex.getMessage(), ex);

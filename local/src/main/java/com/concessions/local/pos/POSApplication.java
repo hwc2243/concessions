@@ -25,6 +25,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
+import com.concessions.common.event.JournalNotifier;
 import com.concessions.common.network.MessengerException;
 import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.RegistrationClient;
@@ -34,6 +35,7 @@ import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.WelcomeResponseDTO;
 import com.concessions.common.service.PreferenceService;
+import com.concessions.dto.JournalDTO;
 import com.concessions.dto.MenuDTO;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.AbstractClientApplication;
@@ -41,17 +43,15 @@ import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.dto.JournalDTO;
-import com.concessions.local.network.server.ConfigurationManager;
-import com.concessions.local.network.server.DeviceManager;
-import com.concessions.local.network.server.JournalManager;
-import com.concessions.local.network.server.MenuManager;
-import com.concessions.local.network.server.OrderManager;
+import com.concessions.local.network.server.ConfigurationHandler;
+import com.concessions.local.network.server.DeviceHandler;
+import com.concessions.local.network.server.JournalHandler;
+import com.concessions.local.network.server.MenuHandler;
+import com.concessions.local.network.server.OrderHandler;
 import com.concessions.local.pos.config.AppConfig;
 import com.concessions.local.pos.controller.OrderSubmissionController;
 import com.concessions.local.pos.model.POSApplicationModel;
 import com.concessions.local.pos.ui.POSApplicationFrame;
-import com.concessions.local.ui.JournalNotifier;
 import com.concessions.local.ui.controller.OrderController;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.view.OrderPanel;
@@ -162,6 +162,7 @@ public class POSApplication extends AbstractClientApplication {
 	protected void executeLocationConfiguration () {
 		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
 		request.setPIN(model.getPin());
+		request.setDeviceId(model.getDeviceId());
 		
 		ConfigurationResponseDTO response = null;
 		try {
@@ -204,7 +205,7 @@ public class POSApplication extends AbstractClientApplication {
 		
 		JournalDTO journal = null;
 		try {
-			journal = messenger.sendRequest(JournalManager.NAME, JournalManager.JOURNAL_GET, request, JournalDTO.class);
+			journal = messenger.sendRequest(NetworkConstants.JOURNAL_SERVICE, NetworkConstants.JOURNAL_GET_ACTION, request, JournalDTO.class);
 			model.setJournal(journal);
 		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to retrieve journal - " + ex.getMessage(), "Fatal Error",

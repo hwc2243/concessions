@@ -64,7 +64,7 @@ public abstract class BaseOrderItem<T extends BaseOrderItem> extends AbstractBas
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

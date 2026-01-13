@@ -40,8 +40,8 @@ import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import com.concessions.local.kitchen.ui.KitchenApplicationFrame;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.server.ConfigurationManager;
-import com.concessions.local.network.server.DeviceManager;
+import com.concessions.local.network.server.ConfigurationHandler;
+import com.concessions.local.network.server.DeviceHandler;
 
 import jakarta.annotation.PostConstruct;
 

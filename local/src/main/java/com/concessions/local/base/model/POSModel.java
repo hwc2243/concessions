@@ -1,7 +1,7 @@
 package com.concessions.local.base.model;
 
+import com.concessions.dto.JournalDTO;
 import com.concessions.dto.MenuDTO;
-import com.concessions.local.network.dto.JournalDTO;
 
 public interface POSModel {
 	public MenuDTO getMenu ();

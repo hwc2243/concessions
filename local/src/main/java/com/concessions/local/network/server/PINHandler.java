@@ -4,8 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.AbstractManager;
+import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.NetworkConstants;
+import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.PINVerifyRequestDTO;
 import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,10 +14,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class PINManager extends AbstractPINManager {
-	private static final Logger logger = LoggerFactory.getLogger(PINManager.class);
+public class PINHandler extends AbstractPINHandler {
+	private static final Logger logger = LoggerFactory.getLogger(PINHandler.class);
 
-	public PINManager() {
+	public PINHandler() {
 		// TODO Auto-generated constructor stub
 	}
 	

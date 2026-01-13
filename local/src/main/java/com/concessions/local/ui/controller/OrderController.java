@@ -19,18 +19,16 @@ import javax.swing.JPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.dto.JournalDTO;
 import com.concessions.dto.MenuDTO;
 import com.concessions.dto.MenuItemDTO;
-
+import com.concessions.dto.OrderDTO;
+import com.concessions.dto.OrderItemDTO;
 import com.concessions.local.base.ui.AbstractFrame;
-import com.concessions.local.network.dto.JournalDTO;
 import com.concessions.local.network.dto.JournalMapper;
-import com.concessions.local.network.dto.OrderDTO;
-import com.concessions.local.network.dto.OrderItemDTO;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.DisabledLayerUI;
-import com.concessions.local.ui.JournalNotifier.JournalListener;
 import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
@@ -42,6 +40,7 @@ import com.concessions.client.model.OrderItem;
 import com.concessions.client.service.OrderItemService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
+import com.concessions.common.event.JournalListener;
 
 import jakarta.annotation.PostConstruct;
 
@@ -154,33 +153,19 @@ public class OrderController implements OrderActionListener, JournalListener {
 		order.setMenuId(orderModel.getMenu().getId());
 		order.setStartTs(LocalDateTime.now());
 
-		orderModel.getOrderEntries().stream().forEach(orderEntry -> {
-			OrderItemDTO orderItem = new OrderItemDTO();
-			orderItem.setMenuItemId(orderEntry.menuItem().getId());
-			orderItem.setName(orderEntry.menuItem().getName());
-			orderItem.setPrice(orderEntry.menuItem().getPrice());
-			order.addOrderItem(orderItem);
-		});
+		List<OrderItemDTO> orderItems = orderModel.getOrderEntries().stream()
+			    .map(orderEntry -> {
+			        OrderItemDTO orderItem = new OrderItemDTO();
+			        orderItem.setMenuItemId(orderEntry.menuItem().getId());
+			        orderItem.setName(orderEntry.menuItem().getName());
+			        orderItem.setPrice(orderEntry.menuItem().getPrice());
+			        return orderItem;
+			    })
+			    .toList();
+
+		order.setOrderItems(orderItems);
 
 		notifyOrderCreated(order);
-
-		/*
-		 * Order order = orderService.newInstance(JournalMapper.fromDto(journal));
-		 * order.setOrderTotal(orderModel.getOrderTotal());
-		 * order.setMenuId(orderModel.getMenu().getId());
-		 * order.setStartTs(LocalDateTime.now());
-		 * 
-		 * orderModel.getOrderEntries().stream().forEach(orderEntry -> { OrderItem
-		 * orderItem = orderItemService.newInstance();
-		 * orderItem.setMenuItemId(orderEntry.menuItem().getId());
-		 * orderItem.setName(orderEntry.menuItem().getName());
-		 * orderItem.setPrice(orderEntry.menuItem().getPrice());
-		 * order.addOrderItem(orderItem); });
-		 * 
-		 * try { Order persistedOrder = orderService.create(order);
-		 * notifyOrderCreated(persistedOrder); } catch (ServiceException ex) {
-		 * ex.printStackTrace(); }
-		 */
 
 		orderModel.clear();
 		updateTotal();
@@ -252,6 +237,6 @@ public class OrderController implements OrderActionListener, JournalListener {
 	}
 
 	public interface OrderListener {
-		public void onOrderCreated(OrderDTO order);
+		public void onOrderCreated (OrderDTO order);
 	}
 }

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 
 import org.slf4j.Logger;
@@ -40,11 +41,13 @@ public class Messenger {
 		this.serverPort = serverPort;
 	}
 
-	public <T> T sendRequest (String service, String action, Object payloadObject, Class<T> responseClass) throws MessengerException {
+	public <T> T sendRequest (String service, String action, Object payloadObject, Class<T> responseClass)
+			throws MessengerException {
 		return sendRequest(this.serverIp, this.serverPort, service, action, payloadObject, responseClass);
 	}
 	
-	public <T> T sendRequest (String serverIp, int serverPort, String service, String action, Object payloadObject, Class<T> responseClass) throws MessengerException {
+	public <T> T sendRequest (String serverIp, int serverPort, String service, String action, Object payloadObject, Class<T> responseClass)
+			throws MessengerException {
 		String message = null;
 		
 		try {
@@ -66,8 +69,7 @@ public class Messenger {
 				// Setup BufferedReader for reading the response from the server
 				BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			) {
-				// 4. Send the message
-				// println() adds a newline character, which the server uses to delimit the message
+				// Send the message - println() adds a newline character, which the server uses to delimit the message
 				writer.println(message);
 				
 				// 5. Read the server's response
@@ -99,7 +101,7 @@ public class Messenger {
 				} else {
 					if (responseJson.isEmpty()) {
 						logger.error("Server returned ERROR but the JSON payload was empty.");
-						throw new MessengerException("Server return ERROR but no message");
+						throw new MessengerException("Server returned ERROR but no message");
 					}
 					try {
 						SimpleResponseDTO responseObject = mapper.readValue(responseJson, SimpleResponseDTO.class);
@@ -110,12 +112,11 @@ public class Messenger {
 						logger.error("Failed to deserialize ERROR response");
 						throw new MessengerException("Server returned ERROR but failed to parse response", e);
 					}
-					// Failure: Log the error message from the payload
 				}
 			} catch (IOException ex) {
-				// Catch connection errors, timeouts, or I/O issues during communication
+				// Catch communications errors like timeouts or I/O issues during communication
 				logger.error("Error communicating with server {}:{}: {}", 
-							 serverIp, serverPort, ex.getMessage());
+						 serverIp, serverPort, ex.getMessage());
 				throw new MessengerException("Communications with server have failed", ex);
 			}
 	}

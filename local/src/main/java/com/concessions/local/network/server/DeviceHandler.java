@@ -6,7 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.service.ServiceException;
-import com.concessions.common.network.AbstractManager;
+import com.concessions.common.network.AbstractHandler;
+import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
 import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
 import com.concessions.local.model.Device;
@@ -19,13 +20,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class DeviceManager extends AbstractPINManager {
-	private static final Logger logger = LoggerFactory.getLogger(DeviceManager.class);
+public class DeviceHandler extends AbstractPINHandler {
+	private static final Logger logger = LoggerFactory.getLogger(DeviceHandler.class);
 
 	@Autowired
 	protected DeviceService deviceService;
 	
-	public DeviceManager() {
+	public DeviceHandler() {
 	}
 	
 	public String getName () {

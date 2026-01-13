@@ -52,7 +52,7 @@ public class LocalNetworkListener {
 	protected boolean server = false;
 
 	@Autowired
-	protected ManagerRegistry registry;
+	protected HandlerRegistry registry;
 
 	@Autowired
 	protected ObjectMapper mapper;
@@ -60,7 +60,7 @@ public class LocalNetworkListener {
 	public LocalNetworkListener () {
 	}
 	
-	public LocalNetworkListener (ManagerRegistry registry, ObjectMapper mapper) {
+	public LocalNetworkListener (HandlerRegistry registry, ObjectMapper mapper) {
 		this.registry = registry;
 		this.mapper = mapper;
 	}

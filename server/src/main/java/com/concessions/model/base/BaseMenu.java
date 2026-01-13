@@ -64,7 +64,7 @@ public abstract class BaseMenu<T extends BaseMenu> extends AbstractBaseEntity
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

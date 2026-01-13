@@ -6,14 +6,14 @@ import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class HealthCheckManager extends AbstractManager {
+public class HealthCheckHandler extends AbstractHandler {
 
 	
-	public HealthCheckManager() {
+	public HealthCheckHandler() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public HealthCheckManager (ObjectMapper mapper) {
+	public HealthCheckHandler (ObjectMapper mapper) {
 		super(mapper);
 	}
 

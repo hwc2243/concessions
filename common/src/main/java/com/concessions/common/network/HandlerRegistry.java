@@ -8,15 +8,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ManagerRegistry {
-	private static final Logger logger = LoggerFactory.getLogger(ManagerRegistry.class);
+public class HandlerRegistry {
+	private static final Logger logger = LoggerFactory.getLogger(HandlerRegistry.class);
 
-	protected static Map<String, AbstractManager> registry = new HashMap<>();
+	protected static Map<String, AbstractHandler> registry = new HashMap<>();
 	
-	public ManagerRegistry() {
+	public HandlerRegistry() {
 	}
 
-	public static void registerManager (AbstractManager manager)
+	public static void registerManager (AbstractHandler manager)
 	{
 		logger.info("Registering local network manager: {}", manager.getName());
 		registry.put(manager.getName(), manager);
@@ -24,7 +24,7 @@ public class ManagerRegistry {
 	
 	public Object handleRequest (String service, String action, String payload) throws NetworkException
 	{
-		AbstractManager manager = registry.get(service);
+		AbstractHandler manager = registry.get(service);
 		if (manager != null) {
 			return manager.process(action, payload);
 		}

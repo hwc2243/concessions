@@ -77,7 +77,7 @@ public abstract class BaseOrder<T extends BaseOrder> extends AbstractBaseEntity
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

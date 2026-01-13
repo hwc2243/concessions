@@ -71,7 +71,7 @@ public abstract class BaseAddress<T extends BaseAddress> extends AbstractBaseEnt
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

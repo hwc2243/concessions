@@ -4,6 +4,7 @@ import com.concessions.dto.CategoryType;
 import java.math.BigDecimal;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MenuItemDTO
 {
@@ -107,6 +108,25 @@ public class MenuItemDTO
   {
     this.options = options;
   }
+
+
+    @Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+			
+		MenuItemDTO other = (MenuItemDTO) obj;
+		return id == other.id;
+	}
 
   public static class Builder {
 

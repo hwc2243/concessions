@@ -1,6 +1,4 @@
-package com.concessions.local.network.server;
-
-import com.concessions.common.network.NetworkException;
+package com.concessions.common.network;
 
 public class ServerException extends NetworkException {
 

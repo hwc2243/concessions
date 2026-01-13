@@ -59,7 +59,7 @@ public abstract class BaseLocation<T extends BaseLocation> extends AbstractBaseE
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

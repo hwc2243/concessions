@@ -3,6 +3,7 @@ package com.concessions.local.network.dto;
 import java.util.UUID;
 
 import com.concessions.client.model.OrderItem;
+import com.concessions.dto.OrderItemDTO;
 
 public class OrderItemMapper {
 

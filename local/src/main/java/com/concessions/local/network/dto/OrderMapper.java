@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import com.concessions.client.model.Order;
 import com.concessions.client.model.OrderItem;
+import com.concessions.dto.OrderDTO;
 
 public class OrderMapper {
 

@@ -73,7 +73,7 @@ public abstract class BaseMenuItem<T extends BaseMenuItem> extends AbstractBaseE
   {
     this.id = id;
   }
-  
+
   public Object getKey ()
   {
     return this.id;

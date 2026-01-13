@@ -40,7 +40,8 @@ import java.text.NumberFormat
 
 @Composable
 fun OrderScreen(
-    orderViewModel: OrderViewModel = viewModel()
+    orderViewModel: OrderViewModel = viewModel(),
+    onCheckout: () -> Unit
 ) {
     val uiState by orderViewModel.uiState.collectAsState()
 
@@ -71,7 +72,7 @@ fun OrderScreen(
                     orderTotal = uiState.orderTotal,
                     onRemoveItem = { orderViewModel.removeItemFromOrder(it) },
                     onClearOrder = { orderViewModel.clearOrder() },
-                    onCheckout = { /* TODO: Implement checkout logic */ },
+                    onCheckout = onCheckout,
                     modifier = Modifier.weight(1.5f)
                 )
             }
@@ -98,7 +99,7 @@ fun OrderScreen(
                     orderTotal = uiState.orderTotal,
                     onRemoveItem = { orderViewModel.removeItemFromOrder(it) },
                     onClearOrder = { orderViewModel.clearOrder() },
-                    onCheckout = { /* TODO: Implement checkout logic */ }
+                    onCheckout = onCheckout
                 )
             }
         }
