@@ -32,7 +32,7 @@ import com.concessions.common.dto.JournalSummaryDTO;
 import com.concessions.common.event.JournalNotifier;
 import com.concessions.dto.JournalDTO;
 import com.concessions.dto.StatusType;
-import com.concessions.local.network.dto.JournalMapper;
+import com.concessions.local.dto.JournalMapper;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.controller.OrderController.OrderListener;

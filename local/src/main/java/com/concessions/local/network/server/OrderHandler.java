@@ -4,12 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.OrderRequestDTO;
-import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.SimpleResponseDTO;
-import com.concessions.local.server.controller.OrderSubmissionController;
+import com.concessions.dto.JournalDTO;
+import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.ui.controller.JournalController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -18,7 +17,7 @@ public class OrderHandler extends AbstractDeviceHandler {
 	
 	@Autowired
 	@Lazy
-	protected OrderSubmissionController controller;
+	protected OrderOrchestrator orderOrchestrator;
 	
 	@Autowired
 	protected JournalController journalController;
@@ -45,7 +44,11 @@ public class OrderHandler extends AbstractDeviceHandler {
 			OrderRequestDTO request = mapper.readValue(payload, OrderRequestDTO.class);
 			validatePIN(request);
 			validateDevice(request);
-			controller.onOrderCreated(request.getOrder());
+			// HWC TODO this should throw an exception if order submission failed and we should return an error to the client
+			JournalDTO journal = orderOrchestrator.submitOrder(request.getOrder());
+			
+			// this is kind of kludgy just provide notifications that the journal changed
+			model.setJournal(journal);
 			journalController.change(model.getJournal());
 			return success;
 			

@@ -1,4 +1,4 @@
-package com.concessions.local.network.dto;
+package com.concessions.local.dto;
 
 import com.concessions.client.model.Journal;
 import com.concessions.dto.JournalDTO;

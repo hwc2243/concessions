@@ -12,8 +12,11 @@ import com.concessions.client.rest.base.HeaderProvider;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.bean.BearerTokenHeaderProvider;
 import com.concessions.local.bean.TenantDiscriminator;
+import com.concessions.local.pos.processor.LocalOrderSubmissionProcessor;
+import com.concessions.local.pos.processor.OrderSubmissionProcessor;
 import com.concessions.local.server.ServerApplication;
 import com.concessions.local.server.model.ServerApplicationModel;
+import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -75,5 +78,10 @@ public class AppConfig {
 		return JsonMapper.builder()
 			     .addModule(new JavaTimeModule())
 			     .build();
+    }
+    
+    @Bean
+    public OrderSubmissionProcessor orderSubmissionProcessor (OrderOrchestrator orderOrchestrator) {
+    	return new LocalOrderSubmissionProcessor(orderOrchestrator);
     }
 }

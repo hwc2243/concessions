@@ -3,7 +3,6 @@ package com.concessions.local.pos;
 import static com.concessions.local.base.Constants.DEVICE_ID_PREFERENCE;
 import static com.concessions.local.base.Constants.PIN_PREFERENCE;
 
-import java.beans.PropertyChangeListener;
 import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 
@@ -22,39 +21,29 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.stereotype.Component;
 
 import com.concessions.common.event.JournalNotifier;
 import com.concessions.common.network.MessengerException;
 import com.concessions.common.network.NetworkConstants;
-import com.concessions.common.network.RegistrationClient;
 import com.concessions.common.network.dto.ConfigurationResponseDTO;
 import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
 import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.WelcomeResponseDTO;
-import com.concessions.common.service.PreferenceService;
+
 import com.concessions.dto.JournalDTO;
 import com.concessions.dto.MenuDTO;
-import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.server.ConfigurationHandler;
-import com.concessions.local.network.server.DeviceHandler;
-import com.concessions.local.network.server.JournalHandler;
-import com.concessions.local.network.server.MenuHandler;
-import com.concessions.local.network.server.OrderHandler;
 import com.concessions.local.pos.config.AppConfig;
-import com.concessions.local.pos.controller.OrderSubmissionController;
 import com.concessions.local.pos.model.POSApplicationModel;
+import com.concessions.local.pos.processor.OrderSubmissionProcessor;
 import com.concessions.local.pos.ui.POSApplicationFrame;
 import com.concessions.local.ui.controller.OrderController;
-import com.concessions.local.ui.model.OrderModel;
-import com.concessions.local.ui.view.OrderPanel;
 
 import jakarta.annotation.PostConstruct;
 
@@ -75,6 +64,9 @@ public class POSApplication extends AbstractClientApplication {
 	@Value("${application.version:SNAPSHOT}")
 	protected String applicationVersion;
 
+	@Autowired
+	protected OrderSubmissionProcessor orderSubmissionProcessor;
+	
 	@Autowired
 	private POSApplicationFrame frame;
 	
@@ -214,10 +206,8 @@ public class POSApplication extends AbstractClientApplication {
 			System.exit(1);
 		}
 
-		OrderSubmissionController orderSubmissionController = new OrderSubmissionController(model, messenger);
-		OrderController controller = new OrderController(frame);
+		OrderController controller = new OrderController(frame, orderSubmissionProcessor);
 		journalNotifier.addJournalListener(controller);
-		controller.addOrderListener(orderSubmissionController);
 		controller.execute(model.getMenu(), journal);
 	}
 	

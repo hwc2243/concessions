@@ -40,15 +40,16 @@ import com.concessions.common.service.PreferenceService;
 import com.concessions.dto.JournalDTO;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.ui.AboutDialog;
+import com.concessions.local.dto.MenuMapper;
 import com.concessions.local.model.Device;
 import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
-import com.concessions.local.network.dto.MenuMapper;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.config.AppConfig;
 import com.concessions.local.server.config.JpaConfig;
 import com.concessions.local.server.model.ServerApplicationModel;
+import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServiceException;
@@ -128,6 +129,9 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	
 	@Autowired
 	protected LocationConfigurationService locationConfigurationService;
+	
+	@Autowired
+	protected OrderOrchestrator orderOrchestrator;
 	
 	@Autowired
 	protected PreferenceService preferenceService;
@@ -332,6 +336,8 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			setupAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() != null);
 			loginAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() == null);
 			logoutAction.setEnabled(applicationModel.getTokenResponse() != null);
+		} else if (ServerApplicationModel.JOURNAL.equals(evt.getPropertyName())) {
+			orderOrchestrator.initialize((JournalDTO)evt.getNewValue());
 		}
 	}
 

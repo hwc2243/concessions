@@ -1,5 +1,6 @@
 package com.concessions.client.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -21,5 +22,10 @@ public class OrderServiceImpl
 		order.setJournalId(journal.getId());
 		
 		return order;
+	}
+
+	@Override
+	public List<Order> findOpen (String journalId) {
+		return this.orderPersistence.findByJournalIdAndEndTsIsNullOrderByStartTsAsc(journalId);
 	}
 }

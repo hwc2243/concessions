@@ -1,20 +1,11 @@
 package com.concessions.local.ui.controller;
 
-import java.awt.Color;
-import java.awt.GridLayout;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
-import javax.swing.JLayer;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,21 +16,14 @@ import com.concessions.dto.MenuItemDTO;
 import com.concessions.dto.OrderDTO;
 import com.concessions.dto.OrderItemDTO;
 import com.concessions.local.base.ui.AbstractFrame;
-import com.concessions.local.network.dto.JournalMapper;
-import com.concessions.local.server.model.ServerApplicationModel;
-import com.concessions.local.ui.ApplicationFrame;
-import com.concessions.local.ui.DisabledLayerUI;
+import com.concessions.local.pos.processor.OrderSubmissionProcessor;
 import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
 import com.concessions.local.ui.view.OrderPanel;
 import com.concessions.local.ui.view.OrderPanel.OrderActionListener;
-import com.concessions.client.model.Journal;
-import com.concessions.client.model.Order;
-import com.concessions.client.model.OrderItem;
 import com.concessions.client.service.OrderItemService;
 import com.concessions.client.service.OrderService;
-import com.concessions.client.service.ServiceException;
 import com.concessions.common.event.JournalListener;
 
 import jakarta.annotation.PostConstruct;
@@ -52,6 +36,8 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 	protected AbstractFrame applicationFrame;
 
+	protected OrderSubmissionProcessor orderSubmissionProcessor;
+	
 	@Autowired
 	protected OrderService orderService;
 
@@ -66,14 +52,16 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 	private List<OrderListener> listeners = new java.util.ArrayList<>();
 
-	public OrderController(@Autowired AbstractFrame applicationFrame) {
+	public OrderController (@Autowired AbstractFrame applicationFrame, @Autowired OrderSubmissionProcessor orderSubmissionProcessor) {
 		this.applicationFrame = applicationFrame;
+		this.orderSubmissionProcessor = orderSubmissionProcessor;
 	}
 
 	@PostConstruct
 	protected void initialize() {
 	}
 
+	/*
 	public void addOrderListener(OrderListener listener) {
 		listeners.add(listener);
 	}
@@ -85,6 +73,7 @@ public class OrderController implements OrderActionListener, JournalListener {
 	protected void notifyOrderCreated(OrderDTO order) {
 		listeners.stream().forEach(listener -> listener.onOrderCreated(order));
 	}
+	*/
 
 	public void execute(MenuDTO menu, JournalDTO journal) {
 		if (menu == null) {
@@ -164,8 +153,8 @@ public class OrderController implements OrderActionListener, JournalListener {
 			    .toList();
 
 		order.setOrderItems(orderItems);
-
-		notifyOrderCreated(order);
+		
+		orderSubmissionProcessor.submitOrder(order);
 
 		orderModel.clear();
 		updateTotal();

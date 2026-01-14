@@ -1,4 +1,4 @@
-package com.concessions.local.pos.controller;
+package com.concessions.local.pos.processor;
 
 import com.concessions.common.network.Messenger;
 import com.concessions.common.network.MessengerException;
@@ -7,21 +7,19 @@ import com.concessions.common.network.dto.OrderRequestDTO;
 import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.dto.OrderDTO;
 import com.concessions.local.pos.model.POSApplicationModel;
-import com.concessions.local.ui.controller.OrderController.OrderListener;
 
-public class OrderSubmissionController implements OrderListener {
+public class NetworkOrderSubmissionProcessor implements OrderSubmissionProcessor {
 
+	protected POSApplicationModel model;
 	protected Messenger messenger;
 	
-	protected POSApplicationModel model;
-	
-	public OrderSubmissionController (POSApplicationModel model, Messenger clientService) {
+	public NetworkOrderSubmissionProcessor(POSApplicationModel model, Messenger messenger) {
 		this.model = model;
-		this.messenger = clientService;
+		this.messenger = messenger;
 	}
 
 	@Override
-	public void onOrderCreated (OrderDTO order) {
+	public void submitOrder (OrderDTO order) {
 		OrderRequestDTO request = new OrderRequestDTO();
 		request.setPIN(model.getPin());
 		request.setDeviceId(model.getDeviceId());
