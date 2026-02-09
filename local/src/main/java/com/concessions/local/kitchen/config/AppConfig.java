@@ -7,6 +7,9 @@ import com.concessions.common.network.HandlerRegistry;
 import com.concessions.common.network.Messenger;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.kitchen.KitchenApplication;
+import com.concessions.local.kitchen.model.KitchenApplicationModel;
+import com.concessions.local.pos.processor.NetworkOrderProcessor;
+import com.concessions.local.pos.processor.OrderProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -32,12 +35,18 @@ public class AppConfig {
 	}
 	
 	@Bean
-	public HandlerRegistry managerRegistry () {
+	public HandlerRegistry handlerRegistry () {
 		return new HandlerRegistry();
 	}
 	
 	@Bean
 	public Messenger messenger () {
 		return new Messenger();
+	}
+	
+	@Bean
+	public OrderProcessor orderProcessor (KitchenApplicationModel model, Messenger messenger)
+	{
+		return new NetworkOrderProcessor(model, messenger);
 	}
 }

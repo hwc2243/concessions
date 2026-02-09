@@ -12,8 +12,8 @@ import com.concessions.client.rest.base.HeaderProvider;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.bean.BearerTokenHeaderProvider;
 import com.concessions.local.bean.TenantDiscriminator;
-import com.concessions.local.pos.processor.LocalOrderSubmissionProcessor;
-import com.concessions.local.pos.processor.OrderSubmissionProcessor;
+import com.concessions.local.pos.processor.LocalOrderProcessor;
+import com.concessions.local.pos.processor.OrderProcessor;
 import com.concessions.local.server.ServerApplication;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
@@ -81,7 +81,7 @@ public class AppConfig {
     }
     
     @Bean
-    public OrderSubmissionProcessor orderSubmissionProcessor (OrderOrchestrator orderOrchestrator) {
-    	return new LocalOrderSubmissionProcessor(orderOrchestrator);
+    public OrderProcessor orderSubmissionProcessor (OrderOrchestrator orderOrchestrator) {
+    	return new LocalOrderProcessor(orderOrchestrator);
     }
 }

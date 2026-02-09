@@ -1,6 +1,5 @@
 package com.concessions.model;
 
-import com.concessions.model.StatusType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDateTime;
@@ -15,7 +14,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 
+import com.concessions.dto.StatusType;
+
 import com.concessions.model.base.BaseJournal;
+
 
 @Entity
 @Table(name="journal")

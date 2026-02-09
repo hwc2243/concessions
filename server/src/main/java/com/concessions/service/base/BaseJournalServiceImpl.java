@@ -13,7 +13,7 @@ import com.concessions.service.ServiceException;
 import com.concessions.persistence.JournalPersistence;
 import com.concessions.persistence.base.BaseJournalPersistence;
 
-import com.concessions.model.StatusType;
+import com.concessions.dto.StatusType;
 
 import com.concessions.model.base.Multitenant;
 import com.concessions.service.base.MultitenantServiceImpl;

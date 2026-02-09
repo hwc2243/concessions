@@ -1,6 +1,6 @@
 package com.concessions.local.model.base;
 
-import com.concessions.local.model.DeviceTypeType;
+import com.concessions.local.dto.DeviceTypeType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

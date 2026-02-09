@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import javax.swing.JFrame;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.base.ui.AbstractFrame;
@@ -13,10 +14,12 @@ import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import jakarta.annotation.PostConstruct;
 
 @Component
+@Qualifier("applicationFrame")
 public class KitchenApplicationFrame extends AbstractFrame implements PropertyChangeListener {
 
 	@Autowired
 	protected KitchenApplicationModel model;
+
 	
 	public KitchenApplicationFrame() {
 		super("Concessions Management Kitchen");

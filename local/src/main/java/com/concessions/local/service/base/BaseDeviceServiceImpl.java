@@ -13,7 +13,7 @@ import com.concessions.local.service.ServiceException;
 import com.concessions.local.persistence.DevicePersistence;
 import com.concessions.local.persistence.base.BaseDevicePersistence;
 
-import com.concessions.local.model.DeviceTypeType;
+import com.concessions.local.dto.DeviceTypeType;
 
 public abstract class BaseDeviceServiceImpl<T extends Device, ID>
   implements BaseDeviceService<T, ID> {

@@ -16,7 +16,8 @@ import com.concessions.dto.MenuItemDTO;
 import com.concessions.dto.OrderDTO;
 import com.concessions.dto.OrderItemDTO;
 import com.concessions.local.base.ui.AbstractFrame;
-import com.concessions.local.pos.processor.OrderSubmissionProcessor;
+import com.concessions.local.pos.processor.OrderProcessor;
+import com.concessions.local.server.orchestrator.OrderException;
 import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.model.OrderModel;
 import com.concessions.local.ui.model.OrderModel.OrderEntry;
@@ -36,7 +37,7 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 	protected AbstractFrame applicationFrame;
 
-	protected OrderSubmissionProcessor orderSubmissionProcessor;
+	protected OrderProcessor orderSubmissionProcessor;
 	
 	@Autowired
 	protected OrderService orderService;
@@ -50,9 +51,7 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 	private OrderPanel orderPanel;
 
-	private List<OrderListener> listeners = new java.util.ArrayList<>();
-
-	public OrderController (@Autowired AbstractFrame applicationFrame, @Autowired OrderSubmissionProcessor orderSubmissionProcessor) {
+	public OrderController (@Autowired AbstractFrame applicationFrame, @Autowired OrderProcessor orderSubmissionProcessor) {
 		this.applicationFrame = applicationFrame;
 		this.orderSubmissionProcessor = orderSubmissionProcessor;
 	}
@@ -60,20 +59,6 @@ public class OrderController implements OrderActionListener, JournalListener {
 	@PostConstruct
 	protected void initialize() {
 	}
-
-	/*
-	public void addOrderListener(OrderListener listener) {
-		listeners.add(listener);
-	}
-
-	public void removeOrderListener(OrderListener listener) {
-		listeners.remove(listener);
-	}
-
-	protected void notifyOrderCreated(OrderDTO order) {
-		listeners.stream().forEach(listener -> listener.onOrderCreated(order));
-	}
-	*/
 
 	public void execute(MenuDTO menu, JournalDTO journal) {
 		if (menu == null) {
@@ -154,10 +139,14 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 		order.setOrderItems(orderItems);
 		
-		orderSubmissionProcessor.submitOrder(order);
-
-		orderModel.clear();
-		updateTotal();
+		try {
+			orderSubmissionProcessor.submitOrder(order);
+			orderModel.clear();
+			updateTotal();
+		} catch (OrderException ex) {
+			JOptionPane.showMessageDialog(applicationFrame, "Failed to submit order", "Error",
+					JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	@Override
@@ -223,9 +212,5 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 	@Override
 	public void journalSynced(JournalDTO journal) {
-	}
-
-	public interface OrderListener {
-		public void onOrderCreated (OrderDTO order);
 	}
 }

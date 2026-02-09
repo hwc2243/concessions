@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class OrderDTO
 {
   protected String id;
@@ -17,8 +19,10 @@ public class OrderDTO
   
   protected BigDecimal orderTotal = null;
   
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
   protected LocalDateTime startTs = null;
   
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
   protected LocalDateTime endTs = null;
   
   protected List<OrderItemDTO> orderItems;

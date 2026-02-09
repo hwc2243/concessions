@@ -10,8 +10,8 @@ import com.concessions.common.network.Messenger;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.pos.POSApplication;
 import com.concessions.local.pos.model.POSApplicationModel;
-import com.concessions.local.pos.processor.NetworkOrderSubmissionProcessor;
-import com.concessions.local.pos.processor.OrderSubmissionProcessor;
+import com.concessions.local.pos.processor.NetworkOrderProcessor;
+import com.concessions.local.pos.processor.OrderProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -52,9 +52,9 @@ public class AppConfig {
 	}
 
 	@Bean
-	public OrderSubmissionProcessor orderSubmissionProcessor (POSApplicationModel model, Messenger messenger)
+	public OrderProcessor orderProcessor (POSApplicationModel model, Messenger messenger)
 	{
-		return new NetworkOrderSubmissionProcessor(model, messenger);
+		return new NetworkOrderProcessor(model, messenger);
 	}
 	
 	@Bean(initMethod = "start", destroyMethod = "shutdown")

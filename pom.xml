@@ -30,58 +30,81 @@
         The 'properties' section is useful for centralizing common versions, 
         making maintenance easier across all modules.
     -->
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
-        <!-- Example: Centralize Spring Boot version -->
-        <spring-boot.version>3.5.3</spring-boot.version>
-        
-        <servicebuilder.version>0.4.0-SNAPSHOT</servicebuilder.version>
-        <service.xml>${project.basedir}/service.xml</service.xml>
-    </properties>
+	<properties>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- 
+		<spring-boot.version>3.5.3</spring-boot.version>
+		<lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+		<org.mapstruct.version>1.6.3</org.mapstruct.version>
+
+		<servicebuilder.version>0.4.1-SNAPSHOT</servicebuilder.version>
+		<service.xml>${project.basedir}/service.xml</service.xml>
+	</properties>
+
+	<!-- 
         The 'dependencyManagement' section centralizes dependency versions. 
         Child modules inherit these versions but must explicitly declare the dependency 
         (without the version tag).
     -->
-    <dependencyManagement>
-        <dependencies>
-            <!-- Example: Spring Boot BOM for consistent dependency versions -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            
-            <!-- Add all common dependencies here -->
-        </dependencies>
-    </dependencyManagement>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${spring-boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mapstruct</groupId>
+				<artifactId>mapstruct</artifactId>
+				<version>${org.mapstruct.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
-    <!--
+	<!--
         The 'build' section can enforce common plugins and configurations 
         (like Java compiler settings) across all modules.
     -->
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version>
-                    <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
-                    </configuration>
-                </plugin>
-                
-            </plugins>
-        </pluginManagement>
-    </build>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.11.0</version>
+					<configuration>
+						<source>${maven.compiler.source}</source>
+						<target>${maven.compiler.target}</target>
+						<!-- Centralized Annotation Processor Setup -->
+						<annotationProcessorPaths>
+							<path>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+								<!-- Version inherited from
+								spring-boot-starter-parent -->
+								<version>${lombok.version}</version>
+							</path>
+							<path>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok-mapstruct-binding</artifactId>
+								<version>${lombok-mapstruct-binding.version}</version>
+							</path>
+							<path>
+								<groupId>org.mapstruct</groupId>
+								<artifactId>mapstruct-processor</artifactId>
+								<version>${org.mapstruct.version}</version>
+							</path>
+						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+
+			</plugins>
+		</pluginManagement>
+	</build>
 
 </project>
 

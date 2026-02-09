@@ -3,6 +3,7 @@ package com.concessions.common.util;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -11,6 +12,10 @@ public class UniqueQueue<T> implements Iterable<T> {
     private final Queue<T> queue = new LinkedList<>();
     private final Set<T> set = new HashSet<>();
 
+    public List<T> getAll () {
+    	return java.util.Collections.unmodifiableList(new java.util.ArrayList<>(queue));
+    }
+    
     /**
      * Adds an element to the end of the queue if it is not already present.
      *
@@ -25,6 +30,20 @@ public class UniqueQueue<T> implements Iterable<T> {
         return false;
     }
 
+    /**
+     * Removes a single instance of the specified element from this queue, if it is present.
+     *
+     * @param element The element to be removed.
+     * @return {@code true} if this queue contained the specified element, {@code false} otherwise.
+     */
+    public boolean remove (T element) {
+        if (set.remove(element)) { // Removes from set, returns true if element was present
+            queue.remove(element); // Removes from queue
+            return true;
+        }
+        return false;
+    }
+    
     /**
      * Retrieves and removes the head of this queue.
      *

@@ -25,6 +25,10 @@ public interface NetworkConstants {
 	
 	// Order Service
 	public String ORDER_SERVICE = "ORDER";
+	public String ORDER_COMPLETE_ACTION = "COMPLETE";
+	public String ORDER_COMPLETED_ACTION = "COMPLETED";
+	public String ORDER_CREATED_ACTION = "CREATED";
+	public String ORDER_GETALL_ACTION = "GETALL";
 	public String ORDER_SUBMIT_ACTION = "SUBMIT";
 	
 	// PIN Service

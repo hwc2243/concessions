@@ -1,6 +1,8 @@
 package com.concessions.dto;
 
 import com.concessions.dto.StatusType;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDateTime;
@@ -21,10 +23,13 @@ public class JournalDTO
   
   protected BigDecimal salesTotal = null;
   
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   protected LocalDateTime startTs = null;
   
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   protected LocalDateTime endTs = null;
   
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   protected LocalDateTime syncTs = null;
   
   protected Long organizationId = null;

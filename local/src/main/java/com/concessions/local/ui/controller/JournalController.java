@@ -35,7 +35,6 @@ import com.concessions.dto.StatusType;
 import com.concessions.local.dto.JournalMapper;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.ApplicationFrame;
-import com.concessions.local.ui.controller.OrderController.OrderListener;
 import com.concessions.local.ui.view.JournalOrdersPanel;
 import com.concessions.local.ui.view.JournalPanel;
 import com.concessions.local.util.ListChunker;

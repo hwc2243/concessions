@@ -33,12 +33,15 @@ import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.WelcomeResponseDTO;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.base.AbstractApplication;
+import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
+import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.kitchen.config.AppConfig;
+import com.concessions.local.kitchen.controller.OrderDisplayController;
 import com.concessions.local.kitchen.model.KitchenApplicationModel;
+import com.concessions.local.kitchen.model.OrderDisplayModel;
 import com.concessions.local.kitchen.ui.KitchenApplicationFrame;
-import com.concessions.local.model.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.server.ConfigurationHandler;
 import com.concessions.local.network.server.DeviceHandler;
@@ -52,7 +55,7 @@ import jakarta.annotation.PostConstruct;
 	    havingValue = "true",
 	    matchIfMissing = false // This ensures if the property is not defined, the component is NOT created.
 	)
-public class KitchenApplication extends AbstractApplication {
+public class KitchenApplication extends AbstractClientApplication {
 
 	private static final Logger logger = LoggerFactory.getLogger(KitchenApplication.class);
 
@@ -70,6 +73,9 @@ public class KitchenApplication extends AbstractApplication {
 	
 	@Autowired
 	private KitchenApplicationModel model;
+	
+	@Autowired
+	private OrderDisplayController orderDisplayController;
 	
 	@Autowired
 	private PreferenceService preferenceService;
@@ -126,6 +132,7 @@ public class KitchenApplication extends AbstractApplication {
 		model.setStatusMessage("Configuring");
 		executeDeviceRegistration();
 		executeLocationConfiguration();
+		executeOrderDisplay();
 		model.setStatusMessage("Ready");
 	}
 	
@@ -133,6 +140,8 @@ public class KitchenApplication extends AbstractApplication {
 		DeviceRegistrationRequestDTO deviceRegistration = new DeviceRegistrationRequestDTO();
 		deviceRegistration.setDeviceId(model.getDeviceId());
 		deviceRegistration.setDeviceType(DeviceTypeType.KITCHEN.name());
+		deviceRegistration.setDeviceIp(localNetworkListener.getListenerIp());
+		deviceRegistration.setDevicePort(localNetworkListener.getListenerPort());
 		deviceRegistration.setPIN(model.getPin());
 		
 		DeviceRegistrationResponseDTO deviceRegistrationResponse;
@@ -150,6 +159,7 @@ public class KitchenApplication extends AbstractApplication {
 	protected void executeLocationConfiguration () {
 		SimpleDeviceRequestDTO request = new SimpleDeviceRequestDTO();
 		request.setPIN(model.getPin());
+		request.setDeviceId(model.getDeviceId());
 		
 		ConfigurationResponseDTO response = null;
 		try {
@@ -166,6 +176,11 @@ public class KitchenApplication extends AbstractApplication {
 			System.exit(1);
 		}
 	}
+	
+	protected void executeOrderDisplay () {
+		orderDisplayController.execute();
+	}
+	
 	@Override
 	protected void showAboutDialog(JFrame frame) {
 		AboutDialog.showAboutDialog(frame, applicationName, applicationVersion);

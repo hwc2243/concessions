@@ -37,11 +37,11 @@ import com.concessions.dto.MenuDTO;
 import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
 import com.concessions.local.base.ui.PINController;
-import com.concessions.local.model.DeviceTypeType;
+import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.pos.config.AppConfig;
 import com.concessions.local.pos.model.POSApplicationModel;
-import com.concessions.local.pos.processor.OrderSubmissionProcessor;
+import com.concessions.local.pos.processor.OrderProcessor;
 import com.concessions.local.pos.ui.POSApplicationFrame;
 import com.concessions.local.ui.controller.OrderController;
 
@@ -65,7 +65,7 @@ public class POSApplication extends AbstractClientApplication {
 	protected String applicationVersion;
 
 	@Autowired
-	protected OrderSubmissionProcessor orderSubmissionProcessor;
+	protected OrderProcessor orderSubmissionProcessor;
 	
 	@Autowired
 	private POSApplicationFrame frame;

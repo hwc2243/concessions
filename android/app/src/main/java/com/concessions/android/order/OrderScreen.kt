@@ -165,9 +165,21 @@ private fun PortraitCurrentOrderPane(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Total:", style = MaterialTheme.typography.titleLarge)
-                Text(formatCurrency(orderTotal), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            // Row for Item Count and Total
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Items: ${orderItems.size}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    formatCurrency(orderTotal),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -266,9 +278,20 @@ private fun CurrentOrderPane(
 
             // Total Display
             Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Total:", style = MaterialTheme.typography.titleLarge)
-                Text(formatCurrency(orderTotal), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Items: ${orderItems.size}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    formatCurrency(orderTotal),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             // Action Buttons
@@ -288,3 +311,4 @@ private fun CurrentOrderPane(
 private fun formatCurrency(price: BigDecimal): String {
     return NumberFormat.getCurrencyInstance().format(price)
 }
+

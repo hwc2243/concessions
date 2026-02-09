@@ -21,6 +21,7 @@ import com.concessions.local.ui.action.JournalOpenAction;
 import com.concessions.local.ui.action.JournalStartAction;
 import com.concessions.local.ui.action.JournalSuspendAction;
 import com.concessions.local.ui.action.JournalViewAction;
+import com.concessions.local.ui.action.KitchenAction;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
 import com.concessions.local.ui.action.OrderAction;
@@ -58,6 +59,9 @@ public class ApplicationFrame extends AbstractFrame implements PropertyChangeLis
 	
 	@Autowired
 	protected JournalViewAction journalViewAction;
+	
+	@Autowired
+	protected KitchenAction kitchenAction;
 	
 	
 	@Autowired 
@@ -109,6 +113,8 @@ public class ApplicationFrame extends AbstractFrame implements PropertyChangeLis
 		
 		JMenuItem orderItem = new JMenuItem(orderAction);
 		orderMenu.add(orderItem);
+		JMenuItem kitchenItem = new JMenuItem(kitchenAction);
+		orderMenu.add(kitchenItem);
 		
 		return menuBar;
 	}

@@ -44,8 +44,11 @@ public class ConfigurationHandler extends AbstractDeviceHandler {
 			if (model.getLocationConfiguration() == null) {
 				throw new ServerException("Location has not been configurated yet");
 			}
+			response.setOrganizationId(model.getLocationConfiguration().getOrganizationId());
 			response.setOrganizationName(model.getLocationConfiguration().getOrganizationName());
+			response.setLocationId(model.getLocationConfiguration().getLocationId());
 			response.setLocationName(model.getLocationConfiguration().getLocationName());
+			response.setMenuId(model.getLocationConfiguration().getMenuId());
 			response.setMenuName(model.getLocationConfiguration().getMenuName());
 			return response;
 		} catch (JsonProcessingException ex) {

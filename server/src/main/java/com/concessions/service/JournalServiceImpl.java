@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.concessions.service.base.BaseJournalServiceImpl;
 import com.concessions.model.Order;
-import com.concessions.model.StatusType;
 import com.concessions.common.dto.JournalSummaryDTO;
+import com.concessions.dto.StatusType;
 import com.concessions.model.Journal;
 
 @Service

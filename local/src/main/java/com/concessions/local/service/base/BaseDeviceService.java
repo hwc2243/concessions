@@ -3,7 +3,7 @@ package com.concessions.local.service.base;
 import java.util.List;
 
 import com.concessions.local.model.base.BaseDevice;
-import com.concessions.local.model.DeviceTypeType;
+import com.concessions.local.dto.DeviceTypeType;
 
 public interface BaseDeviceService<T extends BaseDevice, ID> extends EntityService<T, ID> {
 

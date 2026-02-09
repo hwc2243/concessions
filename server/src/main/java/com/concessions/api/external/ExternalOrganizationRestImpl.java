@@ -25,6 +25,12 @@ public class ExternalOrganizationRestImpl
 {
 
 	@Override
+    public ResponseEntity<List<Organization>> listOrganizations ()
+    {
+		return mine();
+    }
+	
+	@Override
 	@GetMapping("/mine")
 	public ResponseEntity<List<Organization>> mine() {
 		Set<Organization> orgs = new HashSet<>();

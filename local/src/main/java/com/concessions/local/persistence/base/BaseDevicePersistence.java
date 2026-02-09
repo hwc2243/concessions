@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.concessions.local.model.base.BaseDevice;
 import com.concessions.local.model.Device;
-import com.concessions.local.model.DeviceTypeType;
+import com.concessions.local.dto.DeviceTypeType;
 
 public interface BaseDevicePersistence<T extends Device, ID> extends JpaRepository<T, ID>
 {

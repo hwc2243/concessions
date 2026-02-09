@@ -50,7 +50,6 @@ public class OrderMapper {
             return null;
         }
 
-        // In a real application, replace 'new BaseOrder()' with 'new ConcreteOrder()'
         Order entity = new Order();
 
         entity.setId(dto.getId() != null ? dto.getId() : UUID.randomUUID().toString());
