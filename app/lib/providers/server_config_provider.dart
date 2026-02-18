@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '/core/utils/device_utils.dart';
 import '/models/dto/device_registration_request.dart';
 import '/models/dto/device_registration_response.dart';
@@ -8,6 +9,9 @@ import '/network/network_constants.dart';
 import 'client_config_provider.dart';
 
 class ServerConfigProvider extends ChangeNotifier {
+  static const String _keyIp = 'server_ip';
+  static const String _keyPort = 'server_port';
+
   String? _serverIp;
   String? get serverIp => _serverIp;
 
@@ -23,6 +27,25 @@ class ServerConfigProvider extends ChangeNotifier {
   bool _isRegistering = false;
   bool get isRegistering => _isRegistering;
 
+  Future<void> loadConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    _serverIp = prefs.getString(_keyIp);
+    _serverPort = prefs.getInt(_keyPort);
+
+    if (_serverIp != null && _serverPort != null) {
+      _isConnected = true;
+      debugPrint("Loaded saved server config: $_serverIp:$_serverPort");
+    }
+    notifyListeners();
+  }
+
+  /// Private helper to persist data
+  Future<void> _persistConfig(String ip, int port) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyIp, ip);
+    await prefs.setInt(_keyPort, port);
+  }
+
   /// Runs the UDP discovery and updates global server state
   Future<bool> discoverServer() async {
     _isSearching = true;
@@ -36,6 +59,9 @@ class ServerConfigProvider extends ChangeNotifier {
       _serverPort = result['serverPort'];
       _isConnected = true;
       _isSearching = false;
+
+      await _persistConfig(_serverIp!, _serverPort!);
+
       notifyListeners();
       return true;
     }
@@ -92,10 +118,29 @@ class ServerConfigProvider extends ChangeNotifier {
   }
 
   /// Manually clear connection (e.g., on logout/reset)
-  void disconnect() {
+  void disconnect() async {
     _serverIp = null;
     _serverPort = null;
     _isConnected = false;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyIp);
+    await prefs.remove(_keyPort);
+
+    notifyListeners();
+  }
+
+  Future<void> saveManualConfig({
+    required String serverIp,
+    required int serverPort,
+  }) async {
+    _serverIp = serverIp;
+    _serverPort = serverPort;
+    _isConnected = true;
+    _isSearching = false;
+
+    await _persistConfig(_serverIp!, _serverPort!);
+
     notifyListeners();
   }
 }

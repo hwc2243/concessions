@@ -16,6 +16,9 @@ import 'screens/system_setup_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final serverProvider =  ServerConfigProvider();
+  await serverProvider.loadConfig();
+
   final securityProvider = SecurityProvider();
   await securityProvider.initializePin();
 
@@ -25,11 +28,11 @@ void main() async {
         ChangeNotifierProvider.value(value: securityProvider),
         ChangeNotifierProvider(create: (_) => AppConfigProvider()),
         ChangeNotifierProvider(create: (_) => ClientConfigProvider()),
-        ChangeNotifierProvider(create: (_) => ServerConfigProvider()),
         ChangeNotifierProvider(create: (_) => JournalProvider()),
         ChangeNotifierProvider(create: (_) => KitchenProvider()),
         ChangeNotifierProvider(create: (_) => MenuProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider.value(value: serverProvider),
       ],
       child: const MyApp(),
     ),

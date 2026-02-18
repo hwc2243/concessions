@@ -1,3 +1,4 @@
+import '/utils/date_extensions.dart';
 import 'order_item_dto.dart';
 
 class OrderDTO {
@@ -24,8 +25,8 @@ class OrderDTO {
     'journalId': journalId,
     'menuId': menuId,
     'orderTotal': orderTotal,
-    'startTs': startTs.toIso8601String(),
-    'endTs': endTs?.toIso8601String(),
+    'startTs': startTs?.toJavaSafeIsoString(),
+    'endTs': endTs?.toJavaSafeIsoString(),
     'orderItems': orderItems.map((item) => item.toJson()).toList(),
   };
 

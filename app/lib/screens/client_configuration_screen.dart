@@ -35,15 +35,32 @@ class _ClientConfigurationScreenState extends State<ClientConfigurationScreen> {
       final appConfig = context.read<AppConfigProvider>();
       final serverConfig = context.read<ServerConfigProvider>();
 
+      final targetIp = serverConfig.serverIp ?? widget.serverInfo['serverIp'];
+      final targetPort =
+          serverConfig.serverPort ?? widget.serverInfo['serverPort'];
+
+      if (targetIp == null || targetPort == null) {
+        setState(() => _isLoading = false);
+        _showErrorSnackBar("Connection details missing. Please restart setup.");
+        return;
+      }
+
       try {
         await MessengerService.sendRequest<SimpleResponseDTO>(
-          serverIp: serverConfig.serverIp!,
-          serverPort: serverConfig.serverPort!,
+          serverIp: targetIp,
+          serverPort: targetPort,
           service: NetworkConstants.pinService,
           action: NetworkConstants.pinVerifyAction,
           payload: PINVerifyRequestDTO(pin: _pinController.text).toJson(),
           fromJson: (json) => SimpleResponseDTO.fromJson(json),
         );
+
+        if (serverConfig.serverIp == null) {
+          await serverConfig.saveManualConfig(
+            serverIp: targetIp,
+            serverPort: targetPort,
+          );
+        }
 
         await security.savePin(_pinController.text);
         await appConfig.saveClientConfiguration(POSRole.client, _selectedType);
@@ -58,13 +75,25 @@ class _ClientConfigurationScreenState extends State<ClientConfigurationScreen> {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString().replaceAll("MessengerException: ", "")),
+              content: Text(
+                e.toString().replaceAll("MessengerException: ", ""),
+              ),
               backgroundColor: Colors.redAccent,
             ),
           );
         }
       }
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade800,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget build(BuildContext context) {

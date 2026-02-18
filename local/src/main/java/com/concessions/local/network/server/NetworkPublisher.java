@@ -21,8 +21,9 @@ public class NetworkPublisher implements NetworkConstants, OrderListener {
 
 	protected DeviceService deviceService;
 	protected Messenger messenger;
-	
-	public NetworkPublisher(@Autowired DeviceService deviceService, @Autowired Messenger messenger, @Autowired OrderOrchestrator orderOrchestrator) {
+
+	public NetworkPublisher(@Autowired DeviceService deviceService, @Autowired Messenger messenger,
+			@Autowired OrderOrchestrator orderOrchestrator) {
 		this.deviceService = deviceService;
 		this.messenger = messenger;
 		orderOrchestrator.addOrderListener(this);
@@ -32,10 +33,13 @@ public class NetworkPublisher implements NetworkConstants, OrderListener {
 	public void orderCompleted(OrderDTO order) {
 		List<Device> kitchenDevices = findKitchenDevices();
 		kitchenDevices.stream().forEach(device -> {
-			try {
-				messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), ORDER_SERVICE, ORDER_COMPLETED_ACTION, order, SimpleResponseDTO.class);
-			} catch (Exception ex) {
-				ex.printStackTrace();
+			if (StringUtils.isNotBlank(device.getDeviceIp()) && device.getDevicePort() > 0) {
+				try {
+					messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), ORDER_SERVICE,
+							ORDER_COMPLETED_ACTION, order, SimpleResponseDTO.class);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
 			}
 		});
 	}
@@ -46,7 +50,8 @@ public class NetworkPublisher implements NetworkConstants, OrderListener {
 		kitchenDevices.stream().forEach(device -> {
 			if (StringUtils.isNotBlank(device.getDeviceIp()) && device.getDevicePort() > 0) {
 				try {
-					messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), ORDER_SERVICE, ORDER_CREATED_ACTION, order, SimpleResponseDTO.class);
+					messenger.sendRequest(device.getDeviceIp(), device.getDevicePort(), ORDER_SERVICE,
+							ORDER_CREATED_ACTION, order, SimpleResponseDTO.class);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -54,7 +59,7 @@ public class NetworkPublisher implements NetworkConstants, OrderListener {
 		});
 	}
 
-	protected List<Device> findKitchenDevices () {
+	protected List<Device> findKitchenDevices() {
 		return deviceService.findByDeviceType(DeviceTypeType.KITCHEN);
 	}
 }

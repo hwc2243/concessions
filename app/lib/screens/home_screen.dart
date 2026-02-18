@@ -23,6 +23,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _status = "Starting...";
   int _selectedIndex = 0; // 0 for Home, 1 for Settings
+  bool _showManualEntry = false;
+  final _manualIpController = TextEditingController();
+  final _manualPortController = TextEditingController();
 
   @override
   void initState() {
@@ -33,72 +36,102 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initApp() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appConfig = context.read<AppConfigProvider>();
-      final clientConfig = context.read<ClientConfigProvider>();
       final serverConfig = context.read<ServerConfigProvider>();
-      final security = context.read<SecurityProvider>();
-      final journalProvider = context.read<JournalProvider>();
-      final kitchenProvider = context.read<KitchenProvider>();
-      final menuProvider = context.read<MenuProvider>();
 
       // Only search if we are a client
       if (appConfig.role == POSRole.client) {
-        setState(() => _status = "Searching for server...");
-        bool found = await serverConfig.discoverServer();
-        if (!found) {
-          setState(() => _status = "Server Not Found");
-          return;
-        }
-        if (found && mounted) {
-          try {
-            setState(() => _status = "Starting client networking...");
-            await clientConfig.startListener(journalProvider, kitchenProvider);
+        if (serverConfig.serverIp == null || serverConfig.serverIp!.isEmpty) {
+          setState(() {
+            _status = "Searching for server...";
+            _showManualEntry = false;
+          });
 
-            setState(() => _status = "Registering...");
-            await serverConfig.registerWithServer(
-              pin: security.systemPin ?? "",
-              deviceType: appConfig.deviceType?.value ?? "POS",
-              clientConfig: clientConfig,
-            );
+          bool found = await serverConfig.discoverServer();
 
-            setState(() => _status = "Retrieving configuration...");
-            await appConfig.loadLocationConfiguration(
-              clientConfig: clientConfig,
-              serverConfig: serverConfig,
-              security: security,
-            );
-
-            if (appConfig.deviceType == DeviceTypeType.POS) {
-              setState(() => _status = "Fetching Journal...");
-              await journalProvider.loadJournal(
-                serverConfig: serverConfig,
-                clientConfig: clientConfig,
-                security: security,
-              );
-
-              setState(() => _status = "Fetching Menu...");
-              await menuProvider.loadMenu(
-                serverConfig: serverConfig,
-                clientConfig: clientConfig,
-                security: security,
-              );
-            } else if (appConfig.deviceType == DeviceTypeType.KITCHEN) {
-              setState(() => _status = "Fetching orders...");
-              await kitchenProvider.loadInitialOrders(
-                serverConfig: serverConfig,
-                clientConfig: clientConfig,
-                security: security,
-              );
-            }
-
-            setState(() => _status = "Ready");
-          } catch (e) {
-            setState(() => _status = "Setup Failed: $e");
+          if (!found && mounted) {
+            setState(() {
+              _status = "Server Not Found";
+              _showManualEntry = true; // Show manual UI option
+            });
+            return;
           }
-        } else {
-          setState(() => _status = "Server Not Found");
         }
+
+        // If we have an IP (either from provider or just discovered), proceed
+        _establishConnection();
       }
     });
+  }
+
+  Future<void> _establishConnection() async {
+    final appConfig = context.read<AppConfigProvider>();
+    final clientConfig = context.read<ClientConfigProvider>();
+    final serverConfig = context.read<ServerConfigProvider>();
+    final security = context.read<SecurityProvider>();
+    final journalProvider = context.read<JournalProvider>();
+    final kitchenProvider = context.read<KitchenProvider>();
+    final menuProvider = context.read<MenuProvider>();
+
+    try {
+      setState(() {
+        _status = "Starting client networking...";
+        _showManualEntry = false;
+      });
+
+      await clientConfig.startListener(journalProvider, kitchenProvider);
+
+      setState(() => _status = "Registering...");
+      await serverConfig.registerWithServer(
+        pin: security.systemPin ?? "",
+        deviceType: appConfig.deviceType?.value ?? "POS",
+        clientConfig: clientConfig,
+      );
+
+      setState(() => _status = "Retrieving configuration...");
+      await appConfig.loadLocationConfiguration(
+        clientConfig: clientConfig,
+        serverConfig: serverConfig,
+        security: security,
+      );
+
+      if (appConfig.deviceType == DeviceTypeType.POS) {
+        setState(() => _status = "Fetching Journal...");
+        await journalProvider.loadJournal(
+          serverConfig: serverConfig,
+          clientConfig: clientConfig,
+          security: security,
+        );
+
+        setState(() => _status = "Fetching Menu...");
+        await menuProvider.loadMenu(
+          serverConfig: serverConfig,
+          clientConfig: clientConfig,
+          security: security,
+        );
+      } else if (appConfig.deviceType == DeviceTypeType.KITCHEN) {
+        setState(() => _status = "Fetching orders...");
+        await kitchenProvider.loadInitialOrders(
+          serverConfig: serverConfig,
+          clientConfig: clientConfig,
+          security: security,
+        );
+      }
+
+      setState(() => _status = "Ready");
+    } catch (e) {
+      setState(() => _status = "Setup Failed: $e");
+    }
+  }
+
+  void _handleFullReset() {
+    context.read<AppConfigProvider>().resetConfiguration();
+    context.read<ClientConfigProvider>().stopListener();
+    context.read<ClientConfigProvider>().clear();
+    context.read<ServerConfigProvider>().disconnect();
+
+    // Use popUntil to clear the stack or simply trust the Gatekeeper/Main switch
+    // to rebuild and show the SystemSetupScreen.
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void _retryConnection() {
@@ -402,41 +435,73 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    // If user explicitly chose manual mode
+    if (_showManualEntry) {
+      return _buildManualConfigUI();
+    }
+
     final appConfig = context.watch<AppConfigProvider>();
     final serverConfig = context.watch<ServerConfigProvider>();
     final menuProvider = context.watch<MenuProvider>();
     final kitchenProvider = context.watch<KitchenProvider>();
 
-    // 1. Handle Errors
+    // --- STATE: CONNECTION FAILED / NOT FOUND ---
+    // This is the specific UI you requested for failures
     if (_status.contains("Failed") || _status.contains("Not Found")) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 16),
-            Text(_status, textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _retryConnection,
-              child: const Text("Retry Connection"),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.wifi_off_rounded, size: 80, color: Colors.red),
+              const SizedBox(height: 24),
+              Text(
+                _status,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18, color: Colors.black87),
+              ),
+              const SizedBox(height: 32),
+
+              // Option 1: Retry Scan
+              ElevatedButton.icon(
+                onPressed: _retryConnection,
+                icon: const Icon(Icons.refresh),
+                label: const Text("Retry Auto-Scan"),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(250, 50),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Option 2: Manual IP
+              OutlinedButton.icon(
+                onPressed: () => setState(() => _showManualEntry = true),
+                icon: const Icon(Icons.edit),
+                label: const Text("Enter IP Manually"),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(250, 50),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Option 3: Cancel (Full Reset)
+              TextButton(
+                onPressed: _handleFullReset,
+                child: const Text(
+                  "Cancel & Reset Configuration",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    // 2. Loading State (Conditional based on Device Type)
+    // --- STATE: LOADING / INITIALIZING ---
     bool isServerConnected = serverConfig.isConnected;
-    bool isDataLoaded = false;
-
-    if (appConfig.deviceType == DeviceTypeType.POS) {
-      isDataLoaded = menuProvider.menu != null;
-    } else if (appConfig.deviceType == DeviceTypeType.KITCHEN) {
-      // For kitchen, we consider it "loaded" even if the list is empty,
-      // as long as the initial fetch completed (status is "Ready")
-      isDataLoaded = _status == "Ready";
-    }
+    bool isDataLoaded = _status == "Ready";
 
     if (appConfig.role == POSRole.client &&
         (!isServerConnected || !isDataLoaded)) {
@@ -452,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // 3. Normal Screens
+    // --- STATE: READY ---
     if (appConfig.role == POSRole.client) {
       if (appConfig.deviceType == DeviceTypeType.POS) {
         return const OrderEntryScreen();
@@ -462,5 +527,79 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return const Center(child: Text("Welcome"));
+  }
+
+  Widget _buildManualConfigUI() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.settings_ethernet,
+              size: 64,
+              color: Colors.blueGrey,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Manual Server Setup",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _manualIpController,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: "Server IP",
+                border: OutlineInputBorder(),
+                hintText: "e.g. 192.168.1.50",
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _manualPortController,
+              decoration: const InputDecoration(
+                labelText: "Port",
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () async {
+                final ip = _manualIpController.text.trim();
+                final portStr = _manualPortController.text.trim();
+
+                if (ip.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Please enter an IP address")),
+                  );
+                  return;
+                }
+
+                await context.read<ServerConfigProvider>().saveManualConfig(
+                  serverIp: ip,
+                  serverPort: int.tryParse(portStr) ?? 8080,
+                );
+
+                setState(() => _showManualEntry = false);
+                _establishConnection();
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text("Save & Connect"),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _showManualEntry = false),
+              child: const Text("Back to Selection"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
