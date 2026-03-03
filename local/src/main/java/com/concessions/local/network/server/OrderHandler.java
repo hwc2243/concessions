@@ -21,7 +21,6 @@ import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.ui.controller.JournalController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-@Component
 public class OrderHandler extends AbstractDeviceHandler {
 	
 	@Autowired

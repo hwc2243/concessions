@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import com.concessions.client.service.JournalService;
 import com.concessions.local.ui.controller.JournalController;
 
-@Component
 public class JournalViewAction extends AbstractAction {
 
 	@Autowired

@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
@@ -27,25 +28,24 @@ public class ExitAction extends AbstractAction {
     private static final String CANCEL_BUTTON = "Cancel";
     private static final Object[] OPTIONS = { CANCEL_BUTTON, CLOSE_BUTTON, SUSPEND_BUTTON };
     
-	@Autowired
+    @Autowired
 	protected ApplicationFrame frame;
 	
-	@Autowired
 	protected ServerApplicationModel model;
 	
-	@Autowired
 	protected JournalController journalController;
 
 	public ExitAction() {
 		super("Exit");
+		this.frame = frame;
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
 		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		JournalDTO journal = model.getJournal();
-		if (journal != null && journal.getStatus() == StatusType.OPEN) {
+		if (model != null && model.getJournal() != null && model.getJournal().getStatus() == StatusType.OPEN) {
+			JournalDTO journal = model.getJournal();
 			int result = JOptionPane.showOptionDialog(
 		            frame,
 		            "There is an open journal, do you want to Suspend or Close the journal?",

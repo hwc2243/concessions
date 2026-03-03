@@ -10,13 +10,18 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import com.concessions.client.rest.base.HeaderProvider;
 import com.concessions.common.service.PreferenceService;
+import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.bean.BearerTokenHeaderProvider;
+import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.bean.TenantDiscriminator;
 import com.concessions.local.pos.processor.LocalOrderProcessor;
 import com.concessions.local.pos.processor.OrderProcessor;
 import com.concessions.local.server.ServerApplication;
+import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
+import com.concessions.local.service.ApplicationConfigurationService;
+import com.concessions.local.service.ServerConfigurationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -44,6 +49,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @EnableAsync
 public class AppConfig {
 
+	@Bean
+	public ApplicationConfiguration applicationConfiguration (ApplicationConfigurationService appConfigService) {
+		return appConfigService.get();
+	}
+	
+	@Bean
+	public ServerConfiguration serverConfiguration (ServerConfigurationService serverConfigService) {
+		return serverConfigService.get();
+	}
+	
     /**
      * Creates a long-lived TaskScheduler bean for recurring background tasks.
      * This ensures the underlying executor is not prematurely shut down.
@@ -59,8 +74,8 @@ public class AppConfig {
     }
     
     @Bean
-    public HeaderProvider headerProvider (ServerApplicationModel model) {
-    	return new BearerTokenHeaderProvider(model);
+    public HeaderProvider headerProvider (ServerConfiguration serverConfig) {
+    	return new BearerTokenHeaderProvider(serverConfig);
     }
     
     @Bean
@@ -78,6 +93,11 @@ public class AppConfig {
 		return JsonMapper.builder()
 			     .addModule(new JavaTimeModule())
 			     .build();
+    }
+    
+    @Bean
+    public ApplicationModel applicationModel () {
+    	return new ApplicationModel();
     }
     
     @Bean

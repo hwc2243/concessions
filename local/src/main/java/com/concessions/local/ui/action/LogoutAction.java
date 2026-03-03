@@ -11,6 +11,7 @@ import javax.swing.KeyStroke;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.server.model.ServerApplicationModel;
 
@@ -21,7 +22,7 @@ public class LogoutAction extends AbstractAction {
 	protected TokenAuthService authService;
 
 	@Autowired
-	protected ServerApplicationModel applicationModel;
+	protected ServerConfiguration serverConfiguration;
 	
 	public LogoutAction() {
 		super("Logout");
@@ -35,6 +36,6 @@ public class LogoutAction extends AbstractAction {
 	public void actionPerformed(ActionEvent e) {
 		System.out.println("Logout action triggered");
 		authService.clearTokenResponse();
-		applicationModel.setTokenResponse(null);
+		serverConfiguration.setTokenResponse(null);
 	}
 }

@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.prefs.Preferences;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,9 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 import com.concessions.common.service.PreferenceService;
+import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.service.ServerConfigurationService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -55,10 +58,12 @@ public class TokenAuthService {
     private final Gson gson = new Gson();
 
     @Autowired
-    private PreferenceService preferenceService;
+    protected ServerConfigurationService serverConfigService;
     
     @Autowired
     private ThreadPoolTaskScheduler taskScheduler;
+    
+    private final AtomicReference<CompletableFuture<TokenResponse>> activeTokenFuture = new AtomicReference<>();
 
     // Record to hold the initial response data from the device authorization endpoint
     public record DeviceCodeResponse(
@@ -83,7 +88,7 @@ public class TokenAuthService {
     }
     
     public boolean isTokenValid (TokenResponse tokenResponse) {
-		return tokenResponse != null && tokenResponse.access_token() != null && tokenResponse.expires_in() > 60;
+		 return tokenResponse != null && tokenResponse.access_token() != null && tokenResponse.expires_in() > 60;
 	}
 
     // --- Request Device Code ---
@@ -109,6 +114,8 @@ public class TokenAuthService {
     // Poll for Token ---
     public CompletableFuture<TokenResponse> pollForToken(DeviceCodeResponse deviceCodeResponse) {
         CompletableFuture<TokenResponse> tokenFuture = new CompletableFuture<>();
+        activeTokenFuture.set(tokenFuture);
+        
         long interval = Math.max(deviceCodeResponse.interval(), 5);
 
         // Schedule the fixed-delay task using the injected taskScheduler
@@ -129,7 +136,6 @@ public class TokenAuthService {
                     if (!tokenFuture.isDone()) {
                         tokenFuture.completeExceptionally(e);
                     }
-                    // No need to call taskScheduler.shutdown(); it is managed by Spring.
                 }
             }
         };
@@ -137,7 +143,7 @@ public class TokenAuthService {
         // Schedule the polling task and store the handle to cancel it later
         final ScheduledFuture<?> pollingHandle = taskScheduler.scheduleWithFixedDelay(
             pollingTask, 
-            Duration.ofMillis(1000L)
+            Duration.ofMillis(interval * 1000L)
         );
 
         // Schedule a termination task to kill the polling if the code expires
@@ -151,6 +157,7 @@ public class TokenAuthService {
             
         // Add a handler to cancel the polling task once the tokenFuture completes normally or exceptionally
         tokenFuture.whenComplete((result, ex) -> {
+        	activeTokenFuture.compareAndSet(tokenFuture, null);
             if (!pollingHandle.isDone()) {
                 // If the polling task is still running, cancel it
                 pollingHandle.cancel(true);
@@ -160,8 +167,15 @@ public class TokenAuthService {
         return tokenFuture;
     }
     
-    // Refresh Token Grant ---
+    public void cancelPolling() {
+        CompletableFuture<TokenResponse> current = activeTokenFuture.getAndSet(null);
+        if (current != null && !current.isDone()) {
+            // This triggers the whenComplete block inside pollForToken
+            current.cancel(true); 
+        }
+    }
     
+    // Refresh Token Grant ---
     /**
      * Exchanges the current refresh token for a new access token and refresh token pair.
      * The application should call this when the access token is about to expire.
@@ -205,59 +219,11 @@ public class TokenAuthService {
 	 */
 	public void clearTokenResponse() {
 		try {
-			preferenceService.clear(TokenAuthService.class, PREF_ACCESS_TOKEN);
-			preferenceService.clear(TokenAuthService.class, PREF_REFRESH_TOKEN);
-			preferenceService.clear(TokenAuthService.class, PREF_EXPIRY_TIME);
+			ServerConfiguration serverConfig = serverConfigService.get();
+			serverConfig.setTokenResponse(null);
+			serverConfigService.save();
 		} catch (java.util.prefs.BackingStoreException e) {
 			System.err.println("Failed to clear preferences: " + e.getMessage());
-		}
-	}
-	
-	/**
-	 * Loads the stored token response from Java Preferences.
-	 * 
-	 * @return The TokenResponse object, or null if no tokens are found.
-	 */
-	public TokenResponse loadTokenResponse() {
-		String accessToken = preferenceService.get(TokenAuthService.class, PREF_ACCESS_TOKEN);
-		String refreshToken = preferenceService.get(TokenAuthService.class, PREF_REFRESH_TOKEN);
-		String expiryEpochSecondsText = preferenceService.get(TokenAuthService.class, PREF_EXPIRY_TIME);
-		long expiryEpochSeconds = 0;
-		if (expiryEpochSecondsText != null) {
-			expiryEpochSeconds = Long.parseLong(expiryEpochSecondsText);
-		}
-
-		if (accessToken != null && refreshToken != null) {
-			// Calculate remaining seconds for the TokenResponse constructor
-			long currentTimeSeconds = System.currentTimeMillis() / 1000;
-			long remainingSeconds = Math.max(0, expiryEpochSeconds - currentTimeSeconds);
-
-			// Recreate the TokenResponse object.
-			// Note: We use the *remaining* seconds for 'expires_in' if checking expiration
-			// outside this class,
-			// but since we only use this method to check if a token exists, the exact
-			// expires_in isn't critical here.
-			// We set it to a dummy value (0) for simplicity in this case,
-			// or better yet, we can pass the remainingSeconds if the consumer uses it.
-			return new TokenResponse(accessToken, refreshToken, remainingSeconds);
-		}
-		return null;
-	}
-	
-    /**
-	 * Stores the full token response (Access Token, Refresh Token, and Expiry Time)
-	 * using the Java Preferences API.
-	 */
-	public void storeTokenResponse(TokenResponse tokenResponse) {
-		// Calculate the absolute expiry time (current time in seconds + token lifetime)
-		long expiryEpochSeconds = System.currentTimeMillis() / 1000 + tokenResponse.expires_in();
-
-		try {
-			preferenceService.save(TokenAuthService.class, PREF_ACCESS_TOKEN, tokenResponse.access_token());
-			preferenceService.save(TokenAuthService.class, PREF_REFRESH_TOKEN, tokenResponse.refresh_token());
-			preferenceService.save(TokenAuthService.class, PREF_EXPIRY_TIME, String.valueOf(expiryEpochSeconds));
-		} catch (java.util.prefs.BackingStoreException e) {
-			System.err.println("Failed to save preferences: " + e.getMessage());
 		}
 	}
 

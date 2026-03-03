@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.ui.controller.JournalController;
 
-@Component
 public class JournalSuspendAction extends AbstractAction {
 
 	@Autowired

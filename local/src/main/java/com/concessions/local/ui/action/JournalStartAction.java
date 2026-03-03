@@ -10,7 +10,6 @@ import com.concessions.client.model.Journal;
 import com.concessions.client.service.JournalService;
 import com.concessions.local.ui.controller.JournalController;
 
-@Component
 public class JournalStartAction extends AbstractAction {
 
 	@Autowired

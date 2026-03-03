@@ -42,7 +42,6 @@ import com.concessions.local.util.MoneyUtil;
 
 import jakarta.annotation.PostConstruct;
 
-@Component
 public class JournalController {
 
 	private static final Logger logger = LoggerFactory.getLogger(JournalController.class);
@@ -99,7 +98,7 @@ public class JournalController {
 					.collect(Collectors.toList());
 			JournalPanel journalPanel = new JournalPanel(this, journals);
 			journalNotifier.addJournalListener(journalPanel);
-			applicationFrame.setMainContent(journalPanel);
+//			applicationFrame.setMainContent(journalPanel);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
 			return;

@@ -29,8 +29,6 @@ public class ServerApplicationModel extends AbstractModel implements POSModel {
 	
 	private String pin;
 	
-	private TokenResponse tokenResponse;
-	
 	public ServerApplicationModel() {
 	}
 
@@ -90,15 +88,5 @@ public class ServerApplicationModel extends AbstractModel implements POSModel {
 	
 	public void setPIN (String pin) {
 		this.pin = pin;
-	}
-	
-	public TokenResponse getTokenResponse() {
-		return tokenResponse;
-	}
-	
-	public void setTokenResponse(TokenResponse tokenResponse) {
-		TokenResponse oldResponse = this.tokenResponse;
-		this.tokenResponse = tokenResponse;
-		firePropertyChange(TOKEN_RESPONSE, oldResponse, tokenResponse);
 	}
 }

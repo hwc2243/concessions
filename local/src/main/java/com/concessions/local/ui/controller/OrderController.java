@@ -29,7 +29,7 @@ import com.concessions.common.event.JournalListener;
 
 import jakarta.annotation.PostConstruct;
 
-@Component
+
 public class OrderController implements OrderActionListener, JournalListener {
 
 	@Autowired
@@ -51,7 +51,7 @@ public class OrderController implements OrderActionListener, JournalListener {
 
 	private OrderPanel orderPanel;
 
-	public OrderController (@Autowired AbstractFrame applicationFrame, @Autowired OrderProcessor orderSubmissionProcessor) {
+	public OrderController (@Autowired(required=false) AbstractFrame applicationFrame, @Autowired OrderProcessor orderSubmissionProcessor) {
 		this.applicationFrame = applicationFrame;
 		this.orderSubmissionProcessor = orderSubmissionProcessor;
 	}

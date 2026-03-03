@@ -13,19 +13,18 @@ import com.concessions.local.server.model.ServerApplicationModel;
 public class BearerTokenHeaderProvider implements HeaderProvider {
 	private static final Logger logger = LoggerFactory.getLogger(BearerTokenHeaderProvider.class);
 
-	@Autowired
-	protected ServerApplicationModel model;
+	protected ServerConfiguration serverConfig;
 	
 	protected Map<String, String> headers = new HashMap<>();
 	
-	public BearerTokenHeaderProvider(ServerApplicationModel model) {
-		this.model = model;
+	public BearerTokenHeaderProvider(@Autowired ServerConfiguration serverConfig) {
+		this.serverConfig = serverConfig;
 	}
 
 	@Override
 	public Map<String, String> get() {
-		if (model.getTokenResponse() != null) {
-			headers.put("Authorization", "Bearer " + model.getTokenResponse().access_token());
+		if (serverConfig.getTokenResponse() != null) {
+			headers.put("Authorization", "Bearer " + serverConfig.getTokenResponse().access_token());
 		} else {
 			logger.error("No access token available.");
 		}

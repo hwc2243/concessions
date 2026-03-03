@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.ui.controller.OrderController;
 
-@Component
 public class OrderAction extends AbstractAction {
 
 	@Autowired

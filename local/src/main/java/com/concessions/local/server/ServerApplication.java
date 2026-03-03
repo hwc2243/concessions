@@ -40,6 +40,9 @@ import com.concessions.common.service.PreferenceService;
 import com.concessions.dto.JournalDTO;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.ui.AboutDialog;
+import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.bean.ApplicationConfiguration.ApplicationRole;
+import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.dto.MenuMapper;
 import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.model.Device;
@@ -48,12 +51,16 @@ import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.config.AppConfig;
 import com.concessions.local.server.config.JpaConfig;
+import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
+import com.concessions.local.service.ApplicationConfigurationService;
 import com.concessions.local.service.DeviceService;
 import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
+import com.concessions.local.ui.SystemSetupPanel;
+import com.concessions.local.ui.WelcomePanel;
 import com.concessions.local.ui.action.ExitAction;
 import com.concessions.local.ui.action.JournalCloseAction;
 import com.concessions.local.ui.action.JournalStartAction;
@@ -64,7 +71,6 @@ import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.controller.DeviceCodeController;
 import com.concessions.local.ui.controller.JournalController;
 import com.concessions.local.ui.controller.SetupController;
-import com.concessions.local.ui.view.DeviceCodeDialog;
 
 import jakarta.annotation.PostConstruct;
 
@@ -80,30 +86,34 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	protected String applicationVersion;
 	
 	@Autowired
+	protected ApplicationConfigurationService appConfigService;
+	
+	@Autowired
 	protected ApplicationFrame applicationFrame;
 	
+	@Autowired
+	protected ApplicationModel appModel;
+
+	@Autowired
+	protected DeviceCodeController deviceCodeController;
+
+	private ApplicationConfiguration appConfig;
+	
+	private ServerConfiguration serverConfig;
+	
+	// HWC This is the old stuff, needs to be refactored
 	@Autowired
 	protected ServerApplicationModel applicationModel;
 	
 	@Autowired
-	protected DeviceCodeDialog deviceCodeModal;
-	
-	@Autowired
-	protected DeviceCodeController deviceCodeController;
-	
-	@Autowired
 	protected DeviceService deviceService;
 	
-	@Autowired
 	protected JournalCloseAction journalCloseAction;
 	
-	@Autowired
 	protected JournalStartAction journalStartAction;
 	
-	@Autowired
 	protected JournalSuspendAction journalSuspendAction;
 	
-	@Autowired
 	protected JournalController journalController;
 	
 	@Autowired
@@ -147,7 +157,34 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 
 	@PostConstruct
 	protected void initialize () {
+
 		
+		SwingUtilities.invokeLater(() -> {
+			setupDesktopHandler(applicationFrame);
+			WelcomePanel welcomePanel = new WelcomePanel(applicationName, applicationVersion);
+			applicationFrame.addPanel(welcomePanel, WelcomePanel.NAME);
+			applicationFrame.showPanel(WelcomePanel.NAME);
+			
+			applicationFrame.setVisible(true);
+		});
+
+		appConfig = appConfigService.get();
+		appConfig.addPropertyChangeListener(applicationFrame);
+		appConfig.addPropertyChangeListener(this);
+		
+		applicationFrame.addPanel(new SystemSetupPanel(role -> {
+			try {
+				logger.info("Setting application role to: {}", role);
+				appConfig.setApplicationRole(role);
+				appConfigService.save();
+			} catch (BackingStoreException ex) {
+				logger.error("Failed to save application configuration", ex);
+				JOptionPane.showMessageDialog(applicationFrame, "Error saving configuration.");
+				appConfig.setApplicationRole(ApplicationRole.UNDECIDED);
+			}
+		}), SystemSetupPanel.NAME);
+		
+		/*
 		// register our deviceId
 		String deviceId = preferenceService.get(DEVICE_ID_PREFERENCE);
 		if (StringUtils.isBlank(deviceId)) {
@@ -241,17 +278,20 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 				executeSales(organizationConfiguration);
 			}
 		});
+		*/
 	}
 		
 	public void execute () {
 		logger.info("Starting Server application");
-		// Show the main application window
-		SwingUtilities.invokeLater(() -> {
-			setupDesktopHandler(applicationFrame);
 
-			applicationFrame.setVisible(true);
-		});
+		if (appConfig.getApplicationRole() == ApplicationRole.UNDECIDED) {
+			appModel.setStatus("Setup...");
+			executeSystemSetup();
+		} else if (appConfig.getApplicationRole() == ApplicationRole.SERVER) {
+			executeServerSetup();
+		}
 		
+		/*
 		// if we have an organizationConfiguration it doesn't matter if we are authenticated
 		String organizationConfigurationIdText = preferenceService.get(LOCATION_CONFIGURATION_PREFERENCE);
 		if (organizationConfigurationIdText == null) {
@@ -264,9 +304,14 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 		} else {
 			executeSetup(organizationConfigurationIdText);
 		}
+		*/
 	}
 	
-	private void executeDeviceCode () {
+	private void executeSystemSetup () {
+		showPanel(SystemSetupPanel.NAME);
+	}
+	
+	private void executeServerSetup () {
 		deviceCodeController.execute();
 	}
 
@@ -312,7 +357,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			ex.printStackTrace();
 		}
 	}
-
+	
 	protected boolean performQuit ()
 	{
         // Trigger the ExitAction when the user selects "Quit" from the macOS menu.
@@ -329,13 +374,34 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
         AboutDialog.showAboutDialog(ownerFrame, applicationName, applicationVersion);
 	}
 	
+	protected void showPanel (String name) {
+		SwingUtilities.invokeLater(() -> {
+			applicationFrame.showPanel(name);
+		});
+	}
+
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
+		if (evt.getSource() == appConfig) {
+			if (evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_APPLICATION_ROLE)) {
+				switch ((ApplicationRole)evt.getNewValue()) {
+					case UNDECIDED:
+						executeSystemSetup();
+						break;
+					case SERVER:
+						executeServerSetup();
+						break;
+					case CLIENT:
+						break;
+				}
+			}
+		}
+		
 		if (ServerApplicationModel.CONNECTED.equals(evt.getPropertyName()) ||
 				ServerApplicationModel.TOKEN_RESPONSE.equals(evt.getPropertyName())) {
-			setupAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() != null);
-			loginAction.setEnabled(applicationModel.isConnected() && applicationModel.getTokenResponse() == null);
-			logoutAction.setEnabled(applicationModel.getTokenResponse() != null);
+			setupAction.setEnabled(applicationModel.isConnected() && serverConfig.getTokenResponse() != null);
+			loginAction.setEnabled(applicationModel.isConnected() && serverConfig.getTokenResponse() == null);
+			logoutAction.setEnabled(serverConfig.getTokenResponse() != null);
 		} else if (ServerApplicationModel.JOURNAL.equals(evt.getPropertyName())) {
 			orderOrchestrator.initialize((JournalDTO)evt.getNewValue());
 		}

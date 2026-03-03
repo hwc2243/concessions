@@ -11,7 +11,7 @@
 
 	<artifactId>local</artifactId>
 	<packaging>jar</packaging>
-	<name>Concessions Local Server</name>
+	<name>Concessions Management System</name>
 
 	<properties>
 		<zxing.version>3.5.3</zxing.version>

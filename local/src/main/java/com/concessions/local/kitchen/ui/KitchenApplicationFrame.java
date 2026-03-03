@@ -14,7 +14,7 @@ import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import jakarta.annotation.PostConstruct;
 
 @Component
-@Qualifier("applicationFrame")
+@Qualifier("abstractFrame")
 public class KitchenApplicationFrame extends AbstractFrame implements PropertyChangeListener {
 
 	@Autowired

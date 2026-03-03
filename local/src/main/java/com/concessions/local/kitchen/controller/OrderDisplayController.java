@@ -26,7 +26,7 @@ public class OrderDisplayController implements OrderListener {
 	private static final Logger logger = LoggerFactory.getLogger(OrderDisplayController.class);
 
 	@Autowired
-	@Qualifier("applicationFrame")
+	@Qualifier("abstractFrame")
 	protected AbstractFrame frame;
 
 	@Autowired

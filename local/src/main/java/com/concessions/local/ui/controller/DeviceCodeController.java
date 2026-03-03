@@ -1,7 +1,10 @@
 package com.concessions.local.ui.controller;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.prefs.BackingStoreException;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -9,13 +12,18 @@ import javax.swing.SwingWorker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
+import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.server.model.ServerApplicationModel;
+import com.concessions.local.service.ApplicationConfigurationService;
+import com.concessions.local.service.QRGeneratorService;
+import com.concessions.local.service.ServerConfigurationService;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
-import com.concessions.local.ui.view.DeviceCodeDialog;
+import com.concessions.local.ui.view.DeviceCodePanel;
 import com.concessions.local.util.NetworkUtil;
 
 import jakarta.annotation.PostConstruct;
@@ -24,22 +32,27 @@ import jakarta.annotation.PostConstruct;
 public class DeviceCodeController {
 
 	@Autowired
-	protected LoginAction loginAction;
-
-	@Autowired
-	protected LogoutAction logoutAction;
-
+	protected ApplicationConfigurationService appConfigService;
+	
 	@Autowired
 	protected ApplicationFrame applicationFrame;
 
 	@Autowired
-	protected ServerApplicationModel applicationModel;
+	protected ApplicationModel appModel;
 
 	@Autowired
-	protected DeviceCodeDialog deviceCodeModal;
+	protected QRGeneratorService qrService;
+	
+	@Autowired
+	protected ServerConfiguration serverConfig;
+	
+	@Autowired
+	protected ServerConfigurationService serverConfigService;
 
 	@Autowired
 	protected TokenAuthService authService;
+
+	protected DeviceCodePanel deviceCodePanel;
 
 	private List<DeviceCodeListener> listeners = new java.util.ArrayList<>();
 
@@ -48,22 +61,21 @@ public class DeviceCodeController {
 
 	public void execute() {
 		if (NetworkUtil.isConnected()) {
-			TokenResponse tokenResponse = applicationModel.getTokenResponse();
+			TokenResponse tokenResponse = serverConfig.getTokenResponse();
 			if (tokenResponse == null) {
-				applicationModel.setStatusMessage("Starting authentication...");
-				loginAction.setEnabled(true);
-				logoutAction.setEnabled(false);
+				appModel.setStatus("Starting authentication...");
 				initiateLoginFlow();
 			} else {
 				System.out.println("refresh token " + tokenResponse.refresh_token());
-				System.out.println("Using stored access token, expires in " + tokenResponse.expires_in() + " seconds.");
 				if (!authService.isTokenValid(tokenResponse)) {
 					System.out.println("refreshing token...");
 					authService.refreshToken(tokenResponse.refresh_token()).thenAccept(newToken -> {
-						applicationModel.setTokenResponse(newToken);
-						authService.storeTokenResponse(newToken);
-						loginAction.setEnabled(false);
-						logoutAction.setEnabled(true);
+						serverConfig.setTokenResponse(newToken);
+						try {
+							serverConfigService.save();
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
 						notifyAuthenticated(newToken);
 					}).exceptionally(ex -> {
 						// Refresh failed (e.g., refresh token expired). Force new device login.
@@ -83,14 +95,20 @@ public class DeviceCodeController {
 
 	@PostConstruct
 	protected void initialize() {
-		applicationModel.addPropertyChangeListener(evt -> {
-			if ("tokenResponse".equals(evt.getPropertyName())) {
-				TokenResponse tokenResponse = (TokenResponse) evt.getNewValue();
-				boolean isAuthenticated = tokenResponse != null;
-				loginAction.setEnabled(!isAuthenticated);
-				logoutAction.setEnabled(isAuthenticated);
-			}
+		this.deviceCodePanel = new DeviceCodePanel(qrService, new DeviceCodePanel.DeviceCodeUIListener() {
+		    @Override
+		    public void onCancel() {
+		    	try {
+		    		appConfigService.reset();
+		    	} catch (BackingStoreException ex) {
+		    		ex.printStackTrace();
+		    	}
+		    	
+		        authService.cancelPolling(); 
+		    }
 		});
+		
+		this.applicationFrame.addPanel(deviceCodePanel, DeviceCodePanel.NAME);
 	}
 
 	public void addDeviceCodeListener(DeviceCodeListener listener) {
@@ -121,7 +139,7 @@ public class DeviceCodeController {
 
 				// 2. Display the modal with instructions (must run on the EDT)
 				SwingUtilities.invokeLater(() -> {
-					showDeviceCodeModal(response);
+					showDeviceCodePanel(response);
 				});
 
 				// 3. Poll for Token (Blocks the worker thread until authorization completes)
@@ -134,32 +152,36 @@ public class DeviceCodeController {
 				// This method runs on the EDT, safe for UI updates
 				try {
 					get(); // This retrieves the result or re-throws exceptions from doInBackground()
-					applicationModel.setStatusMessage("Authenticated! Token acquired.");
+					appModel.setStatus("Authenticated.");
 					System.out.println("Access Token received: " + tokenResponse.access_token());
-					// Close the modal if it's still open
+					/* Close the modal if it's still open
 					if (deviceCodeModal.isVisible()) {
 						deviceCodeModal.setVisible(false);
 					}
+					*/
 					JOptionPane.showMessageDialog(applicationFrame, "Login Successful!", "Success",
 							JOptionPane.INFORMATION_MESSAGE);
 
-					applicationModel.setTokenResponse(tokenResponse);
-					authService.storeTokenResponse(tokenResponse);
+					serverConfig.setTokenResponse(tokenResponse);
+					serverConfigService.save();
 
 					notifyAuthenticated(tokenResponse);
 
 				} catch (Exception ex) {
 					// Handle join() exceptions and nested exceptions
 					Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-					ex.printStackTrace();
-					applicationModel.setStatusMessage("Authentication Failed.");
-					JOptionPane.showMessageDialog(applicationFrame, "Authentication Failed: " + cause.getMessage(),
-							"Error", JOptionPane.ERROR_MESSAGE);
-
-					// Close the modal if it's still open
-					if (deviceCodeModal.isVisible()) {
-						deviceCodeModal.setVisible(false);
+					Throwable rootCause = cause;
+					while (cause.getCause() != null) {
+						rootCause = rootCause.getCause();
 					}
+					
+					appModel.setStatus("Authentication Failed.");
+					if (!(rootCause instanceof CancellationException)) {
+						ex.printStackTrace();
+						JOptionPane.showMessageDialog(applicationFrame, "Authentication Failed: " + cause.getMessage(),
+							"Error", JOptionPane.ERROR_MESSAGE);
+					}
+
 					notifyFailed();
 				}
 			}
@@ -168,11 +190,14 @@ public class DeviceCodeController {
 	}
 
 	/**
-	 * Creates and displays a modal dialog with the Keycloak user code and
+	 * Creates and displays a panel with the Keycloak user code and
 	 * verification URI.
 	 */
-	private void showDeviceCodeModal(TokenAuthService.DeviceCodeResponse response) {
-		deviceCodeModal.showDialog(response.verification_uri(), response.user_code(), response.expires_in());
+	private void showDeviceCodePanel (TokenAuthService.DeviceCodeResponse response) {
+		SwingUtilities.invokeLater(() -> {
+			deviceCodePanel.setResponse(response);
+			applicationFrame.showPanel(DeviceCodePanel.NAME);
+		});
 	}
 
 	public interface DeviceCodeListener {
