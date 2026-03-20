@@ -3,11 +3,11 @@ package com.concessions.local.kitchen.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.concessions.common.network.HandlerRegistry;
-import com.concessions.common.network.Messenger;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.kitchen.KitchenApplication;
 import com.concessions.local.kitchen.model.KitchenApplicationModel;
+import com.concessions.local.network.HandlerRegistry;
+import com.concessions.local.network.Messenger;
 import com.concessions.local.pos.processor.NetworkOrderProcessor;
 import com.concessions.local.pos.processor.OrderProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;

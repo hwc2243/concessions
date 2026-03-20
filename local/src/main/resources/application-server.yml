@@ -2,7 +2,7 @@ application:
   version: @project.version@
   name: @project.name@
   
-apiHostName: https://concessions.connors.ddns.net
+apiHostName: http://localhost:8080
 authHostName: login.connors.ddns.net
 
 local:

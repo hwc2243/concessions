@@ -59,7 +59,7 @@ public class JournalNotifier {
 	}
 
 	public void notifyJournalStarted(JournalDTO journal) {
-		listeners.stream().forEach(listener -> listener.journalStarted(journal));
+		listeners.stream().forEach(listener -> listener.journalCreated(journal));
 	}
 
 	public void notifyJournalSuspended(JournalDTO journal) {

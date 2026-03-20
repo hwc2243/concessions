@@ -14,6 +14,9 @@ import com.concessions.local.service.DeviceService;
 public abstract class AbstractDeviceHandler extends AbstractPINHandler {
 
 	@Autowired
+	protected DeviceMapper deviceMapper;
+	
+	@Autowired
 	protected DeviceService deviceService;
 	
 	public AbstractDeviceHandler() {
@@ -56,6 +59,6 @@ public abstract class AbstractDeviceHandler extends AbstractPINHandler {
 	
 	protected DeviceDTO loadDevice (String deviceId) {
 	    Device device = deviceService.fetchByDeviceId(deviceId);
-	    return (device == null ? null : DeviceMapper.INSTANCE.toDto(device));
+	    return (device == null ? null : deviceMapper.toDto(device));
 	}
 }

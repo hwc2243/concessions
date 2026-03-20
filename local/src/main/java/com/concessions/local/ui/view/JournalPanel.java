@@ -1,7 +1,10 @@
 package com.concessions.local.ui.view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.LayoutManager;
 import java.awt.event.MouseAdapter;
@@ -12,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -32,7 +36,10 @@ import com.concessions.local.ui.controller.JournalController;
 
 public class JournalPanel extends JPanel implements JournalListener {
 
+	public static final String NAME = "JOURNAL";
+	
 	private JournalController controller;
+	private JButton startButton;
     private final JournalTableModel tableModel;
     private final JPopupMenu popupMenu;
 	private final JTable journalTable;
@@ -43,42 +50,58 @@ public class JournalPanel extends JPanel implements JournalListener {
 
 	public JournalPanel (JournalController controller, List<JournalDTO> journals) {
 		this.controller = controller;
-		//controller.addJournalListener(this);
 		
 		setLayout(new BorderLayout());
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Initialize the table model
+        // --- Header Section ---
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
+        
+        JLabel titleLabel = new JLabel("Journal History", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
+        titleLabel.setBorder(new EmptyBorder(10, 0, 15, 0));
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        
+        // --- Table Initialization ---
         this.tableModel = new JournalTableModel(journals);
         this.journalTable = new JTable(tableModel);
         
-     // Apply custom renderers for better data visualization
+        // Apply custom renderers for better data visualization
         journalTable.setDefaultRenderer(LocalDateTime.class, new LocalDateTimeRenderer());
         journalTable.setDefaultRenderer(BigDecimal.class, new CurrencyRenderer());
-        
-        // Center the header text
         ((DefaultTableCellRenderer)journalTable.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        
-        // Make the table look nicer
         journalTable.setRowHeight(25);
         journalTable.setFillsViewportHeight(true);
         journalTable.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        
+        JScrollPane scrollPane = new JScrollPane(journalTable);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        
+     // --- Footer Action Section ---
+        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        footerPanel.setBackground(Color.WHITE);
+        footerPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+
+        startButton = new JButton("New Journal");
+        startButton.setFont(new Font("SansSerif", Font.BOLD, 13));
+        startButton.setPreferredSize(new Dimension(160, 35));
+        
+        // Invoke start() on the controller
+        startButton.addActionListener(e -> controller.start());
+        
+        footerPanel.add(startButton);
         
         // Initialize and attach the popup menu
         this.popupMenu = createPopupMenu();
         this.setComponentPopupMenu(popupMenu);
         attachPopupMenuListener();
 
-        // Add the table to a JScrollPane for scrolling and headers
-        JScrollPane scrollPane = new JScrollPane(journalTable);
-        
-        // Add a title
-        JLabel titleLabel = new JLabel("Journal History", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-        add(titleLabel, BorderLayout.NORTH);
+        add(headerPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+        add(footerPanel, BorderLayout.SOUTH);
+        
+        refreshActionStates();
 	}
 	
 	private JPopupMenu createPopupMenu() {
@@ -186,6 +209,14 @@ public class JournalPanel extends JPanel implements JournalListener {
         }
     }
 	
+	private void refreshActionStates() {
+        boolean hasOpenJournal = tableModel.getData().stream()
+                .anyMatch(j -> (j.getStatus() == StatusType.OPEN || j.getStatus() == StatusType.NEW || j.getStatus() == StatusType.SYNC));
+        
+        startButton.setEnabled(!hasOpenJournal);
+        startButton.setToolTipText(hasOpenJournal ? "Cannot start a new journal while one is NEW or OPEN." : "Start a new session");
+    }
+	
 	private JournalDTO getSelectedJournal () {
 		JournalDTO journal = null;
 		int selectedRow = journalTable.getSelectedRow();
@@ -246,6 +277,10 @@ public class JournalPanel extends JPanel implements JournalListener {
 	        };
 	    }
 	    
+	    public List<JournalDTO> getData () {
+	    	return this.data;
+	    }
+	    
 	    public JournalDTO getJournalAt (int rowIndex) {
 	    	return data.get(rowIndex);
 	    }
@@ -268,7 +303,7 @@ public class JournalPanel extends JPanel implements JournalListener {
 	@Override
 	public void journalClosed (JournalDTO journal) {
 		tableModel.journalUpdated(journal);
-		
+		refreshActionStates();
 	}
 
 	@Override
@@ -279,11 +314,13 @@ public class JournalPanel extends JPanel implements JournalListener {
 	@Override
 	public void journalOpened(JournalDTO journal) {
 		tableModel.journalUpdated(journal);
+		refreshActionStates();
 	}
 
 	@Override
-	public void journalStarted(JournalDTO journal) {
+	public void journalCreated(JournalDTO journal) {
 		tableModel.journalAdded(journal);
+		refreshActionStates();
 	}
 
 	@Override

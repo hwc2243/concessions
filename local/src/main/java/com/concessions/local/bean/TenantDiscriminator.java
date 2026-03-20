@@ -1,18 +1,20 @@
 package com.concessions.local.bean;
 
-import com.concessions.local.server.model.ServerApplicationModel;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class TenantDiscriminator implements com.concessions.client.rest.TenantDiscriminator {
 
-	protected ServerApplicationModel model;
+	protected ApplicationConfiguration appConfig;
 	
-	public TenantDiscriminator(ServerApplicationModel model) {
-		this.model = model;
+	public TenantDiscriminator(@Autowired ApplicationConfiguration appConfig) {
+		this.appConfig = appConfig;
 	}
 	
 	@Override
 	public Long getOrganizationId () {
-		return (model.getOrganizationId() > 0 ? model.getOrganizationId() : null);
+		return ((appConfig.getLocationConfiguration() != null && appConfig.getLocationConfiguration().getOrganizationId() > 0)
+				? appConfig.getLocationConfiguration().getOrganizationId()
+				: null);
 	}
 
 }

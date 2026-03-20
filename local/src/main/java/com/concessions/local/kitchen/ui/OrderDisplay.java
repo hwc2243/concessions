@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.dto.OrderDTO;
-import com.concessions.local.kitchen.controller.OrderDisplayController;
+import com.concessions.local.kitchen.controller.KitchenController;
 import com.concessions.local.kitchen.model.OrderDisplayModel;
 
 import jakarta.annotation.PostConstruct;
@@ -27,7 +27,7 @@ public class OrderDisplay extends JPanel implements PropertyChangeListener {
     private OrderDisplayModel model;
 
     @Autowired
-    private OrderDisplayController orderDisplayController; // Inject the controller
+    private KitchenController orderDisplayController; // Inject the controller
 
     private FillViewportPanel orderPanel;
     private JLabel orderCountLabel; // New instance variable

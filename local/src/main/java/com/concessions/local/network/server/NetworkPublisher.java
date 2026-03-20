@@ -6,12 +6,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.Messenger;
 import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.dto.OrderDTO;
 import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.model.Device;
+import com.concessions.local.network.Messenger;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.server.orchestrator.OrderOrchestrator.OrderListener;
 import com.concessions.local.service.DeviceService;

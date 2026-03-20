@@ -9,21 +9,21 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.model.ApplicationModel;
-import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.service.ApplicationConfigurationService;
 import com.concessions.local.service.QRGeneratorService;
 import com.concessions.local.service.ServerConfigurationService;
 import com.concessions.local.ui.ApplicationFrame;
-import com.concessions.local.ui.action.LoginAction;
-import com.concessions.local.ui.action.LogoutAction;
-import com.concessions.local.ui.view.DeviceCodePanel;
+import com.concessions.local.ui.DeviceCodePanel;
 import com.concessions.local.util.NetworkUtil;
 
 import jakarta.annotation.PostConstruct;
@@ -31,6 +31,11 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class DeviceCodeController {
 
+	private static final Logger logger = LoggerFactory.getLogger(DeviceCodeController.class);
+
+	@Autowired
+	protected ApplicationConfiguration appConfig;
+	
 	@Autowired
 	protected ApplicationConfigurationService appConfigService;
 	
@@ -54,8 +59,6 @@ public class DeviceCodeController {
 
 	protected DeviceCodePanel deviceCodePanel;
 
-	private List<DeviceCodeListener> listeners = new java.util.ArrayList<>();
-
 	public DeviceCodeController() {
 	}
 
@@ -66,9 +69,9 @@ public class DeviceCodeController {
 				appModel.setStatus("Starting authentication...");
 				initiateLoginFlow();
 			} else {
-				System.out.println("refresh token " + tokenResponse.refresh_token());
+				logger.debug("refresh token " + tokenResponse.refresh_token());
 				if (!authService.isTokenValid(tokenResponse)) {
-					System.out.println("refreshing token...");
+					logger.debug("refreshing token...");
 					authService.refreshToken(tokenResponse.refresh_token()).thenAccept(newToken -> {
 						serverConfig.setTokenResponse(newToken);
 						try {
@@ -76,23 +79,24 @@ public class DeviceCodeController {
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}
-						notifyAuthenticated(newToken);
 					}).exceptionally(ex -> {
 						// Refresh failed (e.g., refresh token expired). Force new device login.
 						initiateLoginFlow();
 						return null;
 					});
-				} else {
-					notifyAuthenticated(tokenResponse);
-				}
+								}
 			}
 		} else {
 			JOptionPane.showMessageDialog(null, "Failed to start authentication: No network connection", "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
-			notifyFailed();
+			System.exit(1);
 		}
 	}
 
+	public boolean isComplete () {
+		return serverConfig.getTokenResponse() != null;
+	}
+	
 	@PostConstruct
 	protected void initialize() {
 		this.deviceCodePanel = new DeviceCodePanel(qrService, new DeviceCodePanel.DeviceCodeUIListener() {
@@ -110,22 +114,6 @@ public class DeviceCodeController {
 		
 		this.applicationFrame.addPanel(deviceCodePanel, DeviceCodePanel.NAME);
 	}
-
-	public void addDeviceCodeListener(DeviceCodeListener listener) {
-		listeners.add(listener);
-	}
-
-	public void removeDeviceCodeListener(DeviceCodeListener listener) {
-		listeners.remove(listener);
-	}
-
-	protected void notifyAuthenticated (TokenResponse tokenResponse) {
-		listeners.stream().forEach(listener -> listener.onDeviceCodeAuthenticated(tokenResponse));
-	}
-
-	protected void notifyFailed () {
-		listeners.stream().forEach(listener -> listener.onDeviceCodeFailed());
-	}
 	
 	private void initiateLoginFlow() {
 		// SwingWorker runs network/blocking code on a separate background thread
@@ -139,7 +127,8 @@ public class DeviceCodeController {
 
 				// 2. Display the modal with instructions (must run on the EDT)
 				SwingUtilities.invokeLater(() -> {
-					showDeviceCodePanel(response);
+					deviceCodePanel.setResponse(response);
+					applicationFrame.showPanel(DeviceCodePanel.NAME);
 				});
 
 				// 3. Poll for Token (Blocks the worker thread until authorization completes)
@@ -153,51 +142,32 @@ public class DeviceCodeController {
 				try {
 					get(); // This retrieves the result or re-throws exceptions from doInBackground()
 					appModel.setStatus("Authenticated.");
-					System.out.println("Access Token received: " + tokenResponse.access_token());
-					/* Close the modal if it's still open
-					if (deviceCodeModal.isVisible()) {
-						deviceCodeModal.setVisible(false);
-					}
-					*/
+					logger.debug("Access Token received: " + tokenResponse.access_token());
+					
 					JOptionPane.showMessageDialog(applicationFrame, "Login Successful!", "Success",
 							JOptionPane.INFORMATION_MESSAGE);
 
 					serverConfig.setTokenResponse(tokenResponse);
 					serverConfigService.save();
 
-					notifyAuthenticated(tokenResponse);
-
 				} catch (Exception ex) {
 					// Handle join() exceptions and nested exceptions
 					Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
 					Throwable rootCause = cause;
-					while (cause.getCause() != null) {
+					while (rootCause.getCause() != null) {
 						rootCause = rootCause.getCause();
 					}
 					
 					appModel.setStatus("Authentication Failed.");
 					if (!(rootCause instanceof CancellationException)) {
-						ex.printStackTrace();
-						JOptionPane.showMessageDialog(applicationFrame, "Authentication Failed: " + cause.getMessage(),
+						rootCause.printStackTrace();
+						JOptionPane.showMessageDialog(applicationFrame, "Authentication Failed: " + rootCause.getMessage(),
 							"Error", JOptionPane.ERROR_MESSAGE);
 					}
-
-					notifyFailed();
 				}
 			}
 		};
 		worker.execute();
-	}
-
-	/**
-	 * Creates and displays a panel with the Keycloak user code and
-	 * verification URI.
-	 */
-	private void showDeviceCodePanel (TokenAuthService.DeviceCodeResponse response) {
-		SwingUtilities.invokeLater(() -> {
-			deviceCodePanel.setResponse(response);
-			applicationFrame.showPanel(DeviceCodePanel.NAME);
-		});
 	}
 
 	public interface DeviceCodeListener {

@@ -17,6 +17,7 @@ import jakarta.annotation.PostConstruct;
 public class ServerConfigurationService {
 
 	private static final String KEY_REFRESH_TOKEN = "refreshToken";
+	private static final String KEY_SERVER_PORT = "serverPort";
 	
 	protected PreferenceService preferenceService;
 	
@@ -34,6 +35,12 @@ public class ServerConfigurationService {
 			TokenResponse tokenResponse = new TokenResponse(null, refreshToken, 0);
 			serverConfig.setTokenResponse(tokenResponse);
 		}
+		
+		String serverPortText = preferenceService.get(KEY_SERVER_PORT);
+		if (StringUtils.isNotBlank(serverPortText)) {
+			int serverPort = Integer.parseInt(serverPortText);
+			serverConfig.setServerPort(serverPort);
+		}
 	}
 
 	public ServerConfiguration get () {
@@ -41,16 +48,30 @@ public class ServerConfigurationService {
 	}
 	
 	public void reset () throws BackingStoreException {
+		/* HWC Once this is set we shouldn't clear it
+		preferenceService.clear(KEY_DEVICE_ID);
+		serverConfig.setDeviceId(null);
+		*/
 		preferenceService.clear(KEY_REFRESH_TOKEN);
+		preferenceService.clear(KEY_SERVER_PORT);
 		serverConfig.setTokenResponse(null);
+		serverConfig.setServerPort(-1);
 	}
 	
 	public void save () throws BackingStoreException {
+		
 		if (serverConfig.getTokenResponse() == null) {
 			preferenceService.clear(KEY_REFRESH_TOKEN);
 		}
 		else {
 			preferenceService.save(KEY_REFRESH_TOKEN, serverConfig.getTokenResponse().refresh_token());
 		}
+		
+		if (serverConfig.getServerPort() < 1024) {
+			preferenceService.clear(KEY_SERVER_PORT);
+		} else {
+			preferenceService.save(KEY_SERVER_PORT, String.valueOf(serverConfig.getServerPort()));
+		}
+		
 	}
 }

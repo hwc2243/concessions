@@ -24,17 +24,17 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.base.ui.AbstractFrame;
 import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.journal.action.JournalCloseAction;
+import com.concessions.local.journal.action.JournalOpenAction;
+import com.concessions.local.journal.action.JournalStartAction;
+import com.concessions.local.journal.action.JournalSuspendAction;
+import com.concessions.local.kitchen.action.KitchenAction;
+import com.concessions.local.journal.action.JournalAction;
+import com.concessions.local.pos.action.OrderAction;
 import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.ui.action.ExitAction;
-import com.concessions.local.ui.action.JournalCloseAction;
-import com.concessions.local.ui.action.JournalOpenAction;
-import com.concessions.local.ui.action.JournalStartAction;
-import com.concessions.local.ui.action.JournalSuspendAction;
-import com.concessions.local.ui.action.JournalViewAction;
-import com.concessions.local.ui.action.KitchenAction;
 import com.concessions.local.ui.action.LoginAction;
 import com.concessions.local.ui.action.LogoutAction;
-import com.concessions.local.ui.action.OrderAction;
 import com.concessions.local.ui.action.SetupAction;
 import com.concessions.local.ui.controller.JournalController;
 
@@ -44,17 +44,25 @@ import jakarta.annotation.PostConstruct;
 public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 
 	@Autowired
+	protected ApplicationModel appModel;
+	
+	@Autowired
 	protected ExitAction exitAction;
 
 	@Autowired
-	protected LoginAction loginAction;
-
-	@Autowired
-	protected LogoutAction logoutAction;
+	protected JournalAction journalAction;
 	
 	@Autowired
-	protected ApplicationModel appModel;
+	protected OrderAction orderAction;
+	
+	@Autowired
+	protected SetupAction setupAction;
+	
+	
+	protected LoginAction loginAction;
 
+	protected LogoutAction logoutAction;
+	
 	protected JournalCloseAction journalCloseAction;
 
 	protected JournalOpenAction journalOpenAction;
@@ -63,16 +71,9 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 
 	protected JournalSuspendAction journalSuspendAction;
 
-	protected JournalViewAction journalViewAction;
-
-	@Autowired
 	protected KitchenAction kitchenAction;
 
-	protected OrderAction orderAction;
-
-	@Autowired
-	protected SetupAction setupAction;
-
+	
 	private CardLayout cardLayout = new CardLayout();
 	private JLabel statusLabel;
 	private JPanel mainContainer = new JPanel(cardLayout);
@@ -91,15 +92,25 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 		fileMenu.add(setupItem);
 		fileMenu.addSeparator();
 
+		/*
 		JMenuItem loginItem = new JMenuItem(loginAction);
 		JMenuItem logoutItem = new JMenuItem(logoutAction);
 		fileMenu.add(loginItem);
 		fileMenu.add(logoutItem);
 		fileMenu.addSeparator();
+		*/
 
 		JMenuItem exitItem = new JMenuItem(exitAction);
 		fileMenu.add(exitItem);
 
+		JMenu operationsMenu = new JMenu("Operations");
+		menuBar.add(operationsMenu);
+		
+		JMenuItem journalItem = new JMenuItem(journalAction);
+		operationsMenu.add(journalItem);
+		JMenuItem orderItem = new JMenuItem(orderAction);
+		operationsMenu.add(orderItem);
+		
 		/*
 		JMenu journalMenu = new JMenu("Journal");
 		menuBar.add(journalMenu);
@@ -117,8 +128,6 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 		JMenu orderMenu = new JMenu("Order");
 		menuBar.add(orderMenu);
 
-		JMenuItem orderItem = new JMenuItem(orderAction);
-		orderMenu.add(orderItem);
 		JMenuItem kitchenItem = new JMenuItem(kitchenAction);
 		orderMenu.add(kitchenItem);
 	    */
@@ -170,6 +179,8 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 
 		setSize(800, 600);
 		setLocationRelativeTo(null);
+		
+		appModel.addPropertyChangeListener(this);
 	}
 	
 	public void addPanel (JPanel panel, String name) {

@@ -52,7 +52,7 @@ public class OrderModel extends AbstractListModel {
 		this.menu = menu;
 		this.menuData = menu.getMenuItems().stream()
 	            .collect(Collectors.groupingBy(MenuItemDTO::getCategory));
-		this.firePropertyChange(MENU_DATA, menuData, oldMenuData);
+		this.firePropertyChange(MENU_DATA, oldMenuData, menuData);
 	}
 	
 	public Map<CategoryType, List<MenuItemDTO>> getMenuData ()

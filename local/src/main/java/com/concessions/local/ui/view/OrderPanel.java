@@ -33,9 +33,12 @@ import java.util.TreeSet;
  */
 public class OrderPanel extends JPanel implements PropertyChangeListener {
 
+	public static final String NAME = "ORDER";
+	
     private OrderModel orderModel;
     
     // --- UI Components ---
+    private final JPanel categoryButtonPanel = new JPanel();
     private final JPanel itemCardPanel = new JPanel(new CardLayout()); // Uses CardLayout to swap item panels
     private final JLabel totalLabel = new JLabel("$0.00");
     private final JPanel centerTitlePanel = new JPanel(new BorderLayout(5, 5));
@@ -49,56 +52,114 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
     public OrderPanel (OrderModel orderModel) {
     	this.orderModel = orderModel;
     	orderModel.addPropertyChangeListener(this);
-    	Map<CategoryType, List<MenuItemDTO>> menuData = orderModel.getMenuData();
     	
-    	contentPane = new JPanel();
-    	contentPane.setLayout(new GridBagLayout());	
+    	initializeUI();
+    	
+    	updateMenuUI(orderModel.getMenuData());
+    }
+    
+    private void initializeUI() {
+        contentPane = new JPanel(new GridBagLayout());
         contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        // Setup GridBagConstraints for components
+        contentPane.setBackground(Color.WHITE);
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH; // Fill both horizontal and vertical space
-        // Use insets to create the 10px horizontal gap between components
-        gbc.insets = new Insets(0, 5, 0, 5); 
-        gbc.weighty = 1.0; // Allow components to grow vertically
-        
-        // --- 1. Left Pane (Categories) ---
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 5, 0, 5);
+        gbc.weighty = 1.0;
+
+        // --- 1. Left Pane ---
         gbc.gridx = 0;
-        // Narrowest: Weight 1.0 (approx 20% of extra width)
-        gbc.weightx = 1.0; 
-        contentPane.add(createLeftPane(new TreeSet(menuData.keySet())), gbc);
+        gbc.weightx = 1.0;
+        categoryButtonPanel.setLayout(new GridLayout(0, 1, 5, 5));
+        categoryButtonPanel.setBackground(Color.WHITE);
+        
+        JScrollPane leftScroll = new JScrollPane(categoryButtonPanel);
+        leftScroll.setBorder(BorderFactory.createTitledBorder("Categories"));
+        leftScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        contentPane.add(leftScroll, gbc);
 
-        // --- 2. Center Pane (Menu Items) ---
+        // --- 2. Center Pane ---
         gbc.gridx = 1;
-        // Widest: Weight 2.5 (approx 50% of extra width)
-        gbc.weightx = 2.5; 
-        contentPane.add(createCenterPane(menuData), gbc);
+        gbc.weightx = 2.5;
+        
+        JScrollPane centerScroll = new JScrollPane(itemCardPanel);
+        centerScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        centerTitlePanel.add(centerScroll, BorderLayout.CENTER);
+        contentPane.add(centerTitlePanel, gbc);
 
-        // --- 3. Right Pane (Order) ---
+        // --- 3. Right Pane ---
         gbc.gridx = 2;
-        // Moderately wide: Weight 1.5 (approx 30% of extra width)
-        gbc.weightx = 1.5; 
+        gbc.weightx = 1.5;
         contentPane.add(createRightPane(), gbc);
-        
-        // Set initial state
-        if (!menuData.isEmpty()) {
-            CategoryType initialCategory = menuData.keySet().iterator().next();
-            
-            // Show the first category's items
-            CardLayout cl = (CardLayout) (itemCardPanel.getLayout());
-            cl.show(itemCardPanel, initialCategory.getName());
-            
-            // Set the initial center pane title
-            centerTitlePanel.setBorder(BorderFactory.createTitledBorder(initialCategory.getName()));
-        }
-        
+
+        // Layering for Disabled State
         disableLayerUI = new DisabledLayerUI();
         disableLayer = new JLayer<>(contentPane, disableLayerUI);
-        setLayout(new BorderLayout()); 
-        setBorder(new EmptyBorder(10, 10, 10, 10)); // Outer padding
+        
+        setLayout(new BorderLayout());
         add(disableLayer, BorderLayout.CENTER);
     }
+    
+    private void updateMenuUI(Map<CategoryType, List<MenuItemDTO>> menuData) {
+        // Clear existing components
+        categoryButtonPanel.removeAll();
+        itemCardPanel.removeAll();
 
+        if (menuData == null || menuData.isEmpty()) {
+            revalidate();
+            repaint();
+            return;
+        }
+
+        Set<CategoryType> sortedCategories = new TreeSet<>(menuData.keySet());
+
+        for (CategoryType category : sortedCategories) {
+            // A. Create Category Button (Left)
+            JButton catButton = new JButton(category.getName());
+            catButton.setBackground(getCategoryColor(category));
+            catButton.setFont(new Font("SansSerif", Font.BOLD, 16));
+            catButton.addActionListener(e -> {
+                CardLayout cl = (CardLayout) itemCardPanel.getLayout();
+                cl.show(itemCardPanel, category.getName());
+                centerTitlePanel.setBorder(BorderFactory.createTitledBorder(category.getName()));
+            });
+            categoryButtonPanel.add(catButton);
+
+            // B. Create Item Panel (Center)
+            JPanel categoryItemPanel = new JPanel(new GridLayout(0, 2, 8, 8));
+            categoryItemPanel.setBackground(Color.WHITE);
+            
+            for (MenuItemDTO item : menuData.get(category)) {
+                JButton itemButton = createItemButton(item);
+                categoryItemPanel.add(itemButton);
+            }
+
+            JPanel wrapper = new JPanel(new BorderLayout());
+            wrapper.setBackground(Color.WHITE);
+            wrapper.add(categoryItemPanel, BorderLayout.NORTH);
+            itemCardPanel.add(wrapper, category.getName());
+        }
+
+        // Default to first category
+        CategoryType first = sortedCategories.iterator().next();
+        ((CardLayout) itemCardPanel.getLayout()).show(itemCardPanel, first.getName());
+        centerTitlePanel.setBorder(BorderFactory.createTitledBorder(first.getName()));
+
+        revalidate();
+        repaint();
+    }
+    
+    private JButton createItemButton(MenuItemDTO item) {
+        String label = String.format("<html><center>%s<br><font color='#555555'>$%s</font></center></html>", 
+                                     item.getName(), item.getPrice().setScale(2, RoundingMode.HALF_UP));
+        JButton btn = new JButton(label);
+        btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btn.setFocusPainted(false);
+        btn.addActionListener(new AddItemToOrderAction(item));
+        return btn;
+    }
+    
     public void setInteractiveState (boolean enabled) {
 		setInteractiveState(enabled, null);
 	}
@@ -347,13 +408,16 @@ public class OrderPanel extends JPanel implements PropertyChangeListener {
         void onClear ();
     }
 
-
-
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getPropertyName().equals(OrderModel.ORDER_TOTAL)) {
-	        totalLabel.setText("$" + ((BigDecimal)evt.getNewValue()).setScale(2, RoundingMode.HALF_UP).toString());
-
-		}
+		switch (evt.getPropertyName()) {
+        case OrderModel.ORDER_TOTAL -> {
+            BigDecimal total = (BigDecimal) evt.getNewValue();
+            totalLabel.setText("$" + total.setScale(2, RoundingMode.HALF_UP).toString());
+        }
+        case OrderModel.MENU_DATA -> {
+            updateMenuUI((Map<CategoryType, List<MenuItemDTO>>) evt.getNewValue());
+        }
+    }
 	}
 }

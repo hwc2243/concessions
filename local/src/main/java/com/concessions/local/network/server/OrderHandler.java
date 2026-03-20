@@ -21,14 +21,12 @@ import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.ui.controller.JournalController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+@Component
 public class OrderHandler extends AbstractDeviceHandler {
 	
 	@Autowired
 	@Lazy
 	protected OrderOrchestrator orderOrchestrator;
-	
-	@Autowired
-	protected JournalController journalController;
 	
 	public OrderHandler() {
 	}
@@ -60,8 +58,8 @@ public class OrderHandler extends AbstractDeviceHandler {
 			JournalDTO journal = orderOrchestrator.submitOrder(request.getOrder());
 			
 			// this is kind of kludgy just provide notifications that the journal changed
-			model.setJournal(journal);
-			journalController.change(model.getJournal());
+			//appConfig.setJournal(journal);
+			//journalController.change(appConfig.getJournal());
 			return success;
 			
 		} catch (JsonProcessingException ex) {

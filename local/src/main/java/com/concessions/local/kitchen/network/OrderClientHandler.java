@@ -4,10 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.NetworkException;
 import com.concessions.dto.OrderDTO;
 import com.concessions.local.kitchen.model.OrderDisplayModel;
+import com.concessions.local.network.AbstractHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

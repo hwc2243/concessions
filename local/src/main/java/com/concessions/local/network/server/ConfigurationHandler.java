@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.ConfigurationResponseDTO;
 import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
+import com.concessions.local.network.AbstractHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.annotation.PostConstruct;
@@ -41,15 +41,15 @@ public class ConfigurationHandler extends AbstractDeviceHandler {
 			validatePIN(request);
 			validateDevice(request);
 			ConfigurationResponseDTO response = new ConfigurationResponseDTO();
-			if (model.getLocationConfiguration() == null) {
+			if (appConfig.getLocationConfiguration() == null) {
 				throw new ServerException("Location has not been configurated yet");
 			}
-			response.setOrganizationId(model.getLocationConfiguration().getOrganizationId());
-			response.setOrganizationName(model.getLocationConfiguration().getOrganizationName());
-			response.setLocationId(model.getLocationConfiguration().getLocationId());
-			response.setLocationName(model.getLocationConfiguration().getLocationName());
-			response.setMenuId(model.getLocationConfiguration().getMenuId());
-			response.setMenuName(model.getLocationConfiguration().getMenuName());
+			response.setOrganizationId(appConfig.getLocationConfiguration().getOrganizationId());
+			response.setOrganizationName(appConfig.getLocationConfiguration().getOrganizationName());
+			response.setLocationId(appConfig.getLocationConfiguration().getLocationId());
+			response.setLocationName(appConfig.getLocationConfiguration().getLocationName());
+			response.setMenuId(appConfig.getLocationConfiguration().getMenuId());
+			response.setMenuName(appConfig.getLocationConfiguration().getMenuName());
 			return response;
 		} catch (JsonProcessingException ex) {
 			throw new ServerException("Failed to process message: " + ex.getMessage(), ex);

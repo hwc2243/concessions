@@ -28,15 +28,15 @@ import javax.swing.border.CompoundBorder;
 import com.concessions.dto.OrderDTO;
 import com.concessions.dto.OrderItemDTO;
 
-import com.concessions.local.kitchen.controller.OrderDisplayController;
+import com.concessions.local.kitchen.controller.KitchenController;
 
 public class OrderView extends JPanel {
 
     private Timer elapsedTimer;
     private JPopupMenu popupMenu;
-    private final OrderDisplayController controller; // New final field for the controller
+    private final KitchenController controller; // New final field for the controller
 
-    public OrderView(OrderDTO order, OrderDisplayController controller) {
+    public OrderView(OrderDTO order, KitchenController controller) {
         this.controller = controller; // Store the controller instance
 
         // Change main layout to BorderLayout to support a "sticky footer"

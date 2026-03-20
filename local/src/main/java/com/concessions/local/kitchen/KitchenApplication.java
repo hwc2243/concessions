@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.common.network.MessengerException;
 import com.concessions.common.network.NetworkConstants;
-import com.concessions.common.network.RegistrationClient;
 import com.concessions.common.network.dto.ConfigurationResponseDTO;
 import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
 import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
@@ -35,19 +34,20 @@ import com.concessions.common.service.PreferenceService;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
-import com.concessions.local.base.ui.PINController;
 import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.kitchen.config.AppConfig;
-import com.concessions.local.kitchen.controller.OrderDisplayController;
+import com.concessions.local.kitchen.controller.KitchenController;
 import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import com.concessions.local.kitchen.model.OrderDisplayModel;
-import com.concessions.local.kitchen.ui.KitchenApplicationFrame;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.server.ConfigurationHandler;
 import com.concessions.local.network.server.DeviceHandler;
+import com.concessions.local.server.RegistrationState;
+import com.concessions.local.ui.controller.PINController;
 
 import jakarta.annotation.PostConstruct;
 
+/*
 @Component
 @ConditionalOnProperty(
 	    prefix = "local.network",
@@ -55,6 +55,7 @@ import jakarta.annotation.PostConstruct;
 	    havingValue = "true",
 	    matchIfMissing = false // This ensures if the property is not defined, the component is NOT created.
 	)
+	*/
 public class KitchenApplication extends AbstractClientApplication {
 
 	private static final Logger logger = LoggerFactory.getLogger(KitchenApplication.class);
@@ -69,19 +70,16 @@ public class KitchenApplication extends AbstractClientApplication {
 	private PINController pinController;
 	
 	@Autowired
-	private KitchenApplicationFrame frame;
-	
-	@Autowired
 	private KitchenApplicationModel model;
 	
 	@Autowired
-	private OrderDisplayController orderDisplayController;
+	private KitchenController orderDisplayController;
 	
 	@Autowired
 	private PreferenceService preferenceService;
 	
 	@Autowired
-	protected RegistrationClient registrationClient;
+	protected RegistrationState registrationClient;
 	
 	public KitchenApplication() {
 		// TODO Auto-generated constructor stub
@@ -118,14 +116,16 @@ public class KitchenApplication extends AbstractClientApplication {
 		messenger.initialize(welcomeResponse.getServerIp(), welcomeResponse.getServerPort());
 		
 		// Show the main application window
+		/*
 		SwingUtilities.invokeLater(() -> {
 			setupDesktopHandler(frame);
 
 			frame.setVisible(true);
 		});
+		*/
 		
 		String pin = preferenceService.get(PIN_PREFERENCE);
-		pinController.execute(frame, pin);
+		//pinController.execute(frame, pin);
 	}
 	
 	public void executeStartup () {

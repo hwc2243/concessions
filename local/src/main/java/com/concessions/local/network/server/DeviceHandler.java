@@ -6,12 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.service.ServiceException;
-import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.DeviceRegistrationRequestDTO;
 import com.concessions.common.network.dto.DeviceRegistrationResponseDTO;
 import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.model.Device;
+import com.concessions.local.network.AbstractHandler;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.service.DeviceService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,9 +45,7 @@ public class DeviceHandler extends AbstractPINHandler {
 	protected DeviceRegistrationResponseDTO processRegister (String payload) throws ServerException {
 		try {
 			DeviceRegistrationRequestDTO request = mapper.readValue(payload, DeviceRegistrationRequestDTO.class);
-			if (!request.getPIN().equals(model.getPIN())) {
-				throw new ServerException("PIN validation failed");
-			}
+			validatePIN(request);
 			// need to check if the device is already registered and if the type is the same
 			Device device = deviceService.fetchByDeviceId(request.getDeviceId());
 			if (device == null) {

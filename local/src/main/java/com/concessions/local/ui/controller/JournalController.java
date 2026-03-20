@@ -4,11 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.swing.JButton;
@@ -20,7 +17,6 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Order;
@@ -28,17 +24,15 @@ import com.concessions.client.rest.JournalRestClient;
 import com.concessions.client.service.JournalService;
 import com.concessions.client.service.OrderService;
 import com.concessions.client.service.ServiceException;
-import com.concessions.common.dto.JournalSummaryDTO;
 import com.concessions.common.event.JournalNotifier;
 import com.concessions.dto.JournalDTO;
 import com.concessions.dto.StatusType;
+import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.dto.JournalMapper;
-import com.concessions.local.server.model.ServerApplicationModel;
+import com.concessions.local.pos.controller.OrderController;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.view.JournalOrdersPanel;
 import com.concessions.local.ui.view.JournalPanel;
-import com.concessions.local.util.ListChunker;
-import com.concessions.local.util.MoneyUtil;
 
 import jakarta.annotation.PostConstruct;
 
@@ -67,42 +61,43 @@ public class JournalController {
 	protected OrderService orderService;
 
 	@Autowired
-	protected ServerApplicationModel model;
-
+	protected ApplicationConfiguration appConfig;
+	
+	protected JournalPanel journalPanel;
+	
 	public JournalController() {
 		// TODO Auto-generated constructor stub
 	}
 
 	@PostConstruct
-	protected void postConstruct () {
+	public void initialize () {
 		// HWC TODO this should be part of orderController
 		journalNotifier.addJournalListener(orderController);
-	}
-	
-	public void initialize () {
+		
 		try {
-			List<Journal> journals = journalService.findAllByStatus(StatusType.OPEN);
-			if (journals.size() == 1) {
-				open(JournalMapper.toDto(journals.iterator().next()));
+			List<JournalDTO> journals = journalService.findAll()
+					.stream()
+					.map(JournalMapper::toDto)
+					.collect(Collectors.toList());
+			
+			List<JournalDTO> openJournals = journals.stream()
+				    .filter(j -> j.getStatus() == StatusType.OPEN)
+				    .collect(Collectors.toList());
+			
+			if (openJournals.size() == 1) {
+				appConfig.setJournal(openJournals.iterator().next());
 			}
+			
+			journalPanel = new JournalPanel(this, journals);
+			journalNotifier.addJournalListener(journalPanel);
+			applicationFrame.addPanel(journalPanel, JournalPanel.NAME);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
 		}
 	}
 	
 	public void view() {
-		try {
-			List<JournalDTO> journals = journalService.findAll()
-					.stream()
-					.map(JournalMapper::toDto)
-					.collect(Collectors.toList());
-			JournalPanel journalPanel = new JournalPanel(this, journals);
-			journalNotifier.addJournalListener(journalPanel);
-//			applicationFrame.setMainContent(journalPanel);
-		} catch (ServiceException ex) {
-			ex.printStackTrace();
-			return;
-		}
+		applicationFrame.showPanel(JournalPanel.NAME);
 	}
 
 	public void viewOrders(JournalDTO journal) {
@@ -113,39 +108,35 @@ public class JournalController {
 		} else {
 			JournalOrdersPanel ordersPanel = new JournalOrdersPanel(orders);
 
-			// 2. Create the JDialog
 			JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(applicationFrame),
 					"Orders for Journal: " + journal.getId(), Dialog.ModalityType.APPLICATION_MODAL); // Ensure modality
 
 			dialog.setLayout(new BorderLayout());
 
-			// 3. Create the OK button panel
 			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 			JButton okButton = new JButton("OK");
 			okButton.addActionListener(e -> dialog.dispose());
 			buttonPanel.add(okButton);
 
-			// Set default action to OK button on Enter key
 			dialog.getRootPane().setDefaultButton(okButton);
 
-			// 4. Assemble the dialog
 			dialog.add(ordersPanel, BorderLayout.CENTER);
 			dialog.add(buttonPanel, BorderLayout.SOUTH);
 
-			// 5. Configure and show the dialog
 			dialog.pack();
-			// Ensure a reasonable minimum size, otherwise the table might look too cramped
+
 			dialog.setMinimumSize(new Dimension(500, 300));
 			dialog.setLocationRelativeTo(applicationFrame);
 			dialog.setVisible(true);
 		}
 	}
 
-	public void change(JournalDTO journal) {
+	public void change (JournalDTO journal) {
 		journalNotifier.notifyJournalChanged(journal);
 	}
 	
 	public void close() {
+		/*
 		JournalDTO journal = model.getJournal();
 		try {
 			if (journal == null) {
@@ -164,6 +155,7 @@ public class JournalController {
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
 		}
+		*/
 
 	}
 
@@ -172,7 +164,7 @@ public class JournalController {
 			journal.setStatus(StatusType.CLOSE);
 			journal.setEndTs(LocalDateTime.now());
 			journalService.update(JournalMapper.fromDto(journal));
-			model.setJournal(journal);
+			appConfig.setJournal(journal);
 			journalNotifier.notifyJournalClosed(journal);
 			
 			// HWC TODO add logic to check if network is connected and if so attempt sync
@@ -183,6 +175,7 @@ public class JournalController {
 	}
 
 	public void open() {
+		/*
 		JournalDTO journal = model.getJournal();
 		try {
 			if (journal == null) {
@@ -215,6 +208,7 @@ public class JournalController {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(null, "Failed to locate journal to open", "Error", JOptionPane.ERROR_MESSAGE);
 		}
+		*/
 	}
 	
 	public void open (JournalDTO journal) {
@@ -224,7 +218,7 @@ public class JournalController {
 			journalEntity.setStatus(StatusType.OPEN);
 			journalEntity = journalService.update(journalEntity);
 			journal = JournalMapper.toDto(journalEntity);
-			model.setJournal(journal);
+			appConfig.setJournal(journal);
 			journalNotifier.notifyJournalOpened(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -245,7 +239,7 @@ public class JournalController {
 			}
 			JournalDTO journal = JournalMapper.toDto(journalService.newInstance());
 			logger.info("Creating journal : " + journal.getId());
-			model.setJournal(journal);
+			appConfig.setJournal(journal);
 			journalNotifier.notifyJournalStarted(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -254,6 +248,7 @@ public class JournalController {
 	}
 
 	public void suspend() {
+		/*
 		JournalDTO journal = model.getJournal();
 		try {
 			if (journal == null) {
@@ -288,6 +283,7 @@ public class JournalController {
 			JOptionPane.showMessageDialog(null, "Failed to search for open journal", "Error",
 					JOptionPane.ERROR_MESSAGE);
 		}
+		*/
 	}
 	
 	public void suspend (JournalDTO journal) {
@@ -295,7 +291,7 @@ public class JournalController {
 		journal.setStatus(StatusType.SUSPEND);
 		try {
 			journalService.update(JournalMapper.fromDto(journal));
-			model.setJournal(journal);
+			appConfig.setJournal(journal);
 			journalNotifier.notifyJournalSuspended(journal);
 		} catch (ServiceException ex) {
 			ex.printStackTrace();
@@ -305,6 +301,8 @@ public class JournalController {
 	}
 
 	public void sync (JournalDTO journal) {
+		new Exception("Not yet implemented").printStackTrace();
+		/*
 		if (journal.getStatus() != StatusType.CLOSE ) {
 			JOptionPane.showMessageDialog(null, "Journal has to be closed before syncing", "Error",
 					JOptionPane.ERROR_MESSAGE);
@@ -351,5 +349,6 @@ public class JournalController {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		*/
 	}
 }

@@ -1,0 +1,39 @@
+package com.concessions.local.network.client;
+
+import org.springframework.stereotype.Component;
+
+import com.concessions.common.network.NetworkException;
+import com.concessions.common.network.dto.SimpleResponseDTO;
+import com.concessions.local.network.AbstractHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Component
+public class HealthCheckHandler extends AbstractHandler {
+
+	
+	public HealthCheckHandler() {
+		// TODO Auto-generated constructor stub
+	}
+	
+	public HealthCheckHandler (ObjectMapper mapper) {
+		super(mapper);
+	}
+
+	@Override
+	public String getName() {
+		return HEALTH_SERVICE;
+	}
+
+	@Override
+	public Object process(String action, String payload) throws NetworkException {
+		switch (action) {
+		case HEALTH_CHECK_ACTION:
+			return performHealthCheck(payload);
+		}
+		throw new NetworkException("Not implemented");
+	}
+
+	public SimpleResponseDTO performHealthCheck (String payload) {
+		return success;
+	}
+}

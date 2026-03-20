@@ -31,7 +31,6 @@ public class LocationConfiguration extends BaseLocationConfiguration<LocationCon
         this.locationName = builder.locationName;
         this.menuId = builder.menuId;
         this.menuName = builder.menuName;
-        this.pin = builder.pin;
     }
 
     public static class Builder {
@@ -42,7 +41,6 @@ public class LocationConfiguration extends BaseLocationConfiguration<LocationCon
         private String locationName = null;
         private Long menuId = null;
         private String menuName = null;
-        private Integer pin = null;
 
         public Builder organizationId(Long organizationId) {
             this.organizationId = organizationId;
@@ -71,11 +69,6 @@ public class LocationConfiguration extends BaseLocationConfiguration<LocationCon
 
         public Builder menuName(String menuName) {
             this.menuName = menuName;
-            return this;
-        }
-
-        public Builder pin(Integer pin) {
-            this.pin = pin;
             return this;
         }
 

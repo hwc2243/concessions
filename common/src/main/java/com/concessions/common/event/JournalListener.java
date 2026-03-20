@@ -9,7 +9,7 @@ public interface JournalListener {
 
 	void journalOpened(JournalDTO journal);
 
-	void journalStarted(JournalDTO journal);
+	void journalCreated(JournalDTO journal);
 
 	void journalSuspended(JournalDTO journal);
 	

@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.concessions.common.network.Messenger;
 import com.concessions.common.network.MessengerException;
 import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.dto.OrderQueueGetAllResponseDTO;
@@ -14,6 +13,7 @@ import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.dto.OrderDTO;
 import com.concessions.local.base.model.AbstractClientModel;
+import com.concessions.local.network.Messenger;
 import com.concessions.local.server.orchestrator.OrderException;
 
 public class NetworkOrderProcessor implements OrderProcessor {

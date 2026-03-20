@@ -12,8 +12,11 @@ import com.concessions.client.rest.base.HeaderProvider;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.bean.BearerTokenHeaderProvider;
+import com.concessions.local.bean.ClientConfiguration;
 import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.bean.TenantDiscriminator;
+import com.concessions.local.network.HandlerRegistry;
+import com.concessions.local.network.LocalNetworkListener;
 import com.concessions.local.pos.processor.LocalOrderProcessor;
 import com.concessions.local.pos.processor.OrderProcessor;
 import com.concessions.local.server.ServerApplication;
@@ -21,6 +24,7 @@ import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.service.ApplicationConfigurationService;
+import com.concessions.local.service.ClientConfigurationService;
 import com.concessions.local.service.ServerConfigurationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -38,13 +42,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 	        "com.concessions.local", 
 	        "com.concessions.client", 
 	        "com.concessions.common"
-	    },
-	    // Exclude the 'com.concessions.local.network' package and all its sub-packages
-	    excludeFilters = @Filter(
-	        type = FilterType.REGEX,
-	        // The regex pattern matches the package and any class inside it (.*)
-	        pattern = "com\\.concessions\\.local\\.network\\.client\\..*" 
-	    )
+	    }
 	)
 @EnableAsync
 public class AppConfig {
@@ -52,6 +50,11 @@ public class AppConfig {
 	@Bean
 	public ApplicationConfiguration applicationConfiguration (ApplicationConfigurationService appConfigService) {
 		return appConfigService.get();
+	}
+	
+	@Bean
+	public ClientConfiguration clientConfiguration (ClientConfigurationService clientConfigService) {
+		return clientConfigService.get();
 	}
 	
 	@Bean
@@ -79,8 +82,8 @@ public class AppConfig {
     }
     
     @Bean
-    public TenantDiscriminator tenantDiscriminator (ServerApplicationModel model) {
-    	return new TenantDiscriminator(model);
+    public TenantDiscriminator tenantDiscriminator (ApplicationConfiguration appConfig) {
+    	return new TenantDiscriminator(appConfig);
     }
     
     @Bean
@@ -95,6 +98,19 @@ public class AppConfig {
 			     .build();
     }
     
+    // HWC TODO this assumes one common handler registry for client and server listeners
+	@Bean(destroyMethod = "shutdown")
+	public LocalNetworkListener clientListener (HandlerRegistry registry, ObjectMapper mapper) {
+		return new LocalNetworkListener(registry, mapper, false);
+		
+	}
+    
+	@Bean(destroyMethod = "shutdown")
+	public LocalNetworkListener serverListener (HandlerRegistry registry, ObjectMapper mapper) {
+		return new LocalNetworkListener(registry, mapper, true);
+		
+	}
+
     @Bean
     public ApplicationModel applicationModel () {
     	return new ApplicationModel();

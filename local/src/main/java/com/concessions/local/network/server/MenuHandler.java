@@ -1,17 +1,21 @@
 package com.concessions.local.network.server;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.dto.MenuDTO;
+import com.concessions.local.bean.ApplicationConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 @Component
 public class MenuHandler extends AbstractDeviceHandler {
+	
+	@Autowired
+	protected ApplicationConfiguration appConfig;
 
 	public MenuHandler() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -33,7 +37,7 @@ public class MenuHandler extends AbstractDeviceHandler {
 			SimpleDeviceRequestDTO request = mapper.readValue(payload, SimpleDeviceRequestDTO.class);
 			validatePIN(request);
 			validateDevice(request);
-			return model.getMenu();
+			return appConfig.getMenu();
 		} catch (JsonProcessingException ex) {
 			throw new ServerException("Failed to process message: " + ex.getMessage(), ex);
 		}

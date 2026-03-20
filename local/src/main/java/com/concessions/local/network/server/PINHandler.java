@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.AbstractHandler;
 import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.PINVerifyRequestDTO;
 import com.concessions.common.network.dto.SimpleResponseDTO;
+import com.concessions.local.network.AbstractHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.annotation.PostConstruct;

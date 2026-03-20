@@ -6,60 +6,63 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import com.concessions.client.model.Journal;
 import com.concessions.dto.JournalDTO;
 import com.concessions.dto.StatusType;
-import com.concessions.local.server.model.ServerApplicationModel;
+import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.bean.ApplicationConfiguration.ApplicationRole;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.controller.JournalController;
 
 @Component
 public class ExitAction extends AbstractAction {
-	
+
 	private static final String SUSPEND_BUTTON = "Suspend";
-    private static final String CLOSE_BUTTON = "Close";
-    private static final String CANCEL_BUTTON = "Cancel";
-    private static final Object[] OPTIONS = { CANCEL_BUTTON, CLOSE_BUTTON, SUSPEND_BUTTON };
-    
-    @Autowired
+	private static final String CLOSE_BUTTON = "Close";
+	private static final String CANCEL_BUTTON = "Cancel";
+	private static final Object[] OPTIONS = { CANCEL_BUTTON, CLOSE_BUTTON, SUSPEND_BUTTON };
+
+	@Autowired
 	protected ApplicationFrame frame;
-	
-	protected ServerApplicationModel model;
-	
+
+	@Autowired
+	protected ApplicationConfiguration appConfig;
+
+	@Lazy
+	@Autowired
 	protected JournalController journalController;
 
 	public ExitAction() {
 		super("Exit");
 		this.frame = frame;
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
-		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (model != null && model.getJournal() != null && model.getJournal().getStatus() == StatusType.OPEN) {
-			JournalDTO journal = model.getJournal();
-			int result = JOptionPane.showOptionDialog(
-		            frame,
-		            "There is an open journal, do you want to Suspend or Close the journal?",
-		            "Confirm Exit",
-		            JOptionPane.YES_NO_CANCEL_OPTION, // This specifies the internal structure for dialog types
-		            JOptionPane.QUESTION_MESSAGE,
-		            null, // icon
-		            OPTIONS, // The array of custom button labels
-		            OPTIONS[2] // The default button (Cancel)
-		        );
+		if (appConfig.getApplicationRole() == ApplicationRole.SERVER) {
+			if (appConfig.getJournal() != null && appConfig.getJournal().getStatus() == StatusType.OPEN) {
+				JournalDTO journal = appConfig.getJournal();
+				int result = JOptionPane.showOptionDialog(frame,
+						"There is an open journal, do you want to Suspend or Close the journal?", "Confirm Exit",
+						JOptionPane.YES_NO_CANCEL_OPTION, // This specifies the internal structure for dialog types
+						JOptionPane.QUESTION_MESSAGE, null, // icon
+						OPTIONS, // The array of custom button labels
+						OPTIONS[2] // The default button (Cancel)
+				);
 
-			String selectedOption = (result >= 0 && result < OPTIONS.length) ? OPTIONS[result].toString() : CANCEL_BUTTON;
+				String selectedOption = (result >= 0 && result < OPTIONS.length) ? OPTIONS[result].toString()
+						: CANCEL_BUTTON;
 
-			switch (selectedOption) {
+				switch (selectedOption) {
 				case CLOSE_BUTTON:
 					journalController.close(journal);
 					System.exit(0);
@@ -71,10 +74,10 @@ public class ExitAction extends AbstractAction {
 				case CANCEL_BUTTON:
 				default:
 					return;
+				}
+			} else {
+				System.exit(0);
 			}
-		}
-		else {
-			System.exit(0);
 		}
 	}
 }

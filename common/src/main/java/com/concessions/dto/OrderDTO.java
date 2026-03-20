@@ -19,10 +19,10 @@ public class OrderDTO
   
   protected BigDecimal orderTotal = null;
   
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS][.SSS]")
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS]")
   protected LocalDateTime startTs = null;
   
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS][.SSS]")
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS]")
   protected LocalDateTime endTs = null;
   
   protected List<OrderItemDTO> orderItems;

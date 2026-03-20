@@ -12,11 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.concessions.common.network.HealthCheckHandler;
-import com.concessions.common.network.Messenger;
 import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.dto.SimpleResponseDTO;
 import com.concessions.local.model.Device;
+import com.concessions.local.network.Messenger;
+import com.concessions.local.network.client.HealthCheckHandler;
 import com.concessions.local.service.DeviceService;
 
 import jakarta.annotation.PostConstruct;

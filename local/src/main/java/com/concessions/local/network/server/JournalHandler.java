@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import com.concessions.common.network.ServerException;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.dto.JournalDTO;
-import com.concessions.local.base.model.POSModel;
+import com.concessions.local.bean.ApplicationConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 @Component
@@ -17,6 +17,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 	    matchIfMissing = false
 	)
 public class JournalHandler extends AbstractDeviceHandler {
+	
+	@Autowired
+	protected ApplicationConfiguration appConfig;
 
 	public JournalHandler() {
 		// TODO Auto-generated constructor stub
@@ -41,8 +44,7 @@ public class JournalHandler extends AbstractDeviceHandler {
 			SimpleDeviceRequestDTO request = mapper.readValue(payload, SimpleDeviceRequestDTO.class);
 			validatePIN(request);
 			validateDevice(request);
-			JournalDTO response = model.getJournal();
-			return response;
+			return appConfig.getJournal();
 		} catch (JsonProcessingException ex) {
 			throw new ServerException("Failed to process message: " + ex.getMessage(), ex);
 		}

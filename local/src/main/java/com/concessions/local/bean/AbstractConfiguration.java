@@ -9,6 +9,5 @@ public abstract class AbstractConfiguration extends AbstractBean {
     	return this.configured;
     }
 
-    abstract void updateConfigured ();
-
+    protected abstract void updateConfigured ();
 }

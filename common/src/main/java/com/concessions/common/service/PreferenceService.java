@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class PreferenceService {
 
 	private Map<Class<?>, Preferences> prefMap = new HashMap<>();
@@ -36,18 +38,26 @@ public class PreferenceService {
 		return getPreferences(clazz).get(name, null);
 	}
 	
-	public void save (String name, String value) throws BackingStoreException
+	public long getLong (String name) {
+		return getLong (appClass, name);
+	}
+	
+	public long getLong (Class<?> clazz, String name) {
+		String value = getPreferences(clazz).get(name, "-1");
+		return (StringUtils.isNotBlank(value) ? Long.parseLong(value) : -1); 
+	}
+	
+	public void save (String name, Object value) throws BackingStoreException
 	{
 		save(appClass, name, value);
 	}
 	
-	public void save (Class<?> clazz, String name, String value) throws BackingStoreException
+	public void save (Class<?> clazz, String name, Object value) throws BackingStoreException
 	{
 		Preferences preferences = getPreferences(clazz);
-		preferences.put(name, value);
+		preferences.put(name, value.toString());
 		preferences.flush();
 	}
-	
 	
 	protected Preferences getPreferences (Class<?> clazz)
 	{

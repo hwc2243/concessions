@@ -9,7 +9,5 @@ import com.concessions.local.model.Device;
 
 @Mapper(componentModel = "spring")
 public interface DeviceMapper {
-  DeviceMapper INSTANCE = Mappers.getMapper(DeviceMapper.class);
-  
   DeviceDTO toDto(Device device);
 }
