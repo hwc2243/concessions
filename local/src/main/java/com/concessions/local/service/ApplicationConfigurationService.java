@@ -60,6 +60,7 @@ public class ApplicationConfigurationService {
 		locationConfiguration.setMenuId(preferenceService.getLong(ApplicationConfiguration.PROPERTY_MENU_ID));
 		locationConfiguration.setMenuName(preferenceService.get(ApplicationConfiguration.PROPERTY_MENU_NAME));
 		applicationConfiguration.setLocationConfiguration(locationConfiguration);
+		applicationConfiguration.setOrganizationId(locationConfiguration.getOrganizationId());
 
 	}
 

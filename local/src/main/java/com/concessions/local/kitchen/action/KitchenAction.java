@@ -8,6 +8,7 @@ import javax.swing.Action;
 import javax.swing.KeyStroke;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.base.ui.AbstractFrame;
@@ -18,11 +19,9 @@ import com.concessions.local.ui.action.AbstractAction;
 @Component
 public class KitchenAction extends AbstractAction {
 
+	@Lazy
 	@Autowired
-	protected ServerApplicationModel model;
-	
-	@Autowired
-	protected KitchenController orderDisplayController;
+	protected KitchenController kitchenController;
 	
 	public KitchenAction() {
 		super("Kitchen");
@@ -33,7 +32,7 @@ public class KitchenAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		orderDisplayController.execute();
+		kitchenController.execute();
 	}
 
 }

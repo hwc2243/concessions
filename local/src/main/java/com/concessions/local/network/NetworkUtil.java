@@ -1,4 +1,4 @@
-package com.concessions.local.util;
+package com.concessions.local.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -6,6 +6,9 @@ import java.net.Socket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Utility class for checking network connectivity using a simple socket.
@@ -27,6 +30,10 @@ public class NetworkUtil {
         return isConnected(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_TIMEOUT_MS);
     }
 
+    public static boolean isConnected(HostConfiguration hostConfiguration) {
+    	return isConnected(hostConfiguration.getHostname(), hostConfiguration.getPort());
+    }
+    
     /**
      * Checks if a specific host and port are reachable within the default timeout period.
      * @param host The hostname or IP address (e.g., "www.google.com").
@@ -61,4 +68,13 @@ public class NetworkUtil {
             return false;
         }
     }
+    
+	@Builder
+	public static class HostConfiguration {
+		@Getter
+		protected String hostname;
+		
+		@Getter
+		protected int port;
+	}
 }

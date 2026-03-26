@@ -1,7 +1,0 @@
-application:
-  version: @project.version@
-  name: @project.name@ Kitchen
-
-local:
-  network:
-    client: true

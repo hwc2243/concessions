@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 
 import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.bean.ApplicationConfiguration.ApplicationRole;
+import com.concessions.local.network.NetworkUtil;
 import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.server.model.ServerApplicationModel;
-import com.concessions.local.util.NetworkUtil;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

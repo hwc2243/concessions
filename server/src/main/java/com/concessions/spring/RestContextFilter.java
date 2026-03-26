@@ -66,7 +66,7 @@ public class RestContextFilter extends OncePerRequestFilter {
 				SessionContext.setCurrentUser(user);
 
 				String organizationIdText = request.getHeader(ORGANIZATION_HEADER);
-				if (organizationIdText != null && !organizationIdText.isEmpty()) {
+				if (organizationIdText != null && !organizationIdText.isEmpty() && !organizationIdText.equals("null")) {
 					logger.debug("RestContextFilter: Organization ID from header: " + organizationIdText);
 					Long organizationId = Long.parseLong(organizationIdText);
 					Organization organization = organizationService.get(organizationId);

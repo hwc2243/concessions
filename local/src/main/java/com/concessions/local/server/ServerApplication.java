@@ -217,6 +217,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 				logger.info("Setting application role to: {}", role);
 				appConfig.setApplicationRole(role);
 				appConfigService.save();
+				updateState();
 			} catch (BackingStoreException ex) {
 				logger.error("Failed to save application configuration", ex);
 				JOptionPane.showMessageDialog(applicationFrame, "Error saving configuration.");
@@ -364,6 +365,10 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	}
 
 
+	public void reset () {
+		
+	}
+	
 	private void setupDeviceId() {
 		// register our deviceId
 		String deviceId = appConfig.getDeviceId();
@@ -438,21 +443,13 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getSource() != appConfig && !evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_JOURNAL) ) {
+		if (evt.getSource() == appConfig
+				&& (evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_APPLICATION_ROLE))
+				   || evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_LOCATION_CONFIGURATION)) {
+			updateState();
+		} else if (evt.getSource() == serverConfig && evt.getPropertyName().equals(ServerConfiguration.PROPERTY_TOKEN_RESPONSE)) {
 			updateState();
 		}
-
-		/*
-		 * if (ServerApplicationModel.CONNECTED.equals(evt.getPropertyName()) ||
-		 * ServerApplicationModel.TOKEN_RESPONSE.equals(evt.getPropertyName())) {
-		 * setupAction.setEnabled(applicationModel.isConnected() &&
-		 * serverConfig.getTokenResponse() != null);
-		 * loginAction.setEnabled(applicationModel.isConnected() &&
-		 * serverConfig.getTokenResponse() == null);
-		 * logoutAction.setEnabled(serverConfig.getTokenResponse() != null); } else if
-		 * (ServerApplicationModel.JOURNAL.equals(evt.getPropertyName())) {
-		 * orderOrchestrator.initialize((JournalDTO)evt.getNewValue()); }
-		 */
 	}
 
 	public static void main(String[] args) {
@@ -464,8 +461,8 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			ConfigurableEnvironment environment = context.getEnvironment();
 
 			YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
-			ClassPathResource resource = new ClassPathResource("application-server.yml");
-			PropertySource<?> yamlPropertySource = loader.load("application-server.yml", resource).get(0); // Take the
+			ClassPathResource resource = new ClassPathResource("application.yml");
+			PropertySource<?> yamlPropertySource = loader.load("application.yml", resource).get(0); // Take the
 																											// first
 																											// (and
 																											// usually

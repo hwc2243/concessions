@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.concessions.dto.OrderDTO;
@@ -26,8 +27,9 @@ public class OrderDisplay extends JPanel implements PropertyChangeListener {
     @Autowired
     private OrderDisplayModel model;
 
+    @Lazy
     @Autowired
-    private KitchenController orderDisplayController; // Inject the controller
+    private KitchenController kitchenController; // Inject the controller
 
     private FillViewportPanel orderPanel;
     private JLabel orderCountLabel; // New instance variable
@@ -66,7 +68,7 @@ public class OrderDisplay extends JPanel implements PropertyChangeListener {
         orderPanel.removeAll();
         for (OrderDTO order : orders) {
             // Pass the controller instance to the OrderView
-            orderPanel.add(new OrderView(order, this.orderDisplayController));
+            orderPanel.add(new OrderView(order, this.kitchenController));
         }
         orderPanel.revalidate();
         orderPanel.repaint();

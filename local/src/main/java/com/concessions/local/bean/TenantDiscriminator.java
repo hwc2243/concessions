@@ -12,8 +12,8 @@ public class TenantDiscriminator implements com.concessions.client.rest.TenantDi
 	
 	@Override
 	public Long getOrganizationId () {
-		return ((appConfig.getLocationConfiguration() != null && appConfig.getLocationConfiguration().getOrganizationId() > 0)
-				? appConfig.getLocationConfiguration().getOrganizationId()
+		return (appConfig.getOrganizationId() > 0
+				? appConfig.getOrganizationId()
 				: null);
 	}
 

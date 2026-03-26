@@ -6,6 +6,9 @@ import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.model.LocationConfiguration;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class ApplicationConfiguration extends AbstractConfiguration {
 
     // Constant for PropertyChangeListeners to track this specific property
@@ -23,22 +26,34 @@ public class ApplicationConfiguration extends AbstractConfiguration {
 	public static final String PROPERTY_JOURNAL = "journal";
 	public static final String PROPERTY_MENU = "menu";
 
-
+	@Getter
     private ApplicationRole applicationRole = ApplicationRole.UNDECIDED;
+	
+	@Getter
     private String deviceId = null;
+	
     // HWC TODO this shouldn't be hardcoded
+	@Getter
     private DeviceTypeType deviceType = DeviceTypeType.SERVER;
+	
+	@Getter
+	@Setter
+	private long organizationId;
+	
+	@Getter
     private LocationConfiguration locationConfiguration = null;
+	
+	@Getter
 	private String pin = null;
+	
+	@Getter
 	private JournalDTO journal = null;
+	
+	@Getter
 	private MenuDTO menu = null;
 
 
     public ApplicationConfiguration() {
-    }
-
-    public ApplicationRole getApplicationRole() {
-        return applicationRole;
     }
 
     public void setApplicationRole(ApplicationRole applicationRole) {
@@ -50,27 +65,15 @@ public class ApplicationConfiguration extends AbstractConfiguration {
         updateConfigured();
     }
 
-	public String getDeviceId() {
-		return deviceId;
-	}
-
 	public void setDeviceId(String deviceId) {
 		this.deviceId = deviceId;
 		updateConfigured();
-	}
-
-	public DeviceTypeType getDeviceType() {
-		return deviceType;
 	}
 
 	public void setDeviceType(DeviceTypeType deviceType) {
 		this.deviceType = deviceType;
 		
 		updateConfigured();
-	}
-
-	public LocationConfiguration getLocationConfiguration() {
-		return locationConfiguration;
 	}
 
 	public void setLocationConfiguration(LocationConfiguration locationConfiguration) {
@@ -90,11 +93,6 @@ public class ApplicationConfiguration extends AbstractConfiguration {
 				StringUtils.isNotBlank(locationConfiguration.getMenuName()));
 	}
 	
-	
-	public String getPin() {
-		return pin;
-	}
-
 	public void setPin(String pin) {
 		String oldPin = this.pin;
 		this.pin = pin;
@@ -103,19 +101,11 @@ public class ApplicationConfiguration extends AbstractConfiguration {
 		updateConfigured();
 	}
 	
-	public JournalDTO getJournal() {
-		return journal;
-	}
-
 	public void setJournal(JournalDTO journal) {
 		JournalDTO oldJournal = this.journal;
 		this.journal = journal;
 		
 		firePropertyChange(PROPERTY_JOURNAL, oldJournal, journal);
-	}
-
-	public MenuDTO getMenu() {
-		return menu;
 	}
 
 	public void setMenu(MenuDTO menu) {

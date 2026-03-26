@@ -104,7 +104,7 @@ public class LocationSetupController {
 			Organization selectedOrganization = view.getSelectedOrganization();
 			if (!LocationSetupPanel.PLEASE_SELECT.equals(selectedOrganization.toString())) {
 				// set this because the multitenant discriminator needs this for future calls.
-				serverConfig.setOrganizationId(selectedOrganization.getId());
+				appConfig.setOrganizationId(selectedOrganization.getId());
 				logger.debug("Selected organization: " + selectedOrganization);
 				loadLocations();
 			}

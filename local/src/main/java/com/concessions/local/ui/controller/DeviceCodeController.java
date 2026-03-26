@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.bean.ServerConfiguration;
+import com.concessions.local.network.NetworkUtil;
 import com.concessions.local.security.TokenAuthService;
 import com.concessions.local.security.TokenAuthService.TokenResponse;
 import com.concessions.local.server.model.ApplicationModel;
@@ -24,7 +25,6 @@ import com.concessions.local.service.QRGeneratorService;
 import com.concessions.local.service.ServerConfigurationService;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.DeviceCodePanel;
-import com.concessions.local.util.NetworkUtil;
 
 import jakarta.annotation.PostConstruct;
 

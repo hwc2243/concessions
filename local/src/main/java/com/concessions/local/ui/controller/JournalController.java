@@ -17,6 +17,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import com.concessions.client.model.Journal;
 import com.concessions.client.model.Order;
@@ -55,6 +56,7 @@ public class JournalController {
 	protected JournalRestClient journalRestClient;
 
 	@Autowired
+	@Lazy
 	protected OrderController orderController;
 	
 	@Autowired
