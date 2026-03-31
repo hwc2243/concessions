@@ -21,7 +21,7 @@
 		<jquery-ui.version>1.13.3</jquery-ui.version>
 		<moneta.version>1.4.5</moneta.version>
 		<popper.version>2.11.7</popper.version>
-		<servicebuilder.version>0.4.0-SNAPSHOT</servicebuilder.version>
+		<servicebuilder.version>0.4.1-SNAPSHOT</servicebuilder.version>
 	</properties>
 
 	<dependencies>

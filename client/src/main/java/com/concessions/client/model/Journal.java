@@ -3,8 +3,6 @@ package com.concessions.client.model;
 import com.concessions.dto.StatusType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
 
 import java.io.Serializable;
 
