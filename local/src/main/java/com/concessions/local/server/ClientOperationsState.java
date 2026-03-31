@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.kitchen.controller.KitchenController;
 import com.concessions.local.pos.controller.OrderController;
 import com.concessions.local.service.DynamicBeanService;
 
@@ -16,6 +17,8 @@ public class ClientOperationsState implements ApplicationState {
 	@Autowired
     private DynamicBeanService beanService;
 
+	protected KitchenController kitchenController;
+	
 	protected OrderController orderController;
 	
 	@Override
@@ -25,6 +28,7 @@ public class ClientOperationsState implements ApplicationState {
 
 	@Override
 	public void execute() {
+		kitchenController = beanService.createBean("kitchenController", KitchenController.class);
 		orderController = beanService.createBean("orderController", OrderController.class);
 	}
 }

@@ -14,6 +14,7 @@ public class ApplicationConfiguration extends AbstractConfiguration {
     // Constant for PropertyChangeListeners to track this specific property
     public static final String PROPERTY_APPLICATION_ROLE = "applicationRole";
     public static final String PROPERTY_DEVICE_ID = "deviceId";
+    public static final String PROPERTY_DEVICE_NUMBER = "deviceNumber";
     public static final String PROPERTY_DEVICE_TYPE = "deviceType";
 	public static final String PROPERTY_PIN = "pin";
     public static final String PROPERTY_LOCATION_CONFIGURATION = "locationConfiguration";
@@ -31,6 +32,9 @@ public class ApplicationConfiguration extends AbstractConfiguration {
 	
 	@Getter
     private String deviceId = null;
+	
+	@Getter
+	private String deviceNumber = null;
 	
     // HWC TODO this shouldn't be hardcoded
 	@Getter
@@ -67,6 +71,11 @@ public class ApplicationConfiguration extends AbstractConfiguration {
 
 	public void setDeviceId(String deviceId) {
 		this.deviceId = deviceId;
+		updateConfigured();
+	}
+	
+	public void setDeviceNumber (String deviceNumber) {
+		this.deviceNumber = deviceNumber;
 		updateConfigured();
 	}
 

@@ -11,11 +11,19 @@ import javax.swing.UIManager;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.concessions.local.base.ui.SettingsDialog;
+import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.bean.ClientConfiguration;
 import com.concessions.local.network.Messenger;
 import com.concessions.local.server.ServerApplication;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public abstract class AbstractApplication {
+
+	@Autowired
+	protected ApplicationConfiguration appConfig;
+	
+	@Autowired
+	protected ClientConfiguration clientConfig;
 
 	@Autowired
 	protected Messenger messenger;
@@ -51,7 +59,7 @@ public abstract class AbstractApplication {
             }
             if (desktop.isSupported(Desktop.Action.APP_PREFERENCES)) {
                 desktop.setPreferencesHandler(e -> {
-                    SettingsDialog.showSettings(ownerFrame, (ServerApplication)this);
+                    SettingsDialog.showSettings(ownerFrame, (ServerApplication)this, appConfig, clientConfig);
                 });
             }
             if (desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {

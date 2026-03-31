@@ -93,8 +93,7 @@ public class RegistrationState implements ApplicationState {
 		DeviceRegistrationResponseDTO deviceRegistrationResponse;
 		try {
 			deviceRegistrationResponse = messenger.sendRequest(NetworkConstants.DEVICE_SERVICE, NetworkConstants.DEVICE_REGISTER_ACTION, deviceRegistration, DeviceRegistrationResponseDTO.class);
-			// HWC TODO store this on a config
-			//model.setDeviceNumber(deviceRegistrationResponse.getDeviceNumber());
+			appConfig.setDeviceNumber(deviceRegistrationResponse.getDeviceNumber());
 		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to register device - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);

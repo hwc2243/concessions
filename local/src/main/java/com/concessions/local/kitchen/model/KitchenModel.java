@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import com.concessions.dto.OrderDTO;
 
 @Component
-public class OrderDisplayModel {
+public class KitchenModel {
     public static final String ORDERS_PROPERTY = "orders";
 
     private List<OrderDTO> orders = new ArrayList<>();

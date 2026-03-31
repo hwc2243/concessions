@@ -8,13 +8,12 @@ import com.concessions.local.kitchen.KitchenApplication;
 import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import com.concessions.local.network.HandlerRegistry;
 import com.concessions.local.network.Messenger;
-import com.concessions.local.pos.processor.NetworkOrderProcessor;
 import com.concessions.local.pos.processor.OrderProcessor;
+import com.concessions.local.pos.processor.OrderProcessorDeprecated;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-@Configuration
 public class AppConfig {
 
 	public AppConfig() {
@@ -44,9 +43,11 @@ public class AppConfig {
 		return new Messenger();
 	}
 	
+	/*
 	@Bean
-	public OrderProcessor orderProcessor (KitchenApplicationModel model, Messenger messenger)
+	public OrderProcessorDeprecated orderProcessor (KitchenApplicationModel model, Messenger messenger)
 	{
-		return new NetworkOrderProcessor(model, messenger);
+		return new OrderProcessor(model, messenger);
 	}
+	*/
 }

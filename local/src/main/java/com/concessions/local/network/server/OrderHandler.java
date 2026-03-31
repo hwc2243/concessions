@@ -71,7 +71,7 @@ public class OrderHandler extends AbstractDeviceHandler {
 		try {
 			SimpleDeviceRequestDTO request = mapper.readValue(payload, SimpleDeviceRequestDTO.class);
 			validatePIN(request);
-			validateDevice(request, DeviceTypeType.KITCHEN);
+			validateDevice(request, DeviceTypeType.KITCHEN, DeviceTypeType.SERVER);
 			DeviceDTO device = this.loadDevice(request.getDeviceId());
 			List<OrderDTO> orders = orderOrchestrator.fetchOrders(device);
 			OrderQueueGetAllResponseDTO response = new OrderQueueGetAllResponseDTO();

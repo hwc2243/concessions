@@ -10,14 +10,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.concessions.dto.OrderDTO;
-import com.concessions.local.kitchen.model.OrderDisplayModel;
-import com.concessions.local.kitchen.ui.OrderDisplay;
+import com.concessions.local.kitchen.model.KitchenModel;
+import com.concessions.local.kitchen.ui.KitchenPanel;
 import com.concessions.local.pos.processor.OrderProcessor;
+import com.concessions.local.pos.processor.OrderProcessorDeprecated;
 import com.concessions.local.server.ApplicationState;
 import com.concessions.local.server.orchestrator.OrderException;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.server.orchestrator.OrderOrchestrator.OrderListener;
 import com.concessions.local.ui.ApplicationFrame;
+import com.concessions.local.ui.view.OrderPanel;
 
 import jakarta.annotation.PostConstruct;
 
@@ -28,23 +30,25 @@ public class KitchenController implements ApplicationState, OrderListener {
 	@Autowired
 	protected ApplicationFrame frame;
 
+	@Autowired(required = false)
+	private OrderOrchestrator orderOrchestrator;
+	
 	@Autowired
 	protected OrderProcessor orderProcessor;
 
-	@Autowired
-	private OrderDisplay orderDisplayComponent;
+	private KitchenPanel kitchenPanel;
 
-	@Autowired
-	protected OrderDisplayModel orderDisplayModel;
-
-	@Autowired(required = false)
-	private OrderOrchestrator orderOrchestrator;
+	protected KitchenModel kitchenModel;
 
 	@PostConstruct
 	protected void initialize() {
+		kitchenModel = new KitchenModel();
+		kitchenPanel = new KitchenPanel(this, kitchenModel);
+		frame.addPanel(kitchenPanel, KitchenPanel.NAME);
+		
 		if (orderOrchestrator != null) {
 			orderOrchestrator.addOrderListener(this);
-			logger.info("OrderDisplayController registered a local listener.");
+			logger.info("KitchenController registered a local listener.");
 		} else {
 			logger.warn("OrderOrchestrator bean not found. Real-time order updates will be disabled.");
 		}
@@ -63,7 +67,7 @@ public class KitchenController implements ApplicationState, OrderListener {
 		if (order != null) {
 			try {
 				orderProcessor.completeOrder(order);
-				orderDisplayModel.removeOrder(order);
+				kitchenModel.removeOrder(order);
 			} catch (OrderException ex) {
 				JOptionPane.showMessageDialog(frame, "Failed to complete order", "Error", JOptionPane.ERROR_MESSAGE);
 			}
@@ -71,26 +75,27 @@ public class KitchenController implements ApplicationState, OrderListener {
 	}
 
 	public void execute() {
-		//frame.setMainContent(orderDisplayComponent);
 		try {
-			orderProcessor.getOrders().stream().forEach(order -> orderDisplayModel.addOrder(order));
+			orderProcessor.getOrders().stream().forEach(order -> kitchenModel.addOrder(order));
 		} catch (OrderException ex) {
 			JOptionPane.showMessageDialog(frame, "Failed to retrieve orders - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
 			System.exit(1);
 		}
+		
+		frame.showPanel(KitchenPanel.NAME);
 	}
 
 	@Override
 	public void orderCompleted(OrderDTO order) {
 		logger.info("Received orderCompleted event for order: {}", order.getId());
-		SwingUtilities.invokeLater(() -> orderDisplayModel.removeOrder(order));
+		SwingUtilities.invokeLater(() -> kitchenModel.removeOrder(order));
 	}
 
 	@Override
 	public void orderCreated(OrderDTO order) {
 		logger.info("Received orderCreated event for order: {}", order.getId());
-		SwingUtilities.invokeLater(() -> orderDisplayModel.addOrder(order));
+		SwingUtilities.invokeLater(() -> kitchenModel.addOrder(order));
 	}
 }

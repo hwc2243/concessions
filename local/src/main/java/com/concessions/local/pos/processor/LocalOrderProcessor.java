@@ -11,7 +11,7 @@ import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.server.orchestrator.OrderException;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
 
-public class LocalOrderProcessor implements OrderProcessor {
+public class LocalOrderProcessor implements OrderProcessorDeprecated {
 	
 	private static final Logger logger = LoggerFactory.getLogger(LocalOrderProcessor.class);
 

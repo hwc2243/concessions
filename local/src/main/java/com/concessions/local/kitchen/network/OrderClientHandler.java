@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.common.network.NetworkException;
 import com.concessions.dto.OrderDTO;
-import com.concessions.local.kitchen.model.OrderDisplayModel;
+import com.concessions.local.kitchen.model.KitchenModel;
 import com.concessions.local.network.AbstractHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,9 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 	)
 public class OrderClientHandler extends AbstractHandler {
 
-	protected OrderDisplayModel orderDisplayModel;
+	protected KitchenModel orderDisplayModel;
 	
-	public OrderClientHandler (@Autowired ObjectMapper mapper, @Autowired OrderDisplayModel orderDisplayModel) {
+	public OrderClientHandler (@Autowired ObjectMapper mapper, @Autowired KitchenModel orderDisplayModel) {
 		super(mapper);
 		this.orderDisplayModel = orderDisplayModel;
 	}

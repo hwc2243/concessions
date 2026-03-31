@@ -53,11 +53,13 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 	protected JournalAction journalAction;
 	
 	@Autowired
+	protected KitchenAction kitchenAction;
+	
+	@Autowired
 	protected OrderAction orderAction;
 	
 	@Autowired
 	protected SetupAction setupAction;
-	
 	
 	protected LoginAction loginAction;
 
@@ -71,7 +73,6 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 
 	protected JournalSuspendAction journalSuspendAction;
 
-	protected KitchenAction kitchenAction;
 
 	
 	private CardLayout cardLayout = new CardLayout();
@@ -108,6 +109,8 @@ public class ApplicationFrame extends JFrame implements PropertyChangeListener {
 		
 		JMenuItem journalItem = new JMenuItem(journalAction);
 		operationsMenu.add(journalItem);
+		JMenuItem kitchenItem = new JMenuItem(kitchenAction);
+		operationsMenu.add(kitchenItem);
 		JMenuItem orderItem = new JMenuItem(orderAction);
 		operationsMenu.add(orderItem);
 		

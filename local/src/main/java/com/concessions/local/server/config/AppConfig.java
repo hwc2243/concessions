@@ -17,8 +17,10 @@ import com.concessions.local.bean.ServerConfiguration;
 import com.concessions.local.bean.TenantDiscriminator;
 import com.concessions.local.network.HandlerRegistry;
 import com.concessions.local.network.LocalNetworkListener;
+import com.concessions.local.network.Messenger;
 import com.concessions.local.pos.processor.LocalOrderProcessor;
 import com.concessions.local.pos.processor.OrderProcessor;
+import com.concessions.local.pos.processor.OrderProcessorDeprecated;
 import com.concessions.local.server.ServerApplication;
 import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.server.model.ServerApplicationModel;
@@ -117,7 +119,7 @@ public class AppConfig {
     }
     
     @Bean
-    public OrderProcessor orderSubmissionProcessor (OrderOrchestrator orderOrchestrator) {
-    	return new LocalOrderProcessor(orderOrchestrator);
+    public OrderProcessor orderProcessor (Messenger messenger, ApplicationConfiguration appConfig) {
+    	return new OrderProcessor(messenger, appConfig);
     }
 }

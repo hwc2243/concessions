@@ -17,26 +17,31 @@ import org.springframework.stereotype.Component;
 
 import com.concessions.dto.OrderDTO;
 import com.concessions.local.kitchen.controller.KitchenController;
-import com.concessions.local.kitchen.model.OrderDisplayModel;
+import com.concessions.local.kitchen.model.KitchenModel;
 
 import jakarta.annotation.PostConstruct;
 
-@Component
-public class OrderDisplay extends JPanel implements PropertyChangeListener {
+public class KitchenPanel extends JPanel implements PropertyChangeListener {
 
-    @Autowired
-    private OrderDisplayModel model;
-
-    @Lazy
-    @Autowired
-    private KitchenController kitchenController; // Inject the controller
+	public static final String NAME = "KITCHEN";
+	
+	private KitchenController kitchenController;
+	
+    private KitchenModel model;
 
     private FillViewportPanel orderPanel;
     private JLabel orderCountLabel; // New instance variable
 
-    @PostConstruct
+    public KitchenPanel (KitchenController kitchenController, KitchenModel model) {
+    		this.kitchenController = kitchenController;
+    		this.model = model;
+    		
+    		initialize();
+    }
+    
     public void initialize() {
         setLayout(new BorderLayout());
+        
         // Use the custom FillViewportPanel to ensure child components fill the viewport vertically.
         orderPanel = new FillViewportPanel();
         orderPanel.setLayout(new BoxLayout(orderPanel, BoxLayout.X_AXIS));
@@ -44,7 +49,6 @@ public class OrderDisplay extends JPanel implements PropertyChangeListener {
         JScrollPane scrollPane = new JScrollPane(orderPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
         add(scrollPane, BorderLayout.CENTER);
 
         // Initialize and add the order count label to the bottom
@@ -57,7 +61,7 @@ public class OrderDisplay extends JPanel implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (OrderDisplayModel.ORDERS_PROPERTY.equals(evt.getPropertyName())) {
+        if (KitchenModel.ORDERS_PROPERTY.equals(evt.getPropertyName())) {
             updateOrderPanel((List<OrderDTO>) evt.getNewValue());
             // Update the order count label when the model changes
             orderCountLabel.setText("Total Orders: " + model.getOrders().size());

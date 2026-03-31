@@ -22,22 +22,28 @@ import javax.swing.border.TitledBorder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.bean.ClientConfiguration;
 import com.concessions.local.server.ServerApplication;
 import com.concessions.local.ui.ApplicationFrame;
+import com.concessions.local.ui.SettingsPanel;
 
 
 @Component
 public class SettingsDialog extends JDialog {
 
-	@Autowired
+	protected ApplicationConfiguration appConfig;
+	
+	protected ClientConfiguration clientConfig;
+	
 	private ServerApplication application;
 	
-	@Autowired
-	private ApplicationFrame frame;
-	
-    public SettingsDialog(JFrame owner, ServerApplication application) {
+    public SettingsDialog(JFrame owner, ServerApplication application, ApplicationConfiguration appConfig, ClientConfiguration clientConfig) {
         super(owner, "Settings", true);
         this.application = application;
+        this.appConfig = appConfig;
+        this.clientConfig = clientConfig;
+        
         setSize(500, 400);
         setLocationRelativeTo(owner);
         setLayout(new BorderLayout());
@@ -45,6 +51,7 @@ public class SettingsDialog extends JDialog {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("General", createGeneralTab());
         tabbedPane.addTab("Maintenance", createMaintenanceTab());
+        tabbedPane.addTab("System", createSystemTab());
 
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -108,6 +115,10 @@ public class SettingsDialog extends JDialog {
         return panel;
     }
 
+    private JPanel createSystemTab () {
+    	return new SettingsPanel(appConfig, clientConfig);
+    }
+    
     private void handleFactoryReset() {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "This action is irreversible. All local device IDs, IP mappings, and \n" +
@@ -124,7 +135,7 @@ public class SettingsDialog extends JDialog {
         }
     }
 
-    public static void showSettings(JFrame owner, ServerApplication application) {
-        new SettingsDialog(owner, application).setVisible(true);
+    public static void showSettings(JFrame owner, ServerApplication application, ApplicationConfiguration appConfig, ClientConfiguration clientConfig ) {
+        new SettingsDialog(owner, application, appConfig, clientConfig).setVisible(true);
     }
 }

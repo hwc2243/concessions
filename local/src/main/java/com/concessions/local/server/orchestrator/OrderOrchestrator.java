@@ -87,7 +87,7 @@ public class OrderOrchestrator {
 	}
 
 	public List<OrderDTO> fetchOrders(DeviceDTO device) {
-		if (device.getDeviceType() != DeviceTypeType.KITCHEN) {
+		if (device.getDeviceType() != DeviceTypeType.KITCHEN && device.getDeviceType() != DeviceTypeType.SERVER) {
 			throw new RuntimeException("Invalid device type to retrieve orders");
 		}
 

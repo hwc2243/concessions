@@ -38,7 +38,7 @@ import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.kitchen.config.AppConfig;
 import com.concessions.local.kitchen.controller.KitchenController;
 import com.concessions.local.kitchen.model.KitchenApplicationModel;
-import com.concessions.local.kitchen.model.OrderDisplayModel;
+import com.concessions.local.kitchen.model.KitchenModel;
 import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.server.ConfigurationHandler;
 import com.concessions.local.network.server.DeviceHandler;
