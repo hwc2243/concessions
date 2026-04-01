@@ -21,11 +21,11 @@ import com.concessions.client.rest.OrganizationRestClient;
 import com.concessions.client.service.MenuService;
 import com.concessions.client.service.ServiceException;
 import com.concessions.local.bean.ApplicationConfiguration;
+import com.concessions.local.bean.LocationConfiguration;
 import com.concessions.local.bean.ServerConfiguration;
-import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.dto.MenuMapper;
 import com.concessions.local.server.model.ApplicationModel;
 import com.concessions.local.service.ApplicationConfigurationService;
-import com.concessions.local.service.LocationConfigurationService;
 import com.concessions.local.service.ServerConfigurationService;
 import com.concessions.local.ui.ApplicationFrame;
 import com.concessions.local.ui.LocationSetupPanel;
@@ -57,9 +57,6 @@ public class LocationSetupController {
 
 	@Autowired
 	protected ServerConfigurationService serverConfigService;
-
-	@Autowired
-	protected LocationConfigurationService locationConfigurationService;
 
 	// The configurations we need
 	@Autowired
@@ -138,6 +135,7 @@ public class LocationSetupController {
 		locConfig.setMenuId(menu.getId());
 		locConfig.setMenuName(menu.getName());
 		appConfig.setLocationConfiguration(locConfig);
+		appConfig.setMenu(MenuMapper.toDto(menu));
 		try {
 			appConfigService.save();
 		} catch (BackingStoreException ex) {

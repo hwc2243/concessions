@@ -14,10 +14,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import com.concessions.local.base.model.AbstractLocationConfigurationModel;
 import com.concessions.local.base.model.AbstractModel;
 import com.concessions.local.base.ui.AbstractFrame.CurrentConfiguration;
-import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.bean.LocationConfiguration;
 import com.concessions.local.server.model.ServerApplicationModel;
 
 public abstract class AbstractFrame extends JFrame implements PropertyChangeListener {
@@ -162,17 +161,6 @@ public abstract class AbstractFrame extends JFrame implements PropertyChangeList
 		case AbstractModel.STATUS_MESSAGE:
 			String newMessage = (String) evt.getNewValue();
 			updateStatus(newMessage);
-			break;
-		case AbstractLocationConfigurationModel.LOCATION_CONFIGURATION:
-			LocationConfiguration locationConfiguration = (LocationConfiguration)evt.getNewValue();
-			if (locationConfiguration != null) {
-				this.updateCurrentConfiguration(
-						new CurrentConfiguration(locationConfiguration.getOrganizationName(),
-								locationConfiguration.getLocationName(),
-								locationConfiguration.getMenuName()));
-			} else {
-				this.updateCurrentConfiguration(null);
-			}
 			break;
 		}
 	}

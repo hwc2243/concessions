@@ -57,9 +57,9 @@ public class SettingsPanel extends JPanel {
         
         // Location Details Section
         content.add(createSectionHeader("Location Details"));
-        content.add(createRawInfoRow("Organization:", appConfig.getLocationConfiguration().getOrganizationName()));
-        content.add(createRawInfoRow("Location:", appConfig.getLocationConfiguration().getLocationName()));
-        content.add(createRawInfoRow("Menu:", appConfig.getLocationConfiguration().getMenuName()));
+        content.add(createRawInfoRow("Organization:", (appConfig.getLocationConfiguration() != null ? appConfig.getLocationConfiguration().getOrganizationName() : "N/A")));
+        content.add(createRawInfoRow("Location:", (appConfig.getLocationConfiguration() != null ? appConfig.getLocationConfiguration().getLocationName() : "N/A")));
+        content.add(createRawInfoRow("Menu:", (appConfig.getLocationConfiguration() != null ? appConfig.getLocationConfiguration().getMenuName() : "N/A")));
         content.add(Box.createVerticalStrut(16));
 
         // Network Details Section
@@ -76,7 +76,7 @@ public class SettingsPanel extends JPanel {
         scrollPane.setBorder(null);
         add(scrollPane, BorderLayout.CENTER);
     }
-
+    
     private JLabel createSectionHeader(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("SansSerif", Font.BOLD, 11));

@@ -14,14 +14,4 @@
         	<finder-attribute name="deviceType"/>
         </finder>
 	</entity>
-	
-	<entity name="locationConfiguration" persistence="true" db-name="location_configuration">
-		<attribute name="organizationId" type="long"/>
-		<attribute name="organizationName" type="string"/>
-		<attribute name="locationId" type="long"/>
-		<attribute name="locationName" type="string"/>
-		<attribute name="menuId" type="long"/>
-		<attribute name="menuName" type="string"/>
-		<attribute name="pin" type="int" />
-	</entity>
 </service>

@@ -121,8 +121,8 @@ public class SettingsDialog extends JDialog {
     
     private void handleFactoryReset() {
         int confirm = JOptionPane.showConfirmDialog(this,
-                "This action is irreversible. All local device IDs, IP mappings, and \n" +
-                "offline journals will be deleted. The app will now close.\n\n" +
+                "This action is irreversible. All local device IDs, IP mappings,\n" +
+                "journals, and orders will be deleted. The app will now close.\n\n" +
                 "Are you absolutely sure you want to proceed?",
                 "Confirm Factory Reset",
                 JOptionPane.YES_NO_OPTION,

@@ -10,7 +10,7 @@ import com.concessions.common.network.NetworkConstants;
 import com.concessions.common.network.dto.ConfigurationResponseDTO;
 import com.concessions.common.network.dto.SimpleDeviceRequestDTO;
 import com.concessions.local.bean.ApplicationConfiguration;
-import com.concessions.local.model.LocationConfiguration;
+import com.concessions.local.bean.LocationConfiguration;
 import com.concessions.local.network.Messenger;
 
 @Component

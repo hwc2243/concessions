@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import com.concessions.common.service.PreferenceService;
 import com.concessions.local.bean.ApplicationConfiguration;
 import com.concessions.local.bean.ApplicationConfiguration.ApplicationRole;
+import com.concessions.local.bean.LocationConfiguration;
 import com.concessions.local.dto.DeviceTypeType;
-import com.concessions.local.model.LocationConfiguration;
-
+ 
 import jakarta.annotation.PostConstruct;
 
 @Service

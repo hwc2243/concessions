@@ -3,7 +3,6 @@ package com.concessions.local.bean;
 import com.concessions.dto.JournalDTO;
 import com.concessions.dto.MenuDTO;
 import com.concessions.local.dto.DeviceTypeType;
-import com.concessions.local.model.LocationConfiguration;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 
 import lombok.Getter;

@@ -12,6 +12,8 @@ public interface JournalService extends BaseJournalService<Journal,Long>
 {
 	public Journal addOrder (Journal journal, Order order) throws ServiceException;
 	
+	public void deleteAll ();
+	
 	public Journal recalcJournal (Journal journal) throws ServiceException;
 	
 	public List<Journal> findNotClosedJournals () throws ServiceException;

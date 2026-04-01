@@ -6,4 +6,5 @@ import com.concessions.local.model.Device;
 
 public interface DeviceService extends BaseDeviceService<Device,Long>
 {
+	public void deleteAll();
 }

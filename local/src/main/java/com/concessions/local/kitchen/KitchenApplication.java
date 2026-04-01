@@ -34,12 +34,12 @@ import com.concessions.common.service.PreferenceService;
 import com.concessions.local.base.AbstractApplication;
 import com.concessions.local.base.AbstractClientApplication;
 import com.concessions.local.base.ui.AboutDialog;
+import com.concessions.local.bean.LocationConfiguration;
 import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.kitchen.config.AppConfig;
 import com.concessions.local.kitchen.controller.KitchenController;
 import com.concessions.local.kitchen.model.KitchenApplicationModel;
 import com.concessions.local.kitchen.model.KitchenModel;
-import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.server.ConfigurationHandler;
 import com.concessions.local.network.server.DeviceHandler;
 import com.concessions.local.server.RegistrationState;
@@ -168,7 +168,6 @@ public class KitchenApplication extends AbstractClientApplication {
 			locationConfiguration.setOrganizationName(response.getOrganizationName());
 			locationConfiguration.setLocationName(response.getLocationName());
 			locationConfiguration.setMenuName(response.getMenuName());
-			model.setLocationConfiguration(locationConfiguration);
 		} catch (MessengerException ex) {
 			JOptionPane.showMessageDialog(null, "Failed to retrieve location configuration - " + ex.getMessage(), "Fatal Error",
 					JOptionPane.ERROR_MESSAGE);

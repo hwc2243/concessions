@@ -15,6 +15,11 @@ public class OrderItemServiceImpl
 {
 
 	@Override
+	public void deleteAll () {
+		this.orderItemPersistence.deleteAllInBatch();
+	}
+	
+	@Override
 	public OrderItem newInstance() {
 		OrderItem orderItem = new OrderItem();
 		orderItem.setId(UUID.randomUUID().toString());

@@ -11,5 +11,7 @@ public interface OrderService extends BaseOrderService<Order,Long>
 {
 	public Order newInstance (Journal journal);
 	
+	public void deleteAll ();
+	
 	public List<Order> findOpen (String journalId);
 }

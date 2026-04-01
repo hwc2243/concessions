@@ -11,4 +11,8 @@ public class DeviceServiceImpl
   extends BaseDeviceServiceImpl<Device,Long>
   implements DeviceService
 {
+	@Override
+	public void deleteAll () {
+		this.devicePersistence.deleteAllInBatch();
+	}
 }

@@ -11,4 +11,7 @@ public class MenuItemOptionServiceImpl
   extends BaseMenuItemOptionServiceImpl<MenuItemOption,Long>
   implements MenuItemOptionService
 {
+	public void deleteAll () {
+		this.menuItemOptionPersistence.deleteAllInBatch();
+	}
 }

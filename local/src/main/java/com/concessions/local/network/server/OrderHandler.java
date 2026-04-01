@@ -86,7 +86,7 @@ public class OrderHandler extends AbstractDeviceHandler {
 		try {
 			OrderRequestDTO request = mapper.readValue(payload, OrderRequestDTO.class);
 			validatePIN(request);
-			validateDevice(request, DeviceTypeType.KITCHEN);
+			validateDevice(request, DeviceTypeType.KITCHEN, DeviceTypeType.SERVER);
 			orderOrchestrator.completeOrder(request.getOrder());
 		} catch (JsonProcessingException ex) {
 			throw new ServerException("Failed to complete order: " + ex.getMessage(), ex);

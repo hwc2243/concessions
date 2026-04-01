@@ -6,4 +6,5 @@ import com.concessions.client.model.MenuItemOption;
 
 public interface MenuItemOptionService extends BaseMenuItemOptionService<MenuItemOption,Long>
 {
+	public void deleteAll ();
 }

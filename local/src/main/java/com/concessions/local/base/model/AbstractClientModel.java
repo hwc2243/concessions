@@ -1,6 +1,6 @@
 package com.concessions.local.base.model;
 
-public abstract class AbstractClientModel extends AbstractLocationConfigurationModel {
+public abstract class AbstractClientModel extends AbstractModel {
 
 	protected String deviceId;
 	protected String deviceNumber;

@@ -13,12 +13,18 @@ public class MenuServiceImpl
   extends BaseMenuServiceImpl<Menu,Long>
   implements MenuService
 {
+	public void deleteAll () {
+		this.menuPersistence.deleteAllInBatch();
+	}
+	
 	@Override
 	@Transactional
 	public Menu get (Long id) throws ServiceException
 	{
 		Menu menu = super.get(id);
-		menu.getMenuItems().size();
+		if (menu != null) {
+			menu.getMenuItems().size();
+		}
 		return menu;
 	}
 }

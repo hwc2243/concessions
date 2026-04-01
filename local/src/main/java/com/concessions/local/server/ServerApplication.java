@@ -50,7 +50,6 @@ import com.concessions.local.journal.action.JournalStartAction;
 import com.concessions.local.journal.action.JournalSuspendAction;
 import com.concessions.local.dto.DeviceTypeType;
 import com.concessions.local.model.Device;
-import com.concessions.local.model.LocationConfiguration;
 import com.concessions.local.network.LocalNetworkListener;
 import com.concessions.local.network.client.JournalClientHandler;
 import com.concessions.local.security.TokenAuthService;
@@ -62,7 +61,7 @@ import com.concessions.local.server.model.ServerApplicationModel;
 import com.concessions.local.server.orchestrator.OrderOrchestrator;
 import com.concessions.local.service.ApplicationConfigurationService;
 import com.concessions.local.service.DeviceService;
-import com.concessions.local.service.LocationConfigurationService;
+import com.concessions.local.service.ResetService;
 import com.concessions.local.service.ServerConfigurationService;
 import com.concessions.local.service.ServiceException;
 import com.concessions.local.ui.ApplicationFrame;
@@ -89,7 +88,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	private static final int AUTHORIZATION_SETUP_STATE = SYSTEM_SETUP_STATE + 1;
 	private static final int PIN_SETUP_STATE = AUTHORIZATION_SETUP_STATE + 1;
 	private static final int LOCATION_SETUP_STATE = PIN_SETUP_STATE + 1;
-	private static final int SERVER_NETWORK_SETUP_STATE = LOCATION_SETUP_STATE + 1; 
+	private static final int SERVER_NETWORK_SETUP_STATE = LOCATION_SETUP_STATE + 1;
 	private static final int CLIENT_NETWORK_SETUP_STATE = SERVER_NETWORK_SETUP_STATE + 1;
 	private static final int REGISTRATION_SETUP_STATE = CLIENT_NETWORK_SETUP_STATE + 1;
 	private static final int LOCATION_CONFIGURATION_SETUP_STATE = REGISTRATION_SETUP_STATE + 1;
@@ -110,10 +109,13 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	@Autowired
 	protected ServerConfigurationService serverConfigService;
 
+	@Autowired
+	protected ResetService resetService;
+
 	// Components
 	@Autowired
 	protected ApplicationFrame applicationFrame;
-	
+
 	// Beans
 	@Autowired
 	protected ApplicationModel appModel;
@@ -127,7 +129,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	// Controllers
 	@Autowired
 	protected ClientOperationsState clientOperationsState;
-	
+
 	@Autowired
 	protected DeviceCodeController deviceCodeController;
 
@@ -140,20 +142,20 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	@Autowired
 	@Qualifier("clientListener")
 	protected LocalNetworkListener clientListener;
-	
+
 	@Autowired
 	@Qualifier("serverListener")
 	protected LocalNetworkListener serverListener;
-	
+
 	@Autowired
 	protected LocationConfigurationState locationConfigurationState;
 
 	@Autowired
 	protected RegistrationState registrationState;
-	
+
 	@Autowired
 	protected ServerOperationsState serverOperationsState;
-	
+
 	private int state = UNKNOWN;
 
 	// HWC This is the old stuff, needs to be refactored
@@ -181,9 +183,6 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 	protected SetupAction setupAction;
 
 	@Autowired
-	protected LocationConfigurationService locationConfigurationService;
-
-	@Autowired
 	protected OrderOrchestrator orderOrchestrator;
 
 	@Autowired
@@ -194,6 +193,8 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 
 	@Autowired
 	protected TokenAuthService authService;
+
+	protected boolean skipEvents = false;
 
 	public ServerApplication() {
 	}
@@ -320,8 +321,8 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			break;
 		}
 	}
-	
-	protected synchronized void updateState() {
+
+	public synchronized void updateState() {
 		int oldState = this.state;
 		int newState = SYSTEM_SETUP_STATE;
 
@@ -335,7 +336,7 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 					newState = PIN_SETUP_STATE;
 				} else if (!locationSetupController.isComplete()) {
 					newState = LOCATION_SETUP_STATE;
-				} else if (!serverListener.isComplete()){
+				} else if (!serverListener.isComplete()) {
 					newState = SERVER_NETWORK_SETUP_STATE;
 				} else if (!clientListener.isComplete()) {
 					newState = CLIENT_NETWORK_SETUP_STATE;
@@ -364,11 +365,12 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 		}
 	}
 
-
-	public void reset () {
-		
+	public void reset() {
+		skipEvents = true;
+		resetService.reset();
+		skipEvents = false;
 	}
-	
+
 	private void setupDeviceId() {
 		// register our deviceId
 		String deviceId = appConfig.getDeviceId();
@@ -443,12 +445,17 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getSource() == appConfig
-				&& (evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_APPLICATION_ROLE))
-				   || evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_LOCATION_CONFIGURATION)) {
-			updateState();
-		} else if (evt.getSource() == serverConfig && evt.getPropertyName().equals(ServerConfiguration.PROPERTY_TOKEN_RESPONSE)) {
-			updateState();
+		if (!skipEvents) {
+			if (evt.getSource() == appConfig
+					&& (evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_APPLICATION_ROLE))
+					|| evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_LOCATION_CONFIGURATION)
+					|| evt.getPropertyName().equals(ApplicationConfiguration.PROPERTY_PIN)) {
+				logger.info("property change {}", evt.getPropertyName());
+				updateState();
+			} else if (evt.getSource() == serverConfig
+					&& evt.getPropertyName().equals(ServerConfiguration.PROPERTY_TOKEN_RESPONSE)) {
+				updateState();
+			}
 		}
 	}
 
@@ -463,11 +470,11 @@ public class ServerApplication extends AbstractApplication implements PropertyCh
 			YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
 			ClassPathResource resource = new ClassPathResource("application.yml");
 			PropertySource<?> yamlPropertySource = loader.load("application.yml", resource).get(0); // Take the
-																											// first
-																											// (and
-																											// usually
-																											// only)
-																											// document
+																									// first
+																									// (and
+																									// usually
+																									// only)
+																									// document
 			environment.getPropertySources().addLast(yamlPropertySource);
 
 			context.register(JpaConfig.class);

@@ -16,6 +16,11 @@ public class OrderServiceImpl
 {
 
 	@Override
+	public void deleteAll () {
+		this.orderPersistence.deleteAllInBatch();
+	}
+	
+	@Override
 	public Order newInstance(Journal journal) {
 		Order order = new Order();
 		order.setId(UUID.randomUUID().toString());

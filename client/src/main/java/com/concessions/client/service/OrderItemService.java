@@ -7,4 +7,7 @@ import com.concessions.client.model.OrderItem;
 public interface OrderItemService extends BaseOrderItemService<OrderItem,Long>
 {
 	public OrderItem newInstance ();
+	
+	public void deleteAll ();
+
 }

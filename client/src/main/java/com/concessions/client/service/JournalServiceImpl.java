@@ -29,6 +29,11 @@ public class JournalServiceImpl
 	protected OrderService orderService;
 	
 	@Override
+	public void deleteAll () {
+		journalPersistence.deleteAllInBatch();
+	}
+	
+	@Override
 	public List<Journal> findNotClosedJournals() throws ServiceException {
 		return journalPersistence.findByStatusNotInAndOrganizationId(notClosed, tenantDiscriminator.getOrganizationId());
 	}
